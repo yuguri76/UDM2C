@@ -5,6 +5,7 @@ import java.io.IOException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.stereotype.Component;
 
 import com.example.livealone.global.exception.ExceptionResponseDto;
 
@@ -13,6 +14,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Component
 public class AuthenticationEntryPointImpl implements AuthenticationEntryPoint {
 
 	@Override
@@ -36,6 +38,5 @@ public class AuthenticationEntryPointImpl implements AuthenticationEntryPoint {
 				.path(request.getRequestURI())
 				.build().toString()
 		);
-
 	}
 }
