@@ -1,6 +1,7 @@
 services:
   mysql:
     image: 'mysql:latest'
+    container_name: mysql
     environment:
       - 'MYSQL_DATABASE=live_alone'
       - 'MYSQL_PASSWORD=secret'
@@ -10,6 +11,7 @@ services:
       - '3307:3306'
   redis:
     image: 'redis:latest'
+    container_name: redis
     ports:
       - '6379:6379'
   kafka:
