@@ -7,8 +7,13 @@ services:
       - 'MYSQL_ROOT_PASSWORD=verysecret'
       - 'MYSQL_USER=myuser'
     ports:
-      - '3307'
+      - '3307:3306'
   redis:
     image: 'redis:latest'
     ports:
-      - '6379'
+      - '6379:6379'
+  kafka:
+    image: 'apache/kafka:3.7.1'
+    container_name: kafka
+    ports:
+      - "9092:9092"
