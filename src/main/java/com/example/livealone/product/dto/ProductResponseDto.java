@@ -1,21 +1,22 @@
 package com.example.livealone.product.dto;
 
-import com.example.livealone.product.entity.Product;
+import lombok.Builder;
 import lombok.Getter;
 
 @Getter
 public class ProductResponseDto {
   private Long id;
   private String name;
-  private int price;
-  private long quantity;
+  private Integer price;
+  private Long quantity;
   private String introduction;
 
-  public ProductResponseDto(Product product) {
-    this.id = product.getId();
-    this.name = product.getName();
-    this.price = product.getPrice();
-    this.quantity = product.getQuantity();
-    this.introduction = product.getIntroduction();
+  @Builder
+  public ProductResponseDto(Long id, String name, Integer price, Long quantity, String introduction) {
+    this.id = id;
+    this.name = name;
+    this.price = price;
+    this.quantity = quantity;
+    this.introduction = introduction;
   }
 }
