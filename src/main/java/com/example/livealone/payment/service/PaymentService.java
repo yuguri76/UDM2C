@@ -59,6 +59,12 @@ public class PaymentService {
 	@Value("https://yourapp.com/payment/callback")
 	private String tossResultCallback;
 
+	/**
+	 * 카카오페이 결제 준비
+	 *
+	 * @param requestDto 결제 요청 DTO
+	 * @return 결제 응답 DTO
+	 */
 	public PaymentResponseDto createKakaoPayReady(PaymentRequestDto requestDto) {
 		String url = "https://kapi.kakao.com/v1/payment/ready";
 
@@ -116,6 +122,14 @@ public class PaymentService {
 		}
 	}
 
+	/**
+	 * 카카오페이 결제 승인
+	 *
+	 * @param pgToken 결제 승인 토큰
+	 * @param orderId 주문 ID
+	 * @param userId 사용자 ID
+	 * @return 결제 응답 DTO
+	 */
 	public PaymentResponseDto approveKakaoPayPayment(String pgToken, Long orderId, Long userId) {
 		String url = "https://kapi.kakao.com/v1/payment/approve";
 
@@ -160,6 +174,12 @@ public class PaymentService {
 		}
 	}
 
+	/**
+	 * 토스페이 결제 준비
+	 *
+	 * @param requestDto 결제 요청 DTO
+	 * @return 결제 응답 DTO
+	 */
 	public PaymentResponseDto createTossPayReady(PaymentRequestDto requestDto) {
 		String url = "https://pay.toss.im/api/v2/payments";
 
@@ -214,6 +234,12 @@ public class PaymentService {
 		}
 	}
 
+	/**
+	 * 주문 ID로 tid 조회
+	 *
+	 * @param orderId 주문 ID
+	 * @return tid
+	 */
 	private String getTidByOrderId(Long orderId) {
 		Payment payment = paymentRepository.findByOrderId(orderId);
 		return payment.getTid();
