@@ -1,8 +1,10 @@
 package com.example.livealone.broadcast.service;
 
 import com.example.livealone.broadcast.dto.BroadcastRequestDto;
+import com.example.livealone.broadcast.dto.BroadcastResponseDto;
 import com.example.livealone.broadcast.entity.Broadcast;
 import com.example.livealone.broadcast.entity.BroadcastCode;
+import com.example.livealone.broadcast.entity.BroadcastStatus;
 import com.example.livealone.broadcast.mapper.BroadcastMapper;
 import com.example.livealone.broadcast.repository.BroadcastCodeRepository;
 import com.example.livealone.broadcast.repository.BroadcastRepository;
@@ -18,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -82,6 +85,21 @@ public class BroadcastService {
     Broadcast broadcast = BroadcastMapper.toBroadcast(boardRequestDto.getTitle(), user, product, code);
     broadcastRepository.save(broadcast);
 
+  }
+
+  @Transactional(readOnly = true)
+  public BroadcastResponseDto inquiryCurrentBroadcast() {
+    Broadcast broadcast = broadcastRepository.findByBroadcastStatus(BroadcastStatus.ONAIR).orElseThrow(() ->
+      new CustomException(messageSource.getMessage(
+        "broadcast.not.found",
+        null,
+        CustomException.DEFAULT_ERROR_MESSAGE,
+        Locale.getDefault()
+    ), HttpStatus.NOT_FOUND)
+    );
+
+    BroadcastResponseDto responseDto = BroadcastMapper.toBroadcastResponseDto(broadcast);
+    return responseDto;
   }
 
   private boolean isWithinBroadcastTime(LocalDateTime airTime, LocalDateTime now) {

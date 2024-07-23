@@ -1,16 +1,14 @@
 package com.example.livealone.broadcast.controller;
 
 import com.example.livealone.broadcast.dto.BroadcastRequestDto;
+import com.example.livealone.broadcast.dto.BroadcastResponseDto;
 import com.example.livealone.broadcast.service.BroadcastService;
 import com.example.livealone.global.dto.CommonResponseDto;
-import com.example.livealone.global.security.UserDetailsImpl;
-import com.example.livealone.user.entity.Social;
-import com.example.livealone.user.entity.User;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -34,6 +32,19 @@ public class BroadcastController {
         null)
     );
 
+  }
+
+  @GetMapping("/broadcast")
+  public ResponseEntity<CommonResponseDto<BroadcastResponseDto>> getBoard() {
+
+    BroadcastResponseDto responseDto = broadcastService.inquiryCurrentBroadcast();
+
+    return ResponseEntity.status(HttpStatus.OK).body(
+        new CommonResponseDto<>(
+            HttpStatus.OK.value(),
+            "현재 진행중인 방송을 성공적으로 불러왔습니다.",
+            responseDto)
+    );
   }
 
 }

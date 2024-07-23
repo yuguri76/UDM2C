@@ -1,5 +1,6 @@
 package com.example.livealone.broadcast.mapper;
 
+import com.example.livealone.broadcast.dto.BroadcastResponseDto;
 import com.example.livealone.broadcast.entity.Broadcast;
 import com.example.livealone.broadcast.entity.BroadcastCode;
 import com.example.livealone.broadcast.entity.BroadcastStatus;
@@ -19,4 +20,9 @@ public class BroadcastMapper {
         .build();
   }
 
+  public static BroadcastResponseDto toBroadcastResponseDto(Broadcast broadcast) {
+    return BroadcastResponseDto.builder()
+        .title(broadcast.getTitle())
+        .build();
+  }
 }
