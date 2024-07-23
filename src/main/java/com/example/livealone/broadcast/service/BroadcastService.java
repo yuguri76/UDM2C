@@ -91,7 +91,7 @@ public class BroadcastService {
   public BroadcastResponseDto inquiryCurrentBroadcast() {
     Broadcast broadcast = broadcastRepository.findByBroadcastStatus(BroadcastStatus.ONAIR).orElseThrow(() ->
       new CustomException(messageSource.getMessage(
-        "broadcast.not.found",
+        "no.exit.current.broadcast",
         null,
         CustomException.DEFAULT_ERROR_MESSAGE,
         Locale.getDefault()
