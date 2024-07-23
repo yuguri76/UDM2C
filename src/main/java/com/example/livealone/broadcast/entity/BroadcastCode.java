@@ -26,7 +26,7 @@ public class BroadcastCode extends Timestamp {
 	@Column(nullable = false)
 	private String code;
 
-	@Column(nullable = false)
+	@Column(name = "air_time", nullable = false, unique = true)
 	private LocalDateTime airTime;
 
 	@Builder
