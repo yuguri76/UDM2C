@@ -54,4 +54,9 @@ public class User extends Timestamp {
 		this.address = address;
 	}
 
+	public void updateUser(String nickname, LocalDate birthDay, String address) {
+		this.nickname = nickname;
+		this.birthDay = birthDay;
+		this.address = address;
+	}
 }
