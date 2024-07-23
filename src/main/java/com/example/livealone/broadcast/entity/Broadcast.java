@@ -46,7 +46,7 @@ public class Broadcast extends Timestamp {
 	private Product product;
 
 	@OneToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "broadcast_code_id", nullable = false)
+	@JoinColumn(name = "broadcast_code_id", referencedColumnName = "air_time", nullable = false, unique = true)
 	private BroadcastCode broadcastCode;
 
 	@Builder
