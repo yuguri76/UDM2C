@@ -114,6 +114,36 @@ public class BroadcastService {
     return responseDto;
   }
 
+  public void closeBroadcast(/*User user*/) {
+    Broadcast broadcast = broadcastRepository.findByBroadcastStatus(BroadcastStatus.ONAIR).orElseThrow(() ->
+        new CustomException(messageSource.getMessage(
+            "no.exit.current.broadcast",
+            null,
+            CustomException.DEFAULT_ERROR_MESSAGE,
+            Locale.getDefault()
+        ), HttpStatus.NOT_FOUND)
+    );
+
+    // 더미 유저 등록 입니다. 삭제 예정.
+    User user = User.builder()
+        .username("홍길동")
+        .email("test@gmail.com")
+        .social(Social.NAVER)
+        .build();
+    userRepository.save(user);
+
+    if(broadcast.getStreamer() != user) {
+      throw new CustomException(messageSource.getMessage(
+          "user.not.match",
+          null,
+          CustomException.DEFAULT_ERROR_MESSAGE,
+          Locale.getDefault()
+      ), HttpStatus.FORBIDDEN);
+    }
+
+    broadcastRepository.save(broadcast.closeBroadcast());
+  }
+
   private boolean isWithinBroadcastTime(LocalDateTime airTime, LocalDateTime now) {
 
     return now.isAfter(airTime.minusMinutes(BROADCAST_BEFORE_STARTING)) &&

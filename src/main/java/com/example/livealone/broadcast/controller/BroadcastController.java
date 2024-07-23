@@ -8,9 +8,11 @@ import com.example.livealone.global.dto.CommonResponseDto;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.annotations.Fetch;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -64,5 +66,20 @@ public class BroadcastController {
             responseDto)
     );
   }
+
+  @PatchMapping("/broadcast")
+  public ResponseEntity<CommonResponseDto<Void>> closeBroadcast(/*@AuthenticationPrincipal UserDetailsImpl userPrincipal*/) {
+
+    broadcastService.closeBroadcast(/*user*/);
+
+    return ResponseEntity.status(HttpStatus.OK).body(
+        new CommonResponseDto<>(
+            HttpStatus.OK.value(),
+            "방송을 성공적으로 중단하였습니다.",
+            null)
+    );
+
+  }
+
 
 }
