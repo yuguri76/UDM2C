@@ -2,6 +2,7 @@ package com.example.livealone.broadcast.service;
 
 import com.example.livealone.broadcast.dto.BroadcastRequestDto;
 import com.example.livealone.broadcast.dto.BroadcastResponseDto;
+import com.example.livealone.broadcast.dto.UserBroadcastResponseDto;
 import com.example.livealone.broadcast.entity.Broadcast;
 import com.example.livealone.broadcast.entity.BroadcastCode;
 import com.example.livealone.broadcast.entity.BroadcastStatus;
@@ -91,7 +92,7 @@ public class BroadcastService {
 
   }
 
-  public List<BroadcastResponseDto> getBroadcast(int page/*, User user*/) {
+  public List<UserBroadcastResponseDto> getBroadcast(int page/*, User user*/) {
 
     // 현재 user 를 가져올 수 없어 일단 임의로 user id를 입력하였습니다. 이후 변경 예정
     return broadcastRepository.findAllByUserId(1L, page, PAGE_SIZE);
