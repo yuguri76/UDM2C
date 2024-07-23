@@ -57,4 +57,10 @@ public class Broadcast extends Timestamp {
 		this.product = product;
 		this.broadcastCode = broadcastCode;
 	}
+
+	public Broadcast closeBroadcast() {
+		this.broadcastStatus = BroadcastStatus.CLOSE;
+		return this;
+	}
+
 }

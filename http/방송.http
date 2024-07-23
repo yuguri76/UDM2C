@@ -11,3 +11,7 @@ Content-Type: application/json
 ### 방송 내역 조회
 GET http://localhost:8080/user/broadcast
 Content-Type: application/json
+
+### 방송 중단
+PATCH http://localhost:8080/broadcast
+Content-Type: application/json
