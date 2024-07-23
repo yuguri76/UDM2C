@@ -1,0 +1,9 @@
+### 방송 생성
+POST http://localhost:8080/broadcast
+Content-Type: application/json
+
+{
+  "title": "맛있는 선산곱창 90% 할인",
+  "code": "1234abcdqwer834f",
+  "product_id": 1
+}
