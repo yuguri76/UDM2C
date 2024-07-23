@@ -16,7 +16,6 @@ spring:
         format_sql: true
         use_sql_comments: true
 
-  # OAuth ???
   security:
     oauth2:
       client:
@@ -63,3 +62,11 @@ jwt:
   key: ${JWT_SECRET_KEY}
   access-expire-time: ${ACCESS_EXPIRE_TIME}
   refresh-expire-time: ${REFRESH_EXPIRE_TIME}
+
+kakao:
+  pay:
+    cid: TC0ONETIME
+    secret: dev
+    approval-url: https://payment/success
+    cancel-url: https://payment/cancel
+    fail-url: https://payment/fail
