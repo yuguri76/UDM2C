@@ -18,11 +18,11 @@ public class UserController {
 
     private final UserService userService;
 
-    @GetMapping("/{userId}")
-    public ResponseEntity<CommonResponseDto<UserInfoDto>> getUserInfo(@PathVariable("userId") long userId
+    @GetMapping("")
+    public ResponseEntity<CommonResponseDto<UserInfoDto>> getUserInfo(
                                                                      /* @AuthenticationPrincipal UserDetailsImpl userDetails*/) {
 //        User user = userDetails.getUser();
-        UserInfoDto userInfoDto = userService.getUserInfo(userId/*,user*/);
+        UserInfoDto userInfoDto = userService.getUserInfo(/*,user*/);
         CommonResponseDto<UserInfoDto> commonResponseDto = CommonResponseDto.<UserInfoDto>builder()
                 .status(HttpStatus.OK.value())
                 .message("User data inquiry successfully")

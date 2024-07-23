@@ -22,7 +22,7 @@ public class UserService {
     public final MessageSource messageSource;
 
     @Transactional
-    public UserInfoDto getUserInfo(long userId/*, User user*/) {
+    public UserInfoDto getUserInfo(/*, User user*/) {
 
         //더미 유저
         User user = User.builder()
@@ -34,7 +34,6 @@ public class UserService {
 
         User curUser = userRepository.save(user);
 
-        checkUser(userId, curUser);
         return UserMapper.toUserInfoDto(curUser);
     }
 
