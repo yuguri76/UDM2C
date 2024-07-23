@@ -29,20 +29,35 @@ public class PaymentService {
 	private final RestTemplate restTemplate;
 	private final ObjectMapper objectMapper;
 
-	@Value("${kakao.pay.cid}")
+	@Value("TC0ONETIME")
 	private String cid;
 
-	@Value("${kakao.pay.secret}")
+	@Value("dev")
 	private String secretKey;
 
-	@Value("${kakao.pay.approval-url}")
+	@Value("https://yourapp.com/payment/success")
 	private String approvalUrl;
 
-	@Value("${kakao.pay.cancel-url}")
+	@Value("https://yourapp.com/payment/cancel")
 	private String cancelUrl;
 
-	@Value("${kakao.pay.fail-url}")
+	@Value("https://yourapp.com/payment/fail")
 	private String failUrl;
+
+	@Value("test_ck_kYG57Eba3GPyQ4zAdxQkVpWDOxmA")
+	private String tossClientKey;
+
+	@Value("test_sk_jExPeJWYVQ1ekabzNRlxV49R5gvN")
+	private String tossSecretKey;
+
+	@Value("https://yourapp.com/payment/success")
+	private String tossRetUrl;
+
+	@Value("https://yourapp.com/payment/cancel")
+	private String tossRetCancelUrl;
+
+	@Value("https://yourapp.com/payment/callback")
+	private String tossResultCallback;
 
 	public PaymentResponseDto createKakaoPayReady(PaymentRequestDto requestDto) {
 		String url = "https://kapi.kakao.com/v1/payment/ready";
@@ -76,6 +91,7 @@ public class PaymentService {
 				.amount(requestDto.getAmount())
 				.paymentMethod(PaymentMethod.KAKAO_PAY)
 				.status(PaymentStatus.REQUESTED)
+				.tid(jsonNode.get("tid").asText())
 				.build();
 
 			paymentRepository.save(payment);
@@ -120,7 +136,7 @@ public class PaymentService {
 			ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, request, String.class);
 			JsonNode jsonNode = objectMapper.readTree(response.getBody());
 
-			Payment payment = paymentRepository.findById(orderId).orElseThrow(() -> new IllegalArgumentException("Payment not found"));
+			Payment payment = paymentRepository.findByOrderId(orderId);
 			payment.updateStatus(PaymentStatus.COMPLETED);
 
 			return PaymentResponseDto.builder()
@@ -140,6 +156,60 @@ public class PaymentService {
 			return PaymentResponseDto.builder()
 				.status("FAILED")
 				.message("결제 승인 실패")
+				.build();
+		}
+	}
+
+	public PaymentResponseDto createTossPayReady(PaymentRequestDto requestDto) {
+		String url = "https://pay.toss.im/api/v2/payments";
+
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.APPLICATION_JSON);
+
+		Map<String, Object> params = new HashMap<>();
+		params.put("orderNo", requestDto.getOrderId().toString());
+		params.put("amount", requestDto.getAmount());
+		params.put("amountTaxFree", 0);
+		params.put("productDesc", "Order " + requestDto.getOrderId());
+		params.put("apiKey", tossClientKey);
+		params.put("autoExecute", true);
+		params.put("resultCallback", tossResultCallback);
+		params.put("retUrl", tossRetUrl);
+		params.put("retCancelUrl", tossRetCancelUrl);
+
+		HttpEntity<Map<String, Object>> request = new HttpEntity<>(params, headers);
+
+		try {
+			ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, request, String.class);
+			JsonNode jsonNode = objectMapper.readTree(response.getBody());
+
+			Payment payment = Payment.builder()
+				.user(userRepository.findById(requestDto.getUserId()).orElseThrow())
+				.order(orderRepository.findById(requestDto.getOrderId()).orElseThrow())
+				.amount(requestDto.getAmount())
+				.paymentMethod(PaymentMethod.TOSS_PAY)
+				.status(PaymentStatus.REQUESTED)
+				.tid(jsonNode.get("payToken").asText())
+				.build();
+
+			paymentRepository.save(payment);
+
+			return PaymentResponseDto.builder()
+				.status("READY")
+				.message("결제 준비 완료")
+				.paymentId(payment.getId())
+				.userId(requestDto.getUserId())
+				.orderId(requestDto.getOrderId())
+				.amount(requestDto.getAmount())
+				.paymentMethod(requestDto.getPaymentMethod())
+				.createdAt(payment.getCreatedAt().toString())
+				.build();
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			return PaymentResponseDto.builder()
+				.status("FAILED")
+				.message("결제 준비 실패")
 				.build();
 		}
 	}

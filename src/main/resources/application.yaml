@@ -67,6 +67,14 @@ kakao:
   pay:
     cid: TC0ONETIME
     secret: dev
-    approval-url: https://payment/success
-    cancel-url: https://payment/cancel
-    fail-url: https://payment/fail
+    approval-url: https://yourapp.com/payment/success
+    cancel-url: https://yourapp.com/payment/cancel
+    fail-url: https://yourapp.com/payment/fail
+
+toss:
+  api:
+    client-key: test_ck_kYG57Eba3GPyQ4zAdxQkVpWDOxmA
+    secret-key: test_sk_jExPeJWYVQ1ekabzNRlxV49R5gvN
+    ret-url: https://yourapp.com/payment/success
+    ret-cancel-url: https://yourapp.com/payment/cancel
+    result-callback: https://yourapp.com/payment/callback
