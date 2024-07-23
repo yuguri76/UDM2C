@@ -2,6 +2,7 @@ package com.example.livealone.broadcast.controller;
 
 import com.example.livealone.broadcast.dto.BroadcastRequestDto;
 import com.example.livealone.broadcast.dto.BroadcastResponseDto;
+import com.example.livealone.broadcast.dto.UserBroadcastResponseDto;
 import com.example.livealone.broadcast.service.BroadcastService;
 import com.example.livealone.global.dto.CommonResponseDto;
 import jakarta.validation.Valid;
@@ -37,7 +38,7 @@ public class BroadcastController {
   }
 
   @GetMapping("/user/broadcast")
-  public ResponseEntity<CommonResponseDto<List<BroadcastResponseDto>>> getBroadcast(
+  public ResponseEntity<CommonResponseDto<List<UserBroadcastResponseDto>>> getBroadcast(
       @RequestParam(defaultValue = "1") int page
       /*, @AuthenticationPrincipal UserDetailsImpl userPrincipal*/) {
 
