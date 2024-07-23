@@ -4,6 +4,7 @@ import com.example.livealone.global.dto.CommonResponseDto;
 import com.example.livealone.global.security.UserDetailsImpl;
 import com.example.livealone.product.dto.ProductRequestDto;
 import com.example.livealone.product.service.ProductService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,7 +23,7 @@ public class ProductController {
 
   @PostMapping()
   public ResponseEntity<CommonResponseDto> createProduct(@AuthenticationPrincipal UserDetailsImpl userDetails,
-                                                          @RequestBody ProductRequestDto requestDto) {
+                                                          @Valid @RequestBody ProductRequestDto requestDto) {
     /**
      * 더미 유저 만들어 테스트
      * 로그인 가능 시, 주석된 코드로 수정 예정
