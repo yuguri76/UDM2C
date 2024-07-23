@@ -2,8 +2,10 @@ package com.example.livealone.broadcast.service;
 
 import com.example.livealone.broadcast.dto.BroadcastRequestDto;
 import com.example.livealone.broadcast.dto.BroadcastResponseDto;
+import com.example.livealone.broadcast.dto.UserBroadcastResponseDto;
 import com.example.livealone.broadcast.entity.Broadcast;
 import com.example.livealone.broadcast.entity.BroadcastCode;
+import com.example.livealone.broadcast.entity.BroadcastStatus;
 import com.example.livealone.broadcast.mapper.BroadcastMapper;
 import com.example.livealone.broadcast.repository.BroadcastCodeRepository;
 import com.example.livealone.broadcast.repository.BroadcastRepository;
@@ -20,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -89,11 +92,56 @@ public class BroadcastService {
 
   }
 
-  public List<BroadcastResponseDto> getBroadcast(int page/*, User user*/) {
+  public List<UserBroadcastResponseDto> getBroadcast(int page/*, User user*/) {
 
     // 현재 user 를 가져올 수 없어 일단 임의로 user id를 입력하였습니다. 이후 변경 예정
     return broadcastRepository.findAllByUserId(1L, page, PAGE_SIZE);
 
+  }
+
+  @Transactional(readOnly = true)
+  public BroadcastResponseDto inquiryCurrentBroadcast() {
+    Broadcast broadcast = broadcastRepository.findByBroadcastStatus(BroadcastStatus.ONAIR).orElseThrow(() ->
+        new CustomException(messageSource.getMessage(
+            "no.exit.current.broadcast",
+            null,
+            CustomException.DEFAULT_ERROR_MESSAGE,
+            Locale.getDefault()
+        ), HttpStatus.NOT_FOUND)
+    );
+
+    BroadcastResponseDto responseDto = BroadcastMapper.toBroadcastResponseDto(broadcast);
+    return responseDto;
+  }
+
+  public void closeBroadcast(/*User user*/) {
+    Broadcast broadcast = broadcastRepository.findByBroadcastStatus(BroadcastStatus.ONAIR).orElseThrow(() ->
+        new CustomException(messageSource.getMessage(
+            "no.exit.current.broadcast",
+            null,
+            CustomException.DEFAULT_ERROR_MESSAGE,
+            Locale.getDefault()
+        ), HttpStatus.NOT_FOUND)
+    );
+
+    // 더미 유저 등록 입니다. 삭제 예정.
+    User user = User.builder()
+        .username("홍길동")
+        .email("test@gmail.com")
+        .social(Social.NAVER)
+        .build();
+    userRepository.save(user);
+
+    if(broadcast.getStreamer() != user) {
+      throw new CustomException(messageSource.getMessage(
+          "user.not.match",
+          null,
+          CustomException.DEFAULT_ERROR_MESSAGE,
+          Locale.getDefault()
+      ), HttpStatus.FORBIDDEN);
+    }
+
+    broadcastRepository.save(broadcast.closeBroadcast());
   }
 
   private boolean isWithinBroadcastTime(LocalDateTime airTime, LocalDateTime now) {

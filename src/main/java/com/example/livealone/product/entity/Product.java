@@ -1,7 +1,6 @@
 package com.example.livealone.product.entity;
 
 import com.example.livealone.global.entity.Timestamp;
-import com.example.livealone.product.dto.ProductRequestDto;
 import com.example.livealone.user.entity.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -50,14 +49,4 @@ public class Product extends Timestamp {
 		this.seller = seller;
 	}
 
-	public Product(ProductRequestDto requestDto) {
-		this.name = requestDto.getName();
-		this.price = requestDto.getPrice();
-		this.quantity = requestDto.getQuantity();
-		this.introduction = requestDto.getIntroduction();
-	}
-
-	public void addSeller(User seller) {
-		this.seller = seller;
-	}
 }
