@@ -4,6 +4,7 @@ import com.example.livealone.broadcast.dto.BroadcastRequestDto;
 import com.example.livealone.broadcast.dto.BroadcastResponseDto;
 import com.example.livealone.broadcast.entity.Broadcast;
 import com.example.livealone.broadcast.entity.BroadcastCode;
+import com.example.livealone.broadcast.entity.BroadcastStatus;
 import com.example.livealone.broadcast.mapper.BroadcastMapper;
 import com.example.livealone.broadcast.repository.BroadcastCodeRepository;
 import com.example.livealone.broadcast.repository.BroadcastRepository;
@@ -20,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -94,6 +96,21 @@ public class BroadcastService {
     // 현재 user 를 가져올 수 없어 일단 임의로 user id를 입력하였습니다. 이후 변경 예정
     return broadcastRepository.findAllByUserId(1L, page, PAGE_SIZE);
 
+  }
+
+  @Transactional(readOnly = true)
+  public BroadcastResponseDto inquiryCurrentBroadcast() {
+    Broadcast broadcast = broadcastRepository.findByBroadcastStatus(BroadcastStatus.ONAIR).orElseThrow(() ->
+        new CustomException(messageSource.getMessage(
+            "no.exit.current.broadcast",
+            null,
+            CustomException.DEFAULT_ERROR_MESSAGE,
+            Locale.getDefault()
+        ), HttpStatus.NOT_FOUND)
+    );
+
+    BroadcastResponseDto responseDto = BroadcastMapper.toBroadcastResponseDto(broadcast);
+    return responseDto;
   }
 
   private boolean isWithinBroadcastTime(LocalDateTime airTime, LocalDateTime now) {

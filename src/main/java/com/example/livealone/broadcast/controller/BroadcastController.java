@@ -51,4 +51,17 @@ public class BroadcastController {
 
   }
 
+  @GetMapping("/broadcast")
+  public ResponseEntity<CommonResponseDto<BroadcastResponseDto>> getBoard() {
+
+    BroadcastResponseDto responseDto = broadcastService.inquiryCurrentBroadcast();
+
+    return ResponseEntity.status(HttpStatus.OK).body(
+        new CommonResponseDto<>(
+            HttpStatus.OK.value(),
+            "현재 진행중인 방송을 성공적으로 불러왔습니다.",
+            responseDto)
+    );
+  }
+
 }
