@@ -1,7 +1,8 @@
 package com.example.livealone.user.service;
 
 import com.example.livealone.global.exception.CustomException;
-import com.example.livealone.user.dto.UserInfoDto;
+import com.example.livealone.user.dto.UserInfoRequestDto;
+import com.example.livealone.user.dto.UserInfoResponseDto;
 import com.example.livealone.user.entity.Social;
 import com.example.livealone.user.entity.User;
 import com.example.livealone.user.mapper.UserMapper;
@@ -22,7 +23,7 @@ public class UserService {
     public final MessageSource messageSource;
 
     @Transactional
-    public UserInfoDto getUserInfo(/*, User user*/) {
+    public UserInfoResponseDto getUserInfo(/*, User user*/) {
 
         //더미 유저
         User user = User.builder()
@@ -34,8 +35,27 @@ public class UserService {
 
         User curUser = userRepository.save(user);
 
-        return UserMapper.toUserInfoDto(curUser);
+        return UserMapper.toUserInfoResponseDto(curUser);
     }
+
+    @Transactional
+    public UserInfoResponseDto updateUserInfo(/* User user*/UserInfoRequestDto userInfoRequestDto) {
+        //더미 유저
+        User user = User.builder()
+                .username("꾸미")
+                .nickname("ggumi")
+                .email("tndus@gmail.com")
+                .social(Social.GOOGLE)
+                .build();
+
+        User curUser = userRepository.save(user);
+
+        curUser.updateUser(userInfoRequestDto.getNickname(), userInfoRequestDto.getBirthDay(), userInfoRequestDto.getAddress());
+
+        return UserMapper.toUserInfoResponseDto(curUser);
+
+    }
+
 
     public void checkUser(long userId, User user) {
         if (!(user.getId().equals(userId))) {

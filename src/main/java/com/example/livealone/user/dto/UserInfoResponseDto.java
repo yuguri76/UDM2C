@@ -6,7 +6,7 @@ import lombok.Getter;
 import java.time.LocalDate;
 
 @Getter
-public class UserInfoDto {
+public class UserInfoResponseDto {
 
     private final String name;
     private final String nickName;
@@ -15,7 +15,7 @@ public class UserInfoDto {
 
 
     @Builder
-    public UserInfoDto(String name, String nickName, LocalDate birthDay, String address) {
+    public UserInfoResponseDto(String name, String nickName, LocalDate birthDay, String address) {
         this.name = name;
         this.nickName = nickName;
         this.birthDay = birthDay;
