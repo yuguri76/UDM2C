@@ -1,6 +1,7 @@
 package com.example.livealone.broadcast.service;
 
 import com.example.livealone.broadcast.dto.BroadcastRequestDto;
+import com.example.livealone.broadcast.dto.BroadcastResponseDto;
 import com.example.livealone.broadcast.entity.Broadcast;
 import com.example.livealone.broadcast.entity.BroadcastCode;
 import com.example.livealone.broadcast.mapper.BroadcastMapper;
@@ -13,6 +14,7 @@ import com.example.livealone.user.entity.Social;
 import com.example.livealone.user.entity.User;
 import com.example.livealone.user.repository.UserRepository;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Locale;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.MessageSource;
@@ -26,11 +28,14 @@ public class BroadcastService {
   private final BroadcastRepository broadcastRepository;
   private final BroadcastCodeRepository broadcastCodeRepository;
   private final ProductRepository productRepository;
+  private final UserRepository userRepository;
+
   private final MessageSource messageSource;
 
   private static final int BROADCAST_BEFORE_STARTING = 10;
   private static final int BROADCAST_AFTER_STARTING = 60;
-  private final UserRepository userRepository;
+
+  private static final int PAGE_SIZE = 10;
 
   public void createBroadcast(BroadcastRequestDto boardRequestDto/*, User user*/) {
 
@@ -81,6 +86,13 @@ public class BroadcastService {
 
     Broadcast broadcast = BroadcastMapper.toBroadcast(boardRequestDto.getTitle(), user, product, code);
     broadcastRepository.save(broadcast);
+
+  }
+
+  public List<BroadcastResponseDto> getBroadcast(int page/*, User user*/) {
+
+    // 현재 user 를 가져올 수 없어 일단 임의로 user id를 입력하였습니다. 이후 변경 예정
+    return broadcastRepository.findAllByUserId(1L, page, PAGE_SIZE);
 
   }
 
