@@ -1,6 +1,7 @@
 package com.example.livealone.payment.entity;
 
-public enum PaymentStauts {
+public enum PaymentStatus {
+	REQUESTED,
 	COMPLETED,
 	FAILED,
 	CANCELLED;

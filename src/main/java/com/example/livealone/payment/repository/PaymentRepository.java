@@ -1,11 +1,11 @@
 package com.example.livealone.payment.repository;
 
-import java.util.List;
-
+import com.example.livealone.payment.entity.Payment;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.example.livealone.payment.entity.Payment;
+import java.util.List;
 
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
 	List<Payment> findByUserId(Long userId);
+	Payment findByOrderId(Long orderId);
 }
