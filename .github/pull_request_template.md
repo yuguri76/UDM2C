@@ -1,6 +1,6 @@
 <br/>
 
-## 🔎  제목 : ((ex)Feat/#2 Make Authentication & Authorization & Auth function 구현(끝나고 예시는 지워주세요)
+## 🔎✨  제목 : ((ex)Feat/#2 Make Authentication & Authorization & Auth function 구현(끝나고 예시는 지워주세요)
 
 
 <br/>
