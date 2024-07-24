@@ -12,5 +12,13 @@ public enum Social {
 	GOOGLE("google");
 
 	private final String value;
+	public static Social fromValue(String value) {
+		for (Social social : values()) {
+			if (social.value.equals(value)) {
+				return social;
+			}
+		}
+    return null;
+  }
 
 }
