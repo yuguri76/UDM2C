@@ -17,6 +17,7 @@ import com.example.livealone.global.security.UserDetailsServiceImpl;
 import com.example.livealone.global.security.filter.JwtAuthentication;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.cors.CorsConfigurationSource;
 
 @Configuration
 @RequiredArgsConstructor
@@ -40,10 +41,12 @@ public class WebSecurityConfig {
 	}
 
 	@Bean
-	public SecurityFilterChain securityFilterChain(final HttpSecurity http) throws Exception {
+	public SecurityFilterChain securityFilterChain(final HttpSecurity http, CorsConfigurationSource corsConfigurationSource) throws Exception {
 
 		http.csrf(AbstractHttpConfigurer::disable);
 		http.formLogin(AbstractHttpConfigurer::disable);
+
+		http.cors(cors -> cors.configurationSource(corsConfigurationSource));
 
 		http.sessionManagement(configurer -> configurer.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
