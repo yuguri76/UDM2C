@@ -1,4 +1,4 @@
-package com.example.livealone.chat.config;
+package com.example.livealone.global.config;
 
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
@@ -23,9 +23,7 @@ public class KafkaProducerConfig {
 
         Map<String, Object> config = new HashMap<>();
 
-        /**
-         * Producer사용에 필요한 기본 설정들
-         */
+        //Producer사용에 필요한 기본 설정들
         config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServer);
         config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);

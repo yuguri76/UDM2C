@@ -2,8 +2,6 @@ package com.example.livealone.chat.handler;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
@@ -11,7 +9,6 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
-import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Component
@@ -43,7 +40,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
         try{
             CLIENTS.remove(session.getId());
         }catch (Exception e){
-            e.printStackTrace();
+            log.error(e.getMessage());
         }
 
     }
@@ -56,9 +53,6 @@ public class WebSocketHandler extends TextWebSocketHandler {
 
         log.info("Read Message"+message);
 
-        /**
-         * Publish
-         */
         kafkaTemplate.send("chat",session.getId()+" : "+message.getPayload());
     }
 

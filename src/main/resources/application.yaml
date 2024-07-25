@@ -60,9 +60,9 @@ spring:
             user-name-attribute: id
   kafka:
     producer:
-      bootstrap-servers: localhost:9092
+      bootstrap-servers: 127.0.0.1:9092
     consumer:
-      bootstrap-servers: localhost:9092
+      bootstrap-servers: 127.0.0.1:9092
 jwt:
   key: ${JWT_SECRET_KEY}
   access-expire-time: ${ACCESS_EXPIRE_TIME}
