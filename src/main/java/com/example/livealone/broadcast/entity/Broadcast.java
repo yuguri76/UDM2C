@@ -1,11 +1,8 @@
 package com.example.livealone.broadcast.entity;
 
-import java.time.LocalDateTime;
-
 import com.example.livealone.global.entity.Timestamp;
 import com.example.livealone.product.entity.Product;
 import com.example.livealone.user.entity.User;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -46,7 +43,7 @@ public class Broadcast extends Timestamp {
 	private Product product;
 
 	@OneToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "broadcast_code_id", referencedColumnName = "air_time", nullable = false, unique = true)
+	@JoinColumn(name = "air_time", referencedColumnName = "air_time", nullable = false, unique = true)
 	private BroadcastCode broadcastCode;
 
 	@Builder

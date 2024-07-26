@@ -5,12 +5,13 @@ import com.example.livealone.broadcast.dto.BroadcastResponseDto;
 import com.example.livealone.broadcast.dto.UserBroadcastResponseDto;
 import com.example.livealone.broadcast.service.BroadcastService;
 import com.example.livealone.global.dto.CommonResponseDto;
+import com.example.livealone.global.security.UserDetailsImpl;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.hibernate.annotations.Fetch;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -26,9 +27,9 @@ public class BroadcastController {
 
   @PostMapping("/broadcast")
   public ResponseEntity<CommonResponseDto<Void>> createBroadcast(
-      @Valid @RequestBody BroadcastRequestDto boardRequestDto/*, @AuthenticationPrincipal UserDetailsImpl userPrincipal*/) {
+      @Valid @RequestBody BroadcastRequestDto boardRequestDto, @AuthenticationPrincipal UserDetailsImpl userPrincipal) {
 
-    broadcastService.createBroadcast(boardRequestDto/*, user*/);
+    broadcastService.createBroadcast(boardRequestDto, userPrincipal.getUser());
 
     return ResponseEntity.status(HttpStatus.CREATED).body(
         new CommonResponseDto<>(
@@ -42,13 +43,13 @@ public class BroadcastController {
   @GetMapping("/user/broadcast")
   public ResponseEntity<CommonResponseDto<List<UserBroadcastResponseDto>>> getBroadcast(
       @RequestParam(defaultValue = "1") int page
-      /*, @AuthenticationPrincipal UserDetailsImpl userPrincipal*/) {
+      , @AuthenticationPrincipal UserDetailsImpl userPrincipal) {
 
     return ResponseEntity.status(HttpStatus.OK).body(
         new CommonResponseDto<>(
             HttpStatus.OK.value(),
             "방송 내역이 성공적으로 조회되었습니다.",
-            broadcastService.getBroadcast(page - 1/*, user*/)
+            broadcastService.getBroadcast(page - 1, userPrincipal.getUser())
         )
     );
 
@@ -68,9 +69,9 @@ public class BroadcastController {
   }
 
   @PatchMapping("/broadcast")
-  public ResponseEntity<CommonResponseDto<Void>> closeBroadcast(/*@AuthenticationPrincipal UserDetailsImpl userPrincipal*/) {
+  public ResponseEntity<CommonResponseDto<Void>> closeBroadcast(@AuthenticationPrincipal UserDetailsImpl userPrincipal) {
 
-    broadcastService.closeBroadcast(/*user*/);
+    broadcastService.closeBroadcast(userPrincipal.getUser());
 
     return ResponseEntity.status(HttpStatus.OK).body(
         new CommonResponseDto<>(
