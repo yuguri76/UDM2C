@@ -1,11 +1,13 @@
 package com.example.livealone.payment.service;
 
+import com.example.livealone.order.entity.Order;
 import com.example.livealone.payment.dto.PaymentRequestDto;
 import com.example.livealone.payment.dto.PaymentResponseDto;
 import com.example.livealone.payment.entity.Payment;
 import com.example.livealone.payment.entity.PaymentMethod;
 import com.example.livealone.payment.entity.PaymentStatus;
 import com.example.livealone.payment.repository.PaymentRepository;
+import com.example.livealone.user.entity.User;
 import com.example.livealone.user.repository.UserRepository;
 import com.example.livealone.order.repository.OrderRepository;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -203,9 +205,15 @@ public class PaymentService {
 			ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, request, String.class);
 			JsonNode jsonNode = objectMapper.readTree(response.getBody());
 
+			User user = userRepository.findById(requestDto.getUserId())
+				.orElseThrow(() -> new IllegalArgumentException("Invalid user ID: " + requestDto.getUserId()));
+
+			Order order = orderRepository.findById(requestDto.getOrderId())
+				.orElseThrow(() -> new IllegalArgumentException("Invalid order ID: " + requestDto.getOrderId()));
+
 			Payment payment = Payment.builder()
-				.user(userRepository.findById(requestDto.getUserId()).orElseThrow())
-				.order(orderRepository.findById(requestDto.getOrderId()).orElseThrow())
+				.user(user)
+				.order(order)
 				.amount(requestDto.getAmount())
 				.paymentMethod(PaymentMethod.TOSS_PAY)
 				.status(PaymentStatus.REQUESTED)
