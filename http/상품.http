@@ -1,0 +1,11 @@
+### 상품 등록
+POST http://localhost:8080/product
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJjaGVhbWluNjMwNkBuYXZlci5jb20iLCJuaWNrbmFtZSI6Iuq5gOyxhOuvvCIsImlhdCI6MTcyMTk4NTkwNCwiZXhwIjoxNzIxOTg2NTA0fQ.oHl-sf1KugNxlSZ7PSHRIv09qyJuoutyefvmgJi9Yak
+
+{
+    "name": "macbook air",
+    "price": 1000000,
+    "quantity": 10,
+    "introduction": "nice notebook"
+}

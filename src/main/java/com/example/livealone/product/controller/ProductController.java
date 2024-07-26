@@ -25,14 +25,9 @@ public class ProductController {
   private final ProductService productService;
 
   @PostMapping()
-  public ResponseEntity<CommonResponseDto> createProduct(@AuthenticationPrincipal UserDetailsImpl userDetails,
+  public ResponseEntity<CommonResponseDto> createProduct(@AuthenticationPrincipal UserDetailsImpl userPrincipal,
                                                           @Valid @RequestBody ProductRequestDto requestDto) {
-    /**
-     * 더미 유저 만들어 테스트
-     * 로그인 가능 시, 주석된 코드로 수정 예정
-     */
-    ProductResponseDto productResponseDto = productService.createProduct(productService.exampleCreateUser(), requestDto);
-//    CommonResponseDto responseDto = productService.createProduct(userDetails.getUser(), requestDto);
+    ProductResponseDto productResponseDto = productService.createProduct(userPrincipal.getUser(), requestDto);
     CommonResponseDto responseDto = new CommonResponseDto(HttpStatus.CREATED.value(), "성공적으로 상품이 등록되었습니다.", productResponseDto);
 
     return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);

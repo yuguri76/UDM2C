@@ -30,7 +30,7 @@ public class DeliveryController {
 
         //User user = userDetails.getUser();
 
-        List<DeliveryHistoryResponseDto> deliveryHistoryResponseDto = deliveryService.getUserDeliveryHistory(/*user,*/ page);
+        List<DeliveryHistoryResponseDto> deliveryHistoryResponseDto = deliveryService.getUserDeliveryHistory(/*user,*/ page - 1);
         CommonResponseDto<List<DeliveryHistoryResponseDto>> commonResponseDto = CommonResponseDto.<List<DeliveryHistoryResponseDto>>builder()
                 .status(HttpStatus.OK.value())
                 .message("User Delivery History inquiry successfully")
