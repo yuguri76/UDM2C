@@ -9,6 +9,7 @@ import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -20,6 +21,8 @@ public class BroadcastRepositoryQueryImpl implements BroadcastRepositoryQuery {
   @Override
   public List<UserBroadcastResponseDto> findAllByUserId(Long userId, int page, int size) {
 
+    PageRequest pageRequest = PageRequest.of(page,size);
+
     return queryFactory.select(new QUserBroadcastResponseDto(
           broadcast.title,
           broadcast.broadcastStatus,
@@ -28,9 +31,9 @@ public class BroadcastRepositoryQueryImpl implements BroadcastRepositoryQuery {
         ))
         .from(broadcast)
         .where(broadcast.streamer.id.eq(userId))
-        .offset(page)
-        .orderBy(new OrderSpecifier<>(Order.DESC, broadcast.createdAt))
-        .limit(size)
+        .offset(pageRequest.getOffset())
+        .limit(pageRequest.getPageSize())
+        .orderBy(new OrderSpecifier<>(Order.DESC, broadcast.id))
         .fetch();
 
   }
