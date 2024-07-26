@@ -1,5 +1,6 @@
 package com.example.livealone.global.security;
 
+import com.example.livealone.user.entity.User;
 import java.security.Key;
 import java.util.Base64;
 import java.util.Date;
@@ -23,7 +24,9 @@ public class JwtService {
 
 	public static final String HEADER = "Authorization";
 
-	private final String TOKEN_PREFIX = "Bearer ";
+	private static final String TOKEN_PREFIX = "Bearer ";
+
+	public static final String CLAIM_NICKNAME = "nickname";
 
 	@Value("${jwt.key}")
 	private String SECRET_KEY;
@@ -41,13 +44,14 @@ public class JwtService {
 
 	}
 
-	public String generateToken(String email) {
+	public String generateToken(User user) {
 
 		Date curDate = new Date();
 		Date expireDate = new Date(curDate.getTime() + EXPIRE_TIME);
 
 		return TOKEN_PREFIX + Jwts.builder()
-			.setSubject(email)
+			.setSubject(user.getEmail())
+			.claim(CLAIM_NICKNAME, user.getNickname())
 			.setIssuedAt(curDate)
 			.setExpiration(expireDate)
 			.signWith(key, SignatureAlgorithm.HS256)
