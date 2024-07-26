@@ -1,10 +1,7 @@
 package com.example.livealone.product.entity;
 
-import com.example.livealone.broadcast.entity.Broadcast;
 import com.example.livealone.global.entity.Timestamp;
-import com.example.livealone.order.entity.OrderStatus;
 import com.example.livealone.user.entity.User;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;

@@ -12,6 +12,7 @@ import com.example.livealone.user.entity.User;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
 
 @Getter
 @RequiredArgsConstructor

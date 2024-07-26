@@ -1,5 +1,6 @@
 package com.example.livealone.global.security.config;
 
+import com.example.livealone.oauth2.handler.OAuth2AuthenticationSuccessHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -16,6 +17,7 @@ import com.example.livealone.global.security.UserDetailsServiceImpl;
 import com.example.livealone.global.security.filter.JwtAuthentication;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.cors.CorsConfigurationSource;
 
 @Configuration
 @RequiredArgsConstructor
@@ -24,6 +26,7 @@ public class WebSecurityConfig {
 	private final JwtService jwtService;
 	private final UserDetailsServiceImpl userDetailsService;
 	private final AuthenticationEntryPointImpl authenticationEntryPointImpl;
+	private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
 
 	@Bean
 	public JwtAuthentication jwtAuthenticationFilter() throws Exception {
@@ -38,10 +41,12 @@ public class WebSecurityConfig {
 	}
 
 	@Bean
-	public SecurityFilterChain securityFilterChain(final HttpSecurity http) throws Exception {
+	public SecurityFilterChain securityFilterChain(final HttpSecurity http, CorsConfigurationSource corsConfigurationSource) throws Exception {
 
 		http.csrf(AbstractHttpConfigurer::disable);
 		http.formLogin(AbstractHttpConfigurer::disable);
+
+		http.cors(cors -> cors.configurationSource(corsConfigurationSource));
 
 		http.sessionManagement(configurer -> configurer.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
@@ -55,6 +60,9 @@ public class WebSecurityConfig {
 			.authenticationEntryPoint(authenticationEntryPointImpl));
 
 		http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+
+		http.oauth2Login(httpSecurityOAuth2LoginConfigurer -> httpSecurityOAuth2LoginConfigurer
+				.successHandler(oAuth2AuthenticationSuccessHandler));
 
 		return http.build();
 

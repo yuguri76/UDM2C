@@ -37,7 +37,7 @@ public class Oauth2UserServiceImpl extends DefaultOAuth2UserService {
 		String provider = userRequest.getClientRegistration().getRegistrationId();
 		OAuth2Userinfo userInfo = getOAuth2User(userRequest.getClientRegistration().getRegistrationId());
 
-		String email = userInfo.getNameFromAttributes(oAuth2User.getAttributes());
+		String email = userInfo.getEmailFromAttributes(oAuth2User.getAttributes());
 		Optional<User> optionalUser = userRepository.findByEmail(email);
 		User user;
 
@@ -45,7 +45,7 @@ public class Oauth2UserServiceImpl extends DefaultOAuth2UserService {
 			user = User.builder()
 				.username(userInfo.getNameFromAttributes(oAuth2User.getAttributes()))
 				.email(email)
-				.social(Social.valueOf(provider))
+				.social(Social.fromValue(provider))
 				.build();
 			userRepository.save(user);
 		}

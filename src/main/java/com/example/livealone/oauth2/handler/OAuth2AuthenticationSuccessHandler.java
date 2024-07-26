@@ -1,5 +1,6 @@
 package com.example.livealone.oauth2.handler;
 
+import java.io.IOException;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -14,7 +15,9 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
 
+@Component
 @RequiredArgsConstructor
 public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
@@ -24,7 +27,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 	private final JwtService jwtService;
 
 	@Override
-	public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) {
+	public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
 
 		User user = ((UserDetailsImpl) authentication.getPrincipal()).getUser();
 
@@ -35,6 +38,9 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 		Cookie cookie = new Cookie("refresh", refreshToken);
 		cookie.setMaxAge(EXPIRE_TIME);
 		response.addCookie(cookie);
+
+		String redirectUrl = "http://localhost:3000/oauth2/redirect?token=" + accessToken;
+		response.sendRedirect(redirectUrl);
 
 	}
 

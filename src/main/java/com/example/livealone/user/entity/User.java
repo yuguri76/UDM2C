@@ -1,5 +1,7 @@
 package com.example.livealone.user.entity;
 
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -35,6 +37,7 @@ public class User extends Timestamp {
 	private String email;
 
 	@Column(nullable = false)
+	@Enumerated(EnumType.STRING)
 	private Social social;
 
 	private LocalDate birthDay;
@@ -51,4 +54,9 @@ public class User extends Timestamp {
 		this.address = address;
 	}
 
+	public void updateUser(String nickname, LocalDate birthDay, String address) {
+		this.nickname = nickname;
+		this.birthDay = birthDay;
+		this.address = address;
+	}
 }

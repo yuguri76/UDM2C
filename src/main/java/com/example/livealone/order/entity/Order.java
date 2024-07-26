@@ -23,7 +23,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Getter
 @NoArgsConstructor
-@Table(name = "broadcasts")
+@Table(name = "orders")
 public class Order extends Timestamp {
 
 	@Id

@@ -9,14 +9,17 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: create
     properties:
       hibernate:
         show_sql: true
         format_sql: true
         use_sql_comments: true
 
-  # OAuth ???
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+
+
   security:
     oauth2:
       client:
@@ -42,6 +45,7 @@ spring:
             authorization-grant-type: authorization_code
             scope:
               - account_email
+              - profile_nickname
             redirect-uri: http://localhost:8080/login/oauth2/code/kakao
             client-name: Kakao
             provider: kakao
@@ -68,5 +72,23 @@ jwt:
   access-expire-time: ${ACCESS_EXPIRE_TIME}
   refresh-expire-time: ${REFRESH_EXPIRE_TIME}
 
+
 server:
   port: 8080
+
+kakao:
+  pay:
+    cid: TC0ONETIME
+    secret: dev
+    approval-url: https://yourapp.com/payment/success
+    cancel-url: https://yourapp.com/payment/cancel
+    fail-url: https://yourapp.com/payment/fail
+
+toss:
+  api:
+    client-key: test_ck_kYG57Eba3GPyQ4zAdxQkVpWDOxmA
+    secret-key: test_sk_jExPeJWYVQ1ekabzNRlxV49R5gvN
+    ret-url: https://yourapp.com/payment/success
+    ret-cancel-url: https://yourapp.com/payment/cancel
+    result-callback: https://yourapp.com/payment/callback
+
