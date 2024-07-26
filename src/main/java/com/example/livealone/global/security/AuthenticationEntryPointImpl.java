@@ -24,16 +24,16 @@ public class AuthenticationEntryPointImpl implements AuthenticationEntryPoint {
 
 		boolean jwtError = request.getAttribute("error") != null;
 
-		String error = jwtError ? request.getAttribute("error").toString() : HttpStatus.FORBIDDEN.getReasonPhrase();
+		String error = jwtError ? request.getAttribute("error").toString() : HttpStatus.UNAUTHORIZED.getReasonPhrase();
 		String message = jwtError ? error : "인증되지 않은 사용자입니다.";
 
-		response.setStatus(HttpStatus.FORBIDDEN.value());
+		response.setStatus(HttpStatus.UNAUTHORIZED.value());
 		response.setContentType("application/json");
 		response.setCharacterEncoding("UTF-8");
 
 		response.getWriter().write(
 			ExceptionResponseDto.builder()
-				.statusCode(HttpStatus.FORBIDDEN)
+				.statusCode(HttpStatus.UNAUTHORIZED)
 				.message(message)
 				.path(request.getRequestURI())
 				.build().toString()

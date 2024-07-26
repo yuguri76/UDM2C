@@ -26,6 +26,8 @@ public class JwtService {
 
 	private static final String TOKEN_PREFIX = "Bearer ";
 
+	public static final String CLAIM_ID = "id";
+	public static final String CLAIM_USERNAME = "username";
 	public static final String CLAIM_NICKNAME = "nickname";
 
 	@Value("${jwt.key}")
@@ -51,6 +53,8 @@ public class JwtService {
 
 		return TOKEN_PREFIX + Jwts.builder()
 			.setSubject(user.getEmail())
+			.claim(CLAIM_ID, user.getId())
+			.claim(CLAIM_USERNAME, user.getUsername())
 			.claim(CLAIM_NICKNAME, user.getNickname())
 			.setIssuedAt(curDate)
 			.setExpiration(expireDate)
