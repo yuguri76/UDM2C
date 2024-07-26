@@ -21,9 +21,9 @@ public class DeliveryService {
 
     private final UserRepository userRepository;
 
-    public List<DeliveryHistoryResponseDto> getUserDeliveryHistory(/*user*/) {
+    public List<DeliveryHistoryResponseDto> getUserDeliveryHistory(/*User user,*/int page) {
 
         //임의로 userId 입력
-        return userRepository.findDeliveryHistoryByUserId(2L);
+        return userRepository.findDeliveryHistoryByUserId(1L, page);
     }
 }

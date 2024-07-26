@@ -8,6 +8,6 @@ import java.util.List;
 @Repository
 public interface UserRepositoryQuery {
 
-    List<DeliveryHistoryResponseDto> findDeliveryHistoryByUserId(Long userId);
+    List<DeliveryHistoryResponseDto> findDeliveryHistoryByUserId(Long userId, int page);
 
 }
