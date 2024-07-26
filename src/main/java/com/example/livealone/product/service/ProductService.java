@@ -50,26 +50,4 @@ public class ProductService {
 
     return responseDto;
   }
-
-  /**
-   * 더미 유저 생성 코드
-   * 단지 로그인 구현 전 테스트를 위한 것
-   * 로그인 테스트 가능할 시 제거 예정
-   * @return
-   */
-  private final UserRepository userRepository;
-
-  @Transactional
-  public User exampleCreateUser() {
-
-    User user = User.builder()
-            .username("testUser")
-            .nickname("testNick")
-            .email("test@email.com")
-            .social(Social.KAKAO)
-            .build();
-
-    return userRepository.save(user);
-  }
-
 }
