@@ -62,11 +62,19 @@ spring:
             user-info-uri: https://kapi.kakao.com/v2/user/me
             user-info-authentication-method: header
             user-name-attribute: id
-
+  kafka:
+    producer:
+      bootstrap-servers: 127.0.0.1:9092
+    consumer:
+      bootstrap-servers: 127.0.0.1:9092
 jwt:
   key: ${JWT_SECRET_KEY}
   access-expire-time: ${ACCESS_EXPIRE_TIME}
   refresh-expire-time: ${REFRESH_EXPIRE_TIME}
+
+
+server:
+  port: 8080
 
 kakao:
   pay:
@@ -83,3 +91,4 @@ toss:
     ret-url: https://yourapp.com/payment/success
     ret-cancel-url: https://yourapp.com/payment/cancel
     result-callback: https://yourapp.com/payment/callback
+
