@@ -52,8 +52,7 @@ public class WebSecurityConfig {
 
 		http.authorizeHttpRequests(request ->
 			request
-				.requestMatchers("/**").permitAll()
-				.anyRequest().authenticated());
+				.requestMatchers("/**").permitAll());
 
 
 		http.exceptionHandling(e -> e

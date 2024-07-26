@@ -79,16 +79,16 @@ server:
 kakao:
   pay:
     cid: TC0ONETIME
-    secret: dev
-    approval-url: https://yourapp.com/payment/success
-    cancel-url: https://yourapp.com/payment/cancel
-    fail-url: https://yourapp.com/payment/fail
+    secret: DEV1983009FCE70023372B535B4EB027DEB9824F
+    approval-url: http://localhost:3000/completePayment
+    cancel-url: http://localhost:3000/payment
+    fail-url: http://localhost:3000/payment
 
 toss:
   api:
     client-key: test_ck_kYG57Eba3GPyQ4zAdxQkVpWDOxmA
     secret-key: test_sk_jExPeJWYVQ1ekabzNRlxV49R5gvN
-    ret-url: https://yourapp.com/payment/success
-    ret-cancel-url: https://yourapp.com/payment/cancel
-    result-callback: https://yourapp.com/payment/callback
+    ret-url: http://localhost:3000/completePayment
+    ret-cancel-url: http://localhost:3000/payment
+    result-callback: http://localhost:3000/payment
 

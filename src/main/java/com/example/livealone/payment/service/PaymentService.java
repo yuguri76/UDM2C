@@ -16,6 +16,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.HashMap;
@@ -34,16 +36,16 @@ public class PaymentService {
 	@Value("TC0ONETIME")
 	private String cid;
 
-	@Value("dev")
+	@Value("DEV1983009FCE70023372B535B4EB027DEB9824F")
 	private String secretKey;
 
-	@Value("https://yourapp.com/payment/success")
+	@Value("http://localhost:8080/completePayment")
 	private String approvalUrl;
 
-	@Value("https://yourapp.com/payment/cancel")
+	@Value("http://localhost:8080/payment")
 	private String cancelUrl;
 
-	@Value("https://yourapp.com/payment/fail")
+	@Value("http://localhost:8080/payment")
 	private String failUrl;
 
 	@Value("test_ck_kYG57Eba3GPyQ4zAdxQkVpWDOxmA")
@@ -52,50 +54,75 @@ public class PaymentService {
 	@Value("test_sk_jExPeJWYVQ1ekabzNRlxV49R5gvN")
 	private String tossSecretKey;
 
-	@Value("https://yourapp.com/payment/success")
+	@Value("http://localhost:8080/completePayment")
 	private String tossRetUrl;
 
-	@Value("https://yourapp.com/payment/cancel")
+	@Value("http://localhost:8080/payment")
 	private String tossRetCancelUrl;
 
-	@Value("https://yourapp.com/payment/callback")
+	@Value("http://localhost:8080/payment")
 	private String tossResultCallback;
 
-	/**
-	 * 카카오페이 결제 준비
-	 *
-	 * @param requestDto 결제 요청 DTO
-	 * @return 결제 응답 DTO
-	 */
 	public PaymentResponseDto createKakaoPayReady(PaymentRequestDto requestDto) {
-		String url = "https://kapi.kakao.com/v1/payment/ready";
+		String url = "https://open-api.kakaopay.com/online/v1/payment/ready";
+		System.out.println("createKakaoPayReady 진입 완료!!!");
 
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-		headers.set("Authorization", "KakaoAK " + secretKey);
+		headers.set("Authorization", "SECRET_KEY " + secretKey);
+		headers.set("Content-type", "application/json"); // 500 에러 해결 지점
 
-		Map<String, String> params = new HashMap<>();
-		params.put("cid", cid);
-		params.put("partner_order_id", requestDto.getOrderId().toString());
-		params.put("partner_user_id", requestDto.getUserId().toString());
-		params.put("item_name", "Order " + requestDto.getOrderId());
+		HashMap<String, String> params = new HashMap<>();
+		params.put("cid", "TC0ONETIME");
+		params.put("partner_order_id", "1L");
+		params.put("partner_user_id", "3L");
+		params.put("item_name", "초코파이");
 		params.put("quantity", "1");
-		params.put("total_amount", String.valueOf(requestDto.getAmount()));
-		params.put("vat_amount", String.valueOf(requestDto.getAmount() / 11));
+		params.put("total_amount", "2200");
+		params.put("vat_amount", "200");
 		params.put("tax_free_amount", "0");
 		params.put("approval_url", approvalUrl);
 		params.put("cancel_url", cancelUrl);
 		params.put("fail_url", failUrl);
 
-		HttpEntity<Map<String, String>> request = new HttpEntity<>(params, headers);
+		HttpEntity<HashMap<String, String>> request = new HttpEntity<>(params, headers);
+		System.out.println("params");
+		System.out.println(params);
 
 		try {
 			ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, request, String.class);
+			System.out.println("response");
+			System.out.println(response);
+
 			JsonNode jsonNode = objectMapper.readTree(response.getBody());
 
+			User user = userRepository.findById(requestDto.getUserId())
+				.orElseThrow(() -> new IllegalArgumentException("Invalid user ID: " + requestDto.getUserId()));
+
+			Order order = orderRepository.findById(requestDto.getOrderId())
+				.orElseThrow(() -> new IllegalArgumentException("Invalid order ID: " + requestDto.getOrderId()));
+
+			String tid = jsonNode.get("tid").asText();
+
+			int retryCount = 0;
+			while (paymentRepository.existsByTid(tid) && retryCount < 3) {
+				response = restTemplate.exchange(url, HttpMethod.POST, request, String.class);
+				jsonNode = objectMapper.readTree(response.getBody());
+				tid = jsonNode.get("tid").asText();
+				retryCount++;
+			}
+
+			if (paymentRepository.existsByTid(tid)) {
+				return PaymentResponseDto.builder()
+					.status("FAILED")
+					.message("결제 준비 실패: 중복된 TID")
+					.build();
+			}
+
+
 			Payment payment = Payment.builder()
-				.user(userRepository.findById(requestDto.getUserId()).orElseThrow())
-				.order(orderRepository.findById(requestDto.getOrderId()).orElseThrow())
+				.user(user)
+				.order(order)
 				.amount(requestDto.getAmount())
 				.paymentMethod(PaymentMethod.KAKAO_PAY)
 				.status(PaymentStatus.REQUESTED)
@@ -124,6 +151,8 @@ public class PaymentService {
 		}
 	}
 
+
+
 	/**
 	 * 카카오페이 결제 승인
 	 *
@@ -137,7 +166,7 @@ public class PaymentService {
 
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-		headers.set("Authorization", "KakaoAK " + secretKey);
+		headers.set("Authorization", "SECRET_KEY " + secretKey);
 
 		Map<String, String> params = new HashMap<>();
 		params.put("cid", cid);

@@ -49,4 +49,15 @@ public class Product extends Timestamp {
 		this.seller = seller;
 	}
 
+	public void setQuantity(int i) {
+	}
+
+	public void setIntroduction(String s) {
+	}
+
+	public void setPrice(int i) {
+	}
+
+	public void setName(String s) {
+	}
 }

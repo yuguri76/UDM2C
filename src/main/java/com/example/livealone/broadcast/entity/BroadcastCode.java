@@ -34,4 +34,8 @@ public class BroadcastCode extends Timestamp {
 		this.code = code;
 		this.airTime = airTime;
 	}
+
+	public BroadcastCode(LocalDateTime now) {
+
+	}
 }

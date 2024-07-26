@@ -58,4 +58,10 @@ public class Order extends Timestamp {
 		this.product = product;
 		this.broadcast = broadcast;
 	}
+
+	public void setQuantity(int i) {
+	}
+
+	public void setProduct(Product product2) {
+	}
 }
