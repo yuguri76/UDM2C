@@ -3,6 +3,7 @@ package com.example.livealone.global.security.config;
 import com.example.livealone.oauth2.handler.OAuth2AuthenticationSuccessHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -29,7 +30,7 @@ public class WebSecurityConfig {
 	private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
 
 	@Bean
-	public JwtAuthentication jwtAuthenticationFilter() throws Exception {
+	public JwtAuthentication jwtAuthenticationFilter() {
 		return new JwtAuthentication(jwtService,userDetailsService);
 	}
 
@@ -52,7 +53,12 @@ public class WebSecurityConfig {
 
 		http.authorizeHttpRequests(request ->
 			request
-				.requestMatchers("/**").permitAll()
+				.requestMatchers("/ws").permitAll()
+				.requestMatchers("/auth/kakao/login").permitAll()
+				.requestMatchers("/auth/naver/login").permitAll()
+				.requestMatchers("/auth/google/login").permitAll()
+				.requestMatchers( HttpMethod.GET,"/broadcast").permitAll()
+				.requestMatchers( HttpMethod.GET,"/product/**").permitAll()
 				.anyRequest().authenticated());
 
 
