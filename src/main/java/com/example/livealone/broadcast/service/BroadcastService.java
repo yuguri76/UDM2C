@@ -17,9 +17,11 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,7 +35,6 @@ public class BroadcastService {
 
   private final MessageSource messageSource;
 
-  private static final int BROADCAST_BEFORE_STARTING = 10;
   private static final int BROADCAST_AFTER_STARTING = 60;
 
   private static final int PAGE_SIZE = 5;
@@ -49,14 +50,7 @@ public class BroadcastService {
         ), HttpStatus.NOT_FOUND)
     );
 
-    if(!isWithinBroadcastTime(code.getAirTime(), LocalDateTime.now())) {
-      throw new CustomException(messageSource.getMessage(
-          "not.air.time",
-          null,
-          CustomException.DEFAULT_ERROR_MESSAGE,
-          Locale.getDefault()
-      ), HttpStatus.FORBIDDEN);
-    }
+    isWithinBroadcastTime(code.getAirTime(), LocalDateTime.now());
 
     Product product = productRepository.findById(boardRequestDto.getProductId()).orElseThrow(
         () -> new CustomException(messageSource.getMessage(
@@ -67,10 +61,11 @@ public class BroadcastService {
         ), HttpStatus.NOT_FOUND)
     );
 
-    Broadcast broadcast = broadcastRepository.findByBroadcastCode(code)
-        .orElse(BroadcastMapper.toBroadcast(boardRequestDto.getTitle(), user, product, code));
+    Optional<Broadcast> optionalBroadcast = broadcastRepository.findByBroadcastCode(code);
 
-    broadcastRepository.save(broadcast);
+    broadcastRepository.save(optionalBroadcast.isPresent() ?
+        optionalBroadcast.get().updateBroadcast(boardRequestDto.getTitle(), user, product) :
+        BroadcastMapper.toBroadcast(boardRequestDto.getTitle(), user, product, code));
 
   }
 
@@ -116,11 +111,24 @@ public class BroadcastService {
     broadcastRepository.save(broadcast.closeBroadcast());
   }
 
-  private boolean isWithinBroadcastTime(LocalDateTime airTime, LocalDateTime now) {
+  private void isWithinBroadcastTime(LocalDateTime airTime, LocalDateTime now) {
+    if(now.isAfter(airTime.plusMinutes(BROADCAST_AFTER_STARTING)) || now.isBefore(airTime)) {
+      throw new CustomException(messageSource.getMessage(
+          "not.air.time",
+          null,
+          CustomException.DEFAULT_ERROR_MESSAGE,
+          Locale.getDefault()
+      ), HttpStatus.FORBIDDEN);
+    }
+  }
 
-    return now.isAfter(airTime.minusMinutes(BROADCAST_BEFORE_STARTING)) &&
-        now.isBefore(airTime.plusMinutes(BROADCAST_AFTER_STARTING));
-
+  /**
+   * 매 정각마다 방송을 중단하는 스케쥴러 입니다.
+   */
+  @Scheduled(cron = "0 0 * * * *")
+  public void forceCloseBroadcast() {
+    broadcastRepository.findByBroadcastStatus(BroadcastStatus.ONAIR)
+        .ifPresent(broadcast -> broadcastRepository.save(broadcast.closeBroadcast()));
   }
 
 }
