@@ -51,16 +51,33 @@ public class PaymentController {
 	 *
 	 * @param pgToken 결제 승인 토큰
 	 * @param orderId 주문 ID
-	 * @param userId 사용자 ID
+	 * @param userId  사용자 ID
 	 * @return 결제 응답 DTO
 	 */
-	@PostMapping("/approve")
+	@PostMapping("/kakao/approve")
 	public ResponseEntity<PaymentResponseDto> approveKakaoPayPayment(@RequestParam String pgToken, @RequestParam Long orderId, @RequestParam Long userId) {
 		PaymentResponseDto response = paymentService.approveKakaoPayPayment(pgToken, orderId, userId);
 		if (response.getStatus().equals("FAILED")) {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
 		}
 		return ResponseEntity.status(HttpStatus.CREATED).body(response);
+	}
+
+	/**
+	 * 카카오페이 결제 완료 처리
+	 *
+	 * @param pgToken 결제 승인 토큰
+	 * @param orderId 주문 ID
+	 * @param userId  사용자 ID
+	 * @return 결제 응답 DTO
+	 */
+	@GetMapping("/kakao/completePayment")
+	public ResponseEntity<PaymentResponseDto> completeKakaoPayment(@RequestParam String pgToken, @RequestParam Long orderId, @RequestParam Long userId) {
+		PaymentResponseDto response = paymentService.approveKakaoPayPayment(pgToken, orderId, userId);
+		if (response.getStatus().equals("FAILED")) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+		}
+		return ResponseEntity.status(HttpStatus.OK).body(response);
 	}
 
 	/**
