@@ -2,8 +2,6 @@ package com.example.livealone.chat.handler;
 
 import com.example.livealone.chat.dto.ChatMessage;
 import com.example.livealone.global.security.JwtService;
-import com.example.livealone.user.service.UserService;
-import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
@@ -71,13 +69,19 @@ public class WebSocketHandler extends TextWebSocketHandler {
 
 
     private String createJsonMessage(String payload){
-
         try{
             ChatMessage readChat = objectMapper.readValue(payload, ChatMessage.class);
 
             if(Objects.equals(readChat.getType(), "AUTH")){
                 // 유저이름 리턴
                 String token = readChat.getMessage().replace("Bearer ","");
+
+                String isValidToken = jwtService.isValidToken(token);
+                if(!Objects.equals(isValidToken, "Valid")){
+                    ChatMessage failedMessage = new ChatMessage("FAILED",isValidToken);
+                    return objectMapper.writeValueAsString(failedMessage);
+                }
+
                 Claims claims = jwtService.getClaims(token);
 
                 String nickname = claims.get("nickname",String.class);
