@@ -8,6 +8,10 @@ import lombok.Getter;
 @Builder
 public class BroadcastResponseDto {
 
-  private String title;
+  private String broadcast_title;
+  private Long product_id;
+  private String product_name;
+  private Integer product_price;
+  private String product_introduction;
 
 }

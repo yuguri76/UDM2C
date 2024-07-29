@@ -21,7 +21,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class ProductService {
 
   private final ProductRepository productRepository;
-  private final MessageSource messageSource;
 
   @Transactional
   public ProductResponseDto createProduct(User user, ProductRequestDto requestDto) {
@@ -30,23 +29,6 @@ public class ProductService {
 
     Product saveProduct = productRepository.save(newProduct);
     ProductResponseDto responseDto = ProductMapper.toProductResponseDto(saveProduct);
-
-    return responseDto;
-  }
-
-  @Transactional(readOnly = true)
-  public ProductResponseDto inquiryProduct(Long productId) {
-
-    Product product = productRepository.findById(productId).orElseThrow(() ->
-        new CustomException(messageSource.getMessage(
-        "product.not.found",
-        null,
-        CustomException.DEFAULT_ERROR_MESSAGE,
-        Locale.getDefault()
-    ), HttpStatus.NOT_FOUND)
-    );
-
-    ProductResponseDto responseDto = ProductMapper.toProductResponseDto(product);
 
     return responseDto;
   }

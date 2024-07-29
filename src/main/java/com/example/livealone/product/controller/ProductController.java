@@ -25,20 +25,11 @@ public class ProductController {
   private final ProductService productService;
 
   @PostMapping()
-  public ResponseEntity<CommonResponseDto> createProduct(@AuthenticationPrincipal UserDetailsImpl userPrincipal,
+  public ResponseEntity<CommonResponseDto<ProductResponseDto>> createProduct(@AuthenticationPrincipal UserDetailsImpl userPrincipal,
                                                           @Valid @RequestBody ProductRequestDto requestDto) {
     ProductResponseDto productResponseDto = productService.createProduct(userPrincipal.getUser(), requestDto);
-    CommonResponseDto responseDto = new CommonResponseDto(HttpStatus.CREATED.value(), "성공적으로 상품이 등록되었습니다.", productResponseDto);
+    CommonResponseDto<ProductResponseDto> responseDto = new CommonResponseDto(HttpStatus.CREATED.value(), "성공적으로 상품이 등록되었습니다.", productResponseDto);
 
     return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
-  }
-
-  @GetMapping("/{productId}")
-  public ResponseEntity<CommonResponseDto> inquiryProduct(@PathVariable Long productId) {
-
-    ProductResponseDto productResponseDto = productService.inquiryProduct(productId);
-    CommonResponseDto responseDto = new CommonResponseDto(HttpStatus.OK.value(), "상품 조회에 성공하였습니다.", productResponseDto);
-
-    return ResponseEntity.status(HttpStatus.OK).body(responseDto);
   }
 }
