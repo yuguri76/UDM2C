@@ -22,9 +22,9 @@ public class UserController {
 
     @GetMapping()
     public ResponseEntity<CommonResponseDto<UserInfoResponseDto>> getUserInfo(
-                                                                     /* @AuthenticationPrincipal UserDetailsImpl userDetails*/) {
-//        User user = userDetails.getUser();
-        UserInfoResponseDto userInfoDto = userService.getUserInfo(/*,user*/);
+                                                                      @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        User user = userDetails.getUser();
+        UserInfoResponseDto userInfoDto = userService.getUserInfo(user);
         CommonResponseDto<UserInfoResponseDto> commonResponseDto = CommonResponseDto.<UserInfoResponseDto>builder()
                 .status(HttpStatus.OK.value())
                 .message("User data inquiry successfully")
@@ -35,10 +35,10 @@ public class UserController {
     }
 
     @PutMapping()
-    public ResponseEntity<CommonResponseDto<UserInfoResponseDto>> updateUserInfo(@RequestBody @Valid UserInfoRequestDto userInfoRequestDto
-                                                                                 /*@AuthenticationPrincipal UserDetailsImpl userDetails*/) {
-//        User user = userDetails.getUser();
-        UserInfoResponseDto userInfoDto = userService.updateUserInfo(/*user*/userInfoRequestDto);
+    public ResponseEntity<CommonResponseDto<UserInfoResponseDto>> updateUserInfo(@RequestBody @Valid UserInfoRequestDto userInfoRequestDto,
+                                                                                 @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        User user = userDetails.getUser();
+        UserInfoResponseDto userInfoDto = userService.updateUserInfo(user, userInfoRequestDto);
         CommonResponseDto<UserInfoResponseDto> commonResponseDto = CommonResponseDto.<UserInfoResponseDto>builder()
                 .status(HttpStatus.OK.value())
                 .message("User data update successfully")

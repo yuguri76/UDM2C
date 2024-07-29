@@ -3,7 +3,6 @@ package com.example.livealone.user.service;
 import com.example.livealone.global.exception.CustomException;
 import com.example.livealone.user.dto.UserInfoRequestDto;
 import com.example.livealone.user.dto.UserInfoResponseDto;
-import com.example.livealone.user.entity.Social;
 import com.example.livealone.user.entity.User;
 import com.example.livealone.user.mapper.UserMapper;
 import com.example.livealone.user.repository.UserRepository;
@@ -23,15 +22,7 @@ public class UserService {
     public final MessageSource messageSource;
 
     @Transactional
-    public UserInfoResponseDto getUserInfo(/*, User user*/) {
-
-        //더미 유저
-        User user = User.builder()
-                .username("꾸미")
-                .nickname("ggumi")
-                .email("tndus@gmail.com")
-                .social(Social.GOOGLE)
-                .build();
+    public UserInfoResponseDto getUserInfo(User user) {
 
         User curUser = userRepository.save(user);
 
@@ -39,14 +30,7 @@ public class UserService {
     }
 
     @Transactional
-    public UserInfoResponseDto updateUserInfo(/* User user*/UserInfoRequestDto userInfoRequestDto) {
-        //더미 유저
-        User user = User.builder()
-                .username("꾸미")
-                .nickname("ggumi")
-                .email("tndus@gmail.com")
-                .social(Social.GOOGLE)
-                .build();
+    public UserInfoResponseDto updateUserInfo(User user, UserInfoRequestDto userInfoRequestDto) {
 
         User curUser = userRepository.save(user);
 
