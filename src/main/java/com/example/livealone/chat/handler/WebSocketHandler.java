@@ -1,5 +1,11 @@
 package com.example.livealone.chat.handler;
 
+import com.example.livealone.chat.dto.ChatMessage;
+import com.example.livealone.global.security.JwtService;
+import com.example.livealone.user.service.UserService;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -9,6 +15,8 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
+import java.io.IOException;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Component
@@ -18,6 +26,8 @@ public class WebSocketHandler extends TextWebSocketHandler {
 
     private static final ConcurrentHashMap<String, WebSocketSession> CLIENTS = new ConcurrentHashMap<>();
     private final KafkaTemplate<String,String> kafkaTemplate;
+    private final ObjectMapper objectMapper;
+    private final JwtService jwtService;
 
     /**
      * 새 웹소켓 세션 접속
@@ -25,9 +35,6 @@ public class WebSocketHandler extends TextWebSocketHandler {
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         CLIENTS.put(session.getId(), session);
-        log.info("New Session : " + session.getId());
-
-        kafkaTemplate.send("chat", "New Session :" + session.getId());
     }
 
     /**
@@ -53,10 +60,35 @@ public class WebSocketHandler extends TextWebSocketHandler {
 
         log.info("Read Message"+message);
 
-        kafkaTemplate.send("chat",session.getId()+" : "+message.getPayload());
+        String jsonMessage = createJsonMessage(message.getPayload());
+
+        kafkaTemplate.send("chat",jsonMessage);
     }
 
     public static ConcurrentHashMap<String,WebSocketSession> getClients(){
         return CLIENTS;
+    }
+
+
+    private String createJsonMessage(String payload){
+
+        try{
+            ChatMessage readChat = objectMapper.readValue(payload, ChatMessage.class);
+
+            if(Objects.equals(readChat.getType(), "AUTH")){
+                // 유저이름 리턴
+                String token = readChat.getMessage().replace("Bearer ","");
+                Claims claims = jwtService.getClaims(token);
+
+                String nickname = claims.get("nickname",String.class);
+
+                ChatMessage chatMessage = new ChatMessage("AUTH",nickname);
+                return objectMapper.writeValueAsString(chatMessage);
+            }
+            return payload;
+        }catch (IOException e){
+            log.info(e.getMessage());
+            return null;
+        }
     }
 }

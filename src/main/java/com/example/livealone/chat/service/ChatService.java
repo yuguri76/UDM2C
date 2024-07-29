@@ -19,6 +19,7 @@ public class ChatService {
 
     /**
      * 현재 연결되어있는 세션에 모두 메시지 전송
+     * message 포맷 ==> {유저닉네임} : {메시지}
      */
     public void write(String message) {
 
