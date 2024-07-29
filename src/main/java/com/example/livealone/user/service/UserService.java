@@ -24,7 +24,7 @@ public class UserService {
     @Transactional
     public UserInfoResponseDto getUserInfo(User user) {
 
-        User curUser = userRepository.save(user);
+        User curUser = findUserById(user.getId());
 
         return UserMapper.toUserInfoResponseDto(curUser);
     }
@@ -32,7 +32,7 @@ public class UserService {
     @Transactional
     public UserInfoResponseDto updateUserInfo(User user, UserInfoRequestDto userInfoRequestDto) {
 
-        User curUser = userRepository.save(user);
+        User curUser = findUserById(user.getId());
 
         curUser.updateUser(userInfoRequestDto.getNickname(), userInfoRequestDto.getBirthDay(), userInfoRequestDto.getAddress());
 
@@ -41,15 +41,14 @@ public class UserService {
     }
 
 
-    public void checkUser(long userId, User user) {
-        if (!(user.getId().equals(userId))) {
-            throw new CustomException(messageSource.getMessage(
-                    "user.not.match",
-                    null,
-                    CustomException.DEFAULT_ERROR_MESSAGE,
-                    Locale.getDefault()
-            ), HttpStatus.NOT_FOUND);
-        }
-    }
+    public User findUserById(long userId) {
 
+        return userRepository.findById(userId).orElseThrow(
+                () -> new CustomException(messageSource.getMessage(
+                        "user.not.found",
+                        null,
+                        CustomException.DEFAULT_ERROR_MESSAGE,
+                        Locale.getDefault()
+                ), HttpStatus.NOT_FOUND));
+    }
 }
