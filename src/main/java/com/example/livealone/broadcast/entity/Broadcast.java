@@ -55,6 +55,14 @@ public class Broadcast extends Timestamp {
 		this.broadcastCode = broadcastCode;
 	}
 
+	public Broadcast updateBroadcast(String title, User streamer, Product product) {
+		this.title = title;
+		this.broadcastStatus = BroadcastStatus.ONAIR;
+		this.streamer = streamer;
+		this.product = product;
+		return this;
+	}
+
 	public Broadcast closeBroadcast() {
 		this.broadcastStatus = BroadcastStatus.CLOSE;
 		return this;
