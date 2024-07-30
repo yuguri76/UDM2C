@@ -1,6 +1,8 @@
 package com.example.livealone.chat.service;
 
+import com.example.livealone.chat.entity.ChatMessage;
 import com.example.livealone.chat.handler.WebSocketHandler;
+import com.example.livealone.chat.repository.ChatMessageRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -9,6 +11,9 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 
@@ -16,6 +21,10 @@ import java.util.concurrent.ConcurrentHashMap;
 @RequiredArgsConstructor
 @Slf4j
 public class ChatService {
+
+    private final ChatMessageRepository chatMessageRepository;
+    private static final int batchSize = 100;
+    private List<ChatMessage> messageBuffer = new LinkedList<>();
 
     /**
      * 현재 연결되어있는 세션에 모두 메시지 전송
@@ -34,6 +43,9 @@ public class ChatService {
                 log.error(e.getMessage());
             }
         });
+    }
+
+    private synchronized void saveMessage(ChatMessage message){
 
     }
 

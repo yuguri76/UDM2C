@@ -1,6 +1,6 @@
 package com.example.livealone.chat.handler;
 
-import com.example.livealone.chat.dto.ChatMessage;
+import com.example.livealone.chat.dto.ChatDto;
 import com.example.livealone.global.security.JwtService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
@@ -33,6 +33,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         CLIENTS.put(session.getId(), session);
+        log.info("New Sesssion :"+session.getId());
     }
 
     /**
@@ -56,7 +57,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
 
-        log.info("Read Message"+message);
+        log.info("Read Message :"+message.getPayload());
 
         String jsonMessage = createJsonMessage(message.getPayload());
 
@@ -70,7 +71,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
 
     private String createJsonMessage(String payload){
         try{
-            ChatMessage readChat = objectMapper.readValue(payload, ChatMessage.class);
+            ChatDto readChat = objectMapper.readValue(payload, ChatDto.class);
 
             if(Objects.equals(readChat.getType(), "AUTH")){
                 // 유저이름 리턴
@@ -78,7 +79,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
 
                 String isValidToken = jwtService.isValidToken(token);
                 if(!Objects.equals(isValidToken, "Valid")){
-                    ChatMessage failedMessage = new ChatMessage("FAILED",isValidToken);
+                    ChatDto failedMessage = new ChatDto("FAILED","",isValidToken);
                     return objectMapper.writeValueAsString(failedMessage);
                 }
 
@@ -86,8 +87,8 @@ public class WebSocketHandler extends TextWebSocketHandler {
 
                 String nickname = claims.get("nickname",String.class);
 
-                ChatMessage chatMessage = new ChatMessage("AUTH",nickname);
-                return objectMapper.writeValueAsString(chatMessage);
+                ChatDto chatDto = new ChatDto("AUTH",nickname,"");
+                return objectMapper.writeValueAsString(chatDto);
             }
             return payload;
         }catch (IOException e){
