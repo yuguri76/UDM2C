@@ -6,6 +6,10 @@ spring:
     url: jdbc:mysql://localhost:3307/live_alone
     username: ${MYSQL_USER}
     password: ${MYSQL_PASSWORD}
+  data:
+    redis:
+      host: localhost
+      port: 6378
 
   jpa:
     hibernate:
