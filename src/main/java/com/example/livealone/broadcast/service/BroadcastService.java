@@ -86,7 +86,9 @@ public class BroadcastService {
         ), HttpStatus.NOT_FOUND)
     );
 
-    return BroadcastMapper.toBroadcastResponseDto(broadcast);
+    Product product = broadcast.getProduct();
+
+    return BroadcastMapper.toBroadcastResponseDto(broadcast, product);
   }
 
   public void closeBroadcast(User user) {

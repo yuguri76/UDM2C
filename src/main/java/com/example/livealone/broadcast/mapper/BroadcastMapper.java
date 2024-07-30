@@ -20,9 +20,13 @@ public class BroadcastMapper {
         .build();
   }
 
-  public static BroadcastResponseDto toBroadcastResponseDto(Broadcast broadcast) {
+  public static BroadcastResponseDto toBroadcastResponseDto(Broadcast broadcast, Product product) {
     return BroadcastResponseDto.builder()
-        .title(broadcast.getTitle())
+        .broadcast_title(broadcast.getTitle())
+        .product_id(product.getId())
+        .product_name(product.getName())
+        .product_price(product.getPrice())
+        .product_introduction(product.getIntroduction())
         .build();
   }
 }
