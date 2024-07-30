@@ -19,3 +19,16 @@ services:
     container_name: kafka
     ports:
       - "9092:9092"
+
+  mongodb:
+    image: 'mongo:latest'
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      - 'MONGO_INITDB_DATABASE: chatdb'
+      - 'MONGO_INITDB_ROOT_USERNAME: admin'
+      - 'MONGO_INITDB_ROOT_PASSWORD: verysecret'
+
+
+
