@@ -1,9 +1,9 @@
 package com.example.livealone.user.repository;
 
 import com.example.livealone.user.entity.RefreshToken;
-import org.apache.kafka.common.protocol.types.Field.Str;
+import java.util.Optional;
 import org.springframework.data.repository.CrudRepository;
-import org.springframework.stereotype.Repository;
 
-public interface RefreshTokenRepository extends CrudRepository<RefreshToken, String> {
+public interface RefreshTokenRepository extends CrudRepository<RefreshToken, Long> {
+  Optional<RefreshToken> findByToken(String token);
 }
