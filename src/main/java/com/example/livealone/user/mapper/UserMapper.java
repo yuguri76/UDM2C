@@ -1,5 +1,6 @@
 package com.example.livealone.user.mapper;
 
+import com.example.livealone.user.dto.UserAddressResponseDto;
 import com.example.livealone.user.dto.UserInfoResponseDto;
 import com.example.livealone.user.entity.User;
 import lombok.Getter;
@@ -16,4 +17,9 @@ public class UserMapper {
                 .build();
     }
 
+    public static UserAddressResponseDto toUserAddressResponseDto(User entity) {
+        return UserAddressResponseDto.builder()
+            .address(entity.getAddress())
+            .build();
+    }
 }

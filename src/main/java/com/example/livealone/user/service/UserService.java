@@ -1,18 +1,18 @@
 package com.example.livealone.user.service;
 
 import com.example.livealone.global.exception.CustomException;
+import com.example.livealone.user.dto.UserAddressResponseDto;
 import com.example.livealone.user.dto.UserInfoRequestDto;
 import com.example.livealone.user.dto.UserInfoResponseDto;
 import com.example.livealone.user.entity.User;
 import com.example.livealone.user.mapper.UserMapper;
 import com.example.livealone.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
+import java.util.Locale;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-
-import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
@@ -40,6 +40,20 @@ public class UserService {
 
     }
 
+    public UserAddressResponseDto getAddress(User user) {
+        User curUser = findUserById(user.getId());
+
+        if (curUser.getAddress() == null) {
+            throw new CustomException(messageSource.getMessage(
+                "not.register.address",
+                null,
+                CustomException.DEFAULT_ERROR_MESSAGE,
+                Locale.getDefault()
+            ), HttpStatus.NOT_FOUND);
+        }
+
+        return UserMapper.toUserAddressResponseDto(curUser);
+    }
 
     public User findUserById(long userId) {
 
