@@ -12,7 +12,7 @@ import org.springframework.web.servlet.view.RedirectView;
 @RestController
 @RequestMapping("/payment")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://175.193.47.104:7956")
+@CrossOrigin(origins = "http://seoldarin.iptime.org:7956")
 public class PaymentController {
 
 	private final PaymentService paymentService;
@@ -128,9 +128,9 @@ public class PaymentController {
 		PaymentResponseDto response = paymentService.approveTossPayPayment(payToken);
 		RedirectView redirectView = new RedirectView();
 		if (response.getStatus().equals("FAILED")) {
-			redirectView.setUrl("http://localhost:3000/payment");
+			redirectView.setUrl("http://seoldarin.iptime.org:7956/payment");
 		} else {
-			redirectView.setUrl("http://localhost:3000/completepayment");
+			redirectView.setUrl("http://seoldarin.iptime.org:7956/completepayment");
 		}
 		return redirectView;
 	}

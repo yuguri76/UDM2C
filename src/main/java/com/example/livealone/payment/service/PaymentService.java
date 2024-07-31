@@ -65,13 +65,13 @@ public class PaymentService {
 	// @Value("test_sk_jExPeJWYVQ1ekabzNRlxV49R5gvN")
 	// private String tossSecretKey;
 
-	@Value("http://175.193.47.104:7956/completePayment")
+	@Value("http://seoldarin.iptime.org:7956/ORDER-CHECK?orderno=1")
 	private String tossRetUrl;
 
-	@Value("http://175.193.47.104:7956/payment")
+	@Value("http://seoldarin.iptime.org:7956/close")
 	private String tossRetCancelUrl;
 
-	@Value("http://175.193.47.104:7956/payment")
+	@Value("http://seoldarin.iptime.org:7956/callback")
 	private String tossResultCallback;
 
 	public PaymentResponseDto createKakaoPayReady(PaymentRequestDto requestDto) {
@@ -242,11 +242,14 @@ public class PaymentService {
 		params.put("productDesc", "토스 티셔츠");
 		params.put("apiKey", tossClientKey);
 		params.put("autoExecute", true);
+		params.put("callbackVersion", "V2");
 		params.put("resultCallback", tossResultCallback);
 		params.put("retUrl", tossRetUrl);
 		params.put("retCancelUrl", tossRetCancelUrl);
 
 		HttpEntity<Map<String, Object>> request = new HttpEntity<>(params, headers);
+		System.out.println("params");
+		System.out.println(params);
 
 		try {
 			ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, request, String.class);
