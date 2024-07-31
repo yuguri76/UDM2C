@@ -1,5 +1,6 @@
 package com.example.livealone.product.service;
 
+import com.example.livealone.broadcast.entity.Broadcast;
 import com.example.livealone.global.exception.CustomException;
 import com.example.livealone.product.dto.ProductRequestDto;
 import com.example.livealone.product.dto.ProductResponseDto;
@@ -21,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class ProductService {
 
   private final ProductRepository productRepository;
+  private final MessageSource messageSource;
 
   @Transactional
   public ProductResponseDto createProduct(User user, ProductRequestDto requestDto) {
@@ -31,5 +33,23 @@ public class ProductService {
     ProductResponseDto responseDto = ProductMapper.toProductResponseDto(saveProduct);
 
     return responseDto;
+  }
+
+  public Product findByProductId(Long productId) {
+
+    return productRepository.findById(productId).orElseThrow(
+            () -> new CustomException(messageSource.getMessage(
+                    "product.not.found",
+                    null,
+                    CustomException.DEFAULT_ERROR_MESSAGE,
+                    Locale.getDefault()
+            ), HttpStatus.NOT_FOUND)
+    );
+
+  }
+
+  public Product saveProduct(Product product) {
+
+    return productRepository.save(product);
   }
 }

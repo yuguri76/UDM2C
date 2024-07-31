@@ -1,6 +1,7 @@
 package com.example.livealone.product.entity;
 
 import com.example.livealone.global.entity.Timestamp;
+import com.example.livealone.global.exception.CustomException;
 import com.example.livealone.user.entity.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -13,6 +14,9 @@ import jakarta.persistence.Table;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.http.HttpStatus;
+
+import java.util.Locale;
 
 @Getter
 @Entity
@@ -47,6 +51,14 @@ public class Product extends Timestamp {
 		this.quantity = quantity;
 		this.introduction = introduction;
 		this.seller = seller;
+	}
+
+	public void decreaseStock(int quantity) {
+		this.quantity -= quantity;
+	}
+
+	public void rollbackStock(int quantity) {
+		this.quantity += quantity;
 	}
 
 }
