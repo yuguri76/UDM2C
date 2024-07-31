@@ -1,6 +1,6 @@
 package com.example.livealone.global.config;
 
-import com.example.livealone.chat.handler.WebSocketHandler;
+import com.example.livealone.global.handler.WebSocketHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;

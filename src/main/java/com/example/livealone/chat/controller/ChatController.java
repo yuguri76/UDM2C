@@ -17,10 +17,8 @@ public class ChatController {
 
     private final ChatService chatService;
 
-
     @KafkaListener(topics = "chat")
     public void listenGroupChat(String message) {
-        log.info("Write Message " + message);
         chatService.write(message);
     }
 
