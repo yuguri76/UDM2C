@@ -1,6 +1,5 @@
 package com.example.livealone.product.service;
 
-import com.example.livealone.broadcast.entity.Broadcast;
 import com.example.livealone.global.exception.CustomException;
 import com.example.livealone.product.dto.ProductRequestDto;
 import com.example.livealone.product.dto.ProductResponseDto;
@@ -9,8 +8,12 @@ import com.example.livealone.product.mapper.ProductMapper;
 import com.example.livealone.product.repository.ProductRepository;
 import com.example.livealone.user.entity.User;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.MessageSource;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
