@@ -51,17 +51,21 @@ public class WebSecurityConfig {
 
 		http.sessionManagement(configurer -> configurer.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
+		// http.authorizeHttpRequests(request ->
+		// 	request
+		// 		.requestMatchers("/ws").permitAll()
+		// 		.requestMatchers("/auth/kakao/login").permitAll()
+		// 		.requestMatchers("/auth/naver/login").permitAll()
+		// 		.requestMatchers("/auth/google/login").permitAll()
+		// 		.requestMatchers("/auth/reissue").permitAll()
+		// 		.requestMatchers( HttpMethod.GET,"/broadcast").permitAll()
+		// 		.requestMatchers( HttpMethod.GET,"/product/**").permitAll()
+		// 		.anyRequest().authenticated());
+
 		http.authorizeHttpRequests(request ->
 			request
-				.requestMatchers("/ws").permitAll()
-				.requestMatchers("/auth/kakao/login").permitAll()
-				.requestMatchers("/auth/naver/login").permitAll()
-				.requestMatchers("/auth/google/login").permitAll()
-				.requestMatchers("/auth/reissue").permitAll()
-				.requestMatchers( HttpMethod.GET,"/broadcast").permitAll()
-				.requestMatchers( HttpMethod.GET,"/product/**").permitAll()
-				.anyRequest().authenticated());
-
+				.anyRequest().permitAll() // 모든 요청에 대해 인증을 요구하지 않음
+		);
 
 		http.exceptionHandling(e -> e
 			.authenticationEntryPoint(authenticationEntryPointImpl));

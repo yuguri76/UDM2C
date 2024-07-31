@@ -56,19 +56,22 @@ public class PaymentService {
 	@Value("http://localhost:8080/payment")
 	private String failUrl;
 
-	@Value("test_ck_kYG57Eba3GPyQ4zAdxQkVpWDOxmA")
+	@Value("sk_test_w5lNQylNqa5lNQe013Nq")
 	private String tossClientKey;
 
 	@Value("test_sk_jExPeJWYVQ1ekabzNRlxV49R5gvN")
 	private String tossSecretKey;
 
-	@Value("http://localhost:8080/completePayment")
+	// @Value("test_sk_jExPeJWYVQ1ekabzNRlxV49R5gvN")
+	// private String tossSecretKey;
+
+	@Value("http://175.193.47.104:7956/completePayment")
 	private String tossRetUrl;
 
-	@Value("http://localhost:8080/payment")
+	@Value("http://175.193.47.104:7956/payment")
 	private String tossRetCancelUrl;
 
-	@Value("http://localhost:8080/payment")
+	@Value("http://175.193.47.104:7956/payment")
 	private String tossResultCallback;
 
 	public PaymentResponseDto createKakaoPayReady(PaymentRequestDto requestDto) {
@@ -221,7 +224,7 @@ public class PaymentService {
 	}
 
 	/**
-	 * 토스페이 결제 준비
+	 * 토스페이 결제 준비(생성)
 	 *
 	 * @param requestDto 결제 요청 DTO
 	 * @return 결제 응답 DTO
@@ -236,7 +239,7 @@ public class PaymentService {
 		params.put("orderNo", requestDto.getOrderId().toString());
 		params.put("amount", requestDto.getAmount());
 		params.put("amountTaxFree", 0);
-		params.put("productDesc", "Order " + requestDto.getOrderId());
+		params.put("productDesc", "토스 티셔츠");
 		params.put("apiKey", tossClientKey);
 		params.put("autoExecute", true);
 		params.put("resultCallback", tossResultCallback);
@@ -247,36 +250,48 @@ public class PaymentService {
 
 		try {
 			ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, request, String.class);
+
+			// JSON 응답 디버깅
+			System.out.println("Response Body: " + response.getBody());
+
 			JsonNode jsonNode = objectMapper.readTree(response.getBody());
 
-			User user = userRepository.findById(requestDto.getUserId())
-				.orElseThrow(() -> new IllegalArgumentException("Invalid user ID: " + requestDto.getUserId()));
+			// 필드 존재 여부 체크
+			if (jsonNode.has("payToken") && jsonNode.has("checkoutPage")) {
+				User user = userRepository.findById(requestDto.getUserId())
+					.orElseThrow(() -> new IllegalArgumentException("Invalid user ID: " + requestDto.getUserId()));
 
-			Order order = orderRepository.findById(requestDto.getOrderId())
-				.orElseThrow(() -> new IllegalArgumentException("Invalid order ID: " + requestDto.getOrderId()));
+				Order order = orderRepository.findById(requestDto.getOrderId())
+					.orElseThrow(() -> new IllegalArgumentException("Invalid order ID: " + requestDto.getOrderId()));
 
-			Payment payment = Payment.builder()
-				.user(user)
-				.order(order)
-				.amount(requestDto.getAmount())
-				.paymentMethod(PaymentMethod.TOSS_PAY)
-				.status(PaymentStatus.REQUESTED)
-				.tid(jsonNode.get("payToken").asText())
-				.build();
+				Payment payment = Payment.builder()
+					.user(user)
+					.order(order)
+					.amount(requestDto.getAmount())
+					.paymentMethod(PaymentMethod.TOSS_PAY)
+					.status(PaymentStatus.REQUESTED)
+					.tid(jsonNode.get("payToken").asText())
+					.build();
 
-			paymentRepository.save(payment);
+				paymentRepository.save(payment);
 
-			return PaymentResponseDto.builder()
-				.status("READY")
-				.message("결제 준비 완료")
-				.paymentId(payment.getId())
-				.userId(requestDto.getUserId())
-				.orderId(requestDto.getOrderId())
-				.amount(requestDto.getAmount())
-				.paymentMethod(requestDto.getPaymentMethod())
-				.createdAt(payment.getCreatedAt().toString())
-				.build();
-
+				return PaymentResponseDto.builder()
+					.status("READY")
+					.message("결제 준비 완료")
+					.paymentId(payment.getId())
+					.userId(requestDto.getUserId())
+					.orderId(requestDto.getOrderId())
+					.amount(requestDto.getAmount())
+					.paymentMethod(requestDto.getPaymentMethod())
+					.createdAt(payment.getCreatedAt().toString())
+					.nextRedirectUrl(jsonNode.get("checkoutPage").asText())
+					.build();
+			} else {
+				return PaymentResponseDto.builder()
+					.status("FAILED")
+					.message("결제 준비 실패: 필요한 필드가 응답에 없습니다.")
+					.build();
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 			return PaymentResponseDto.builder()
@@ -285,6 +300,58 @@ public class PaymentService {
 				.build();
 		}
 	}
+
+	/**
+	 * 토스페이 결제 승인
+	 *
+	 * @param payToken 결제 고유 토큰
+	 * @return 결제 응답 DTO
+	 */
+	@Transactional
+	public PaymentResponseDto approveTossPayPayment(String payToken) {
+		String url = "https://pay.toss.im/api/v2/execute";
+
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.APPLICATION_JSON);
+
+		Map<String, String> params = new HashMap<>();
+		params.put("apiKey", tossSecretKey);
+		params.put("payToken", payToken);
+
+		HttpEntity<Map<String, String>> request = new HttpEntity<>(params, headers);
+
+		try {
+			ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, request, String.class);
+			JsonNode jsonNode = objectMapper.readTree(response.getBody());
+
+			Payment payment = paymentRepository.findByTid(payToken);
+			if (payment == null) {
+				throw new IllegalArgumentException("Invalid payToken: " + payToken);
+			}
+
+			payment.updateStatus(PaymentStatus.COMPLETED);
+
+			return PaymentResponseDto.builder()
+				.status("COMPLETED")
+				.message("결제 완료")
+				.paymentId(payment.getId())
+				.userId(payment.getUser().getId())
+				.orderId(payment.getOrder().getId())
+				.amount(payment.getAmount())
+				.paymentMethod(payment.getPaymentMethod().name())
+				.createdAt(payment.getCreatedAt().toString())
+				.updateAt(jsonNode.get("approved_at").asText())
+				.build();
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			return PaymentResponseDto.builder()
+				.status("FAILED")
+				.message("결제 승인 실패")
+				.build();
+		}
+	}
+
 
 	/**
 	 * 주문 ID로 tid 조회
