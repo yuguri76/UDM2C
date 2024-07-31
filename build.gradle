@@ -18,7 +18,8 @@ repositories {
 }
 
 dependencies {
-
+    // MongoDB
+    implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
     // redisson
     implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive'
     implementation 'org.redisson:redisson-spring-boot-starter:3.27.1'

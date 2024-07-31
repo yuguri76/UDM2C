@@ -10,6 +10,10 @@ spring:
     redis:
       host: localhost
       port: 6378
+    mongodb:
+      uri: mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@localhost:27017/chatdb?authSource=admin
+      port: 27017
+
 
   jpa:
     hibernate:
