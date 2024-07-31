@@ -25,10 +25,11 @@ public class PaymentController {
 	 */
 	@PostMapping("/kakao/process")
 	public ResponseEntity<PaymentResponseDto> createKakaoPayReady(@RequestBody PaymentRequestDto requestDto) {
+		// PaymentResponseDto response = paymentService.createKakaoPayReady(requestDto);
+		// if (response.getStatus().equals("FAILED")) {
+		// 	return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+		// }
 		PaymentResponseDto response = paymentService.createKakaoPayReady(requestDto);
-		if (response.getStatus().equals("FAILED")) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-		}
 		return ResponseEntity.status(HttpStatus.CREATED).body(response);
 	}
 

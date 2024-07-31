@@ -70,6 +70,10 @@ public class PaymentService {
 	private String tossResultCallback;
 
 	public PaymentResponseDto createKakaoPayReady(PaymentRequestDto requestDto) {
+		// Ready API -> 성공 시 next url 리턴 -> 프론트에서 결제 진행 -> 사용자가 결제 수단 선택 후 비밀번호 인증까지 마치면 결제 대기 화면은 결제 준비 API 요청시
+		// 전달 받은 approval_url에 pg_token 파라미터를 붙여 대기화면을 approval_url로 redirect
+		// 인증완료 시 응답받은 pg_token과 tid로 최종 승인요청 -> online/v1/payment/approve
+
 		String url = "https://open-api.kakaopay.com/online/v1/payment/ready";
 		System.out.println("createKakaoPayReady 진입 완료!!!");
 
@@ -87,7 +91,7 @@ public class PaymentService {
 		params.put("total_amount", "2200");
 		params.put("vat_amount", "200");
 		params.put("tax_free_amount", "0");
-		params.put("approval_url", approvalUrl);
+		params.put("approval_url", String.format("http://localhost:8080/payment/kakao/complete?order_id=%d&user_id=%d", 2, 2));
 		params.put("cancel_url", cancelUrl);
 		params.put("fail_url", failUrl);
 
@@ -169,6 +173,11 @@ public class PaymentService {
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 		headers.set("Authorization", "SECRET_KEY " + secretKey);
+		headers.set("Content-type", "application/json"); // No HttpMessageConverter for java.util.HashMap and content type "application/x-www-form-urlencoded"
+
+		System.out.println(getTidByOrderId(orderId));
+		System.out.println(orderId.toString());
+		System.out.println(userId.toString());
 
 		Map<String, String> params = new HashMap<>();
 		params.put("cid", cid);
