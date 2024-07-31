@@ -133,4 +133,22 @@ public class BroadcastService {
         .ifPresent(broadcast -> broadcastRepository.save(broadcast.closeBroadcast()));
   }
 
+  public Broadcast findByBroadcastId(Long broadcastId) {
+
+    return broadcastRepository.findById(broadcastId).orElseThrow(
+            () -> new CustomException(messageSource.getMessage(
+                    "broadcast.not.found",
+                    null,
+                    CustomException.DEFAULT_ERROR_MESSAGE,
+                    Locale.getDefault()
+            ), HttpStatus.NOT_FOUND)
+    );
+
+  }
+
+
+  public Broadcast saveBroadcast(Broadcast broadcast) {
+
+    return broadcastRepository.save(broadcast);
+  }
 }
