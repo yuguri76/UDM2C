@@ -4,11 +4,7 @@ import com.example.livealone.product.dto.ProductRequestDto;
 import com.example.livealone.product.dto.ProductResponseDto;
 import com.example.livealone.product.entity.Product;
 import com.example.livealone.user.entity.User;
-import lombok.Getter;
-import org.springframework.stereotype.Component;
 
-@Getter
-@Component
 public class ProductMapper {
   public static Product toProduct(ProductRequestDto requestDto, User seller) {
     return Product.builder()

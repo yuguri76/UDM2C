@@ -1,0 +1,4 @@
+### 유저 기본 배송지 가져오기
+GET http://localhost:8080/user/address
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJjaGVhbWluNjMwNkBuYXZlci5jb20iLCJpZCI6MSwidXNlcm5hbWUiOiLquYDssYTrr7wiLCJuaWNrbmFtZSI6Iuq5gOyxhOuvvCIsImlhdCI6MTcyMjMyODgwNSwiZXhwIjoxNzIyMzI5NDA1fQ.volO1BuI5HsLLum3RoyLgHXnS2Wuj2jSf2OCgIYNmqU

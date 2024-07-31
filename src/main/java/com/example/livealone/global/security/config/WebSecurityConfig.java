@@ -57,6 +57,7 @@ public class WebSecurityConfig {
 				.requestMatchers("/auth/kakao/login").permitAll()
 				.requestMatchers("/auth/naver/login").permitAll()
 				.requestMatchers("/auth/google/login").permitAll()
+				.requestMatchers("/auth/reissue").permitAll()
 				.requestMatchers( HttpMethod.GET,"/broadcast").permitAll()
 				.requestMatchers( HttpMethod.GET,"/product/**").permitAll()
 				.anyRequest().authenticated());
