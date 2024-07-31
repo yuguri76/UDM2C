@@ -96,9 +96,10 @@ kakao:
 
 toss:
   api:
+    base-url : http://175.193.47.104:7956
     client-key: test_ck_kYG57Eba3GPyQ4zAdxQkVpWDOxmA
     secret-key: test_sk_jExPeJWYVQ1ekabzNRlxV49R5gvN
-    ret-url: http://localhost:8080/completePayment
-    ret-cancel-url: http://localhost:8080/payment
-    result-callback: http://localhost:8080/payment
+    ret-url: /completePayment
+    ret-cancel-url: /payment
+    result-callback: /completePayment
 

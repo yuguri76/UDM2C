@@ -12,7 +12,7 @@ import org.springframework.web.servlet.view.RedirectView;
 @RestController
 @RequestMapping("/payment")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = "http://175.193.47.104:7956")
 public class PaymentController {
 
 	private final PaymentService paymentService;
@@ -98,6 +98,42 @@ public class PaymentController {
 		return ResponseEntity.status(HttpStatus.CREATED).body(response);
 	}
 
+	/**
+	 * 토스페이 결제 승인
+	 *
+	 * @param payToken 결제 고유 토큰
+	 * @return 결제 응답 DTO
+	 */
+	@PostMapping("/toss/approve")
+	public ResponseEntity<PaymentResponseDto> approveTossPayPayment(@RequestParam String payToken) {
+		PaymentResponseDto response = paymentService.approveTossPayPayment(payToken);
+		if (response.getStatus().equals("FAILED")) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+		}
+		return ResponseEntity.ok(response);
+	}
+
+	/**
+	 * 토스페이 결제 완료 처리
+	 *
+	 * @param payToken 결제 승인 토큰
+	 * @param orderId 주문 ID
+	 * @param userId 사용자 ID
+	 * @return 결제 응답 DTO
+	 */
+	@GetMapping("/toss/complete")
+	public RedirectView completeTossPayment(@RequestParam("payToken") String payToken,
+											@RequestParam("order_id") Long orderId,
+											@RequestParam("user_id") Long userId) {
+		PaymentResponseDto response = paymentService.approveTossPayPayment(payToken);
+		RedirectView redirectView = new RedirectView();
+		if (response.getStatus().equals("FAILED")) {
+			redirectView.setUrl("http://localhost:3000/payment");
+		} else {
+			redirectView.setUrl("http://localhost:3000/completepayment");
+		}
+		return redirectView;
+	}
 
 	/**
 	 * 사용자 결제 내역 조회
