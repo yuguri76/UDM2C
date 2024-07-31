@@ -1,7 +1,11 @@
 package com.example.livealone.broadcast.service;
 
+import static com.example.livealone.global.entity.SocketMessageType.BROADCAST;
+import static com.example.livealone.global.entity.SocketMessageType.INIT;
+
 import com.example.livealone.broadcast.dto.BroadcastRequestDto;
 import com.example.livealone.broadcast.dto.BroadcastResponseDto;
+import com.example.livealone.broadcast.dto.StreamKeyResponseDto;
 import com.example.livealone.broadcast.dto.UserBroadcastResponseDto;
 import com.example.livealone.broadcast.entity.Broadcast;
 import com.example.livealone.broadcast.entity.BroadcastCode;
@@ -9,21 +13,29 @@ import com.example.livealone.broadcast.entity.BroadcastStatus;
 import com.example.livealone.broadcast.mapper.BroadcastMapper;
 import com.example.livealone.broadcast.repository.BroadcastCodeRepository;
 import com.example.livealone.broadcast.repository.BroadcastRepository;
+import com.example.livealone.global.dto.SocketMessageDto;
 import com.example.livealone.global.exception.CustomException;
+import com.example.livealone.global.handler.WebSocketHandler;
 import com.example.livealone.product.entity.Product;
 import com.example.livealone.product.repository.ProductRepository;
 import com.example.livealone.user.entity.User;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.socket.TextMessage;
+import org.springframework.web.socket.WebSocketSession;
 
 @Service
 @RequiredArgsConstructor
@@ -33,6 +45,7 @@ public class BroadcastService {
   private final BroadcastCodeRepository broadcastCodeRepository;
   private final ProductRepository productRepository;
 
+  private final ObjectMapper objectMapper;
   private final MessageSource messageSource;
 
   private static final int BROADCAST_AFTER_STARTING = 60;
@@ -125,12 +138,35 @@ public class BroadcastService {
   }
 
   /**
-   * 매 정각마다 방송을 중단하는 스케쥴러 입니다.
+   * 매 정각마다 방송을 중단하고 스트림 키를 보내는 스케쥴러 입니다.
    */
   @Scheduled(cron = "0 0 * * * *")
-  public void forceCloseBroadcast() {
+  public void forceCloseBroadcast() throws JsonProcessingException {
     broadcastRepository.findByBroadcastStatus(BroadcastStatus.ONAIR)
         .ifPresent(broadcast -> broadcastRepository.save(broadcast.closeBroadcast()));
+
+    String messageJSON = objectMapper.writeValueAsString(broadcastCodeRepository
+        .findByAirTimeBetween(LocalDateTime.now().minusMinutes(1), LocalDateTime.now().plusMinutes(1))
+        .orElseThrow(() ->
+            new CustomException(messageSource.getMessage(
+                "current.broadcast.code.not.found",
+                null,
+                CustomException.DEFAULT_ERROR_MESSAGE,
+                Locale.getDefault()
+            ), HttpStatus.NOT_FOUND))
+        .getCode()
+    );
+    SocketMessageDto socketMessageDto = new SocketMessageDto(BROADCAST, "server", messageJSON);
+
+    String result = objectMapper.writeValueAsString(socketMessageDto);
+    TextMessage text = new TextMessage(result);
+
+    WebSocketHandler.getClients().forEach((key, value) -> {
+      try {
+        value.sendMessage(text);
+      } catch (IOException ignored) {
+      }
+    });
   }
 
   public Broadcast findByBroadcastId(Long broadcastId) {
@@ -146,9 +182,22 @@ public class BroadcastService {
 
   }
 
-
   public Broadcast saveBroadcast(Broadcast broadcast) {
 
     return broadcastRepository.save(broadcast);
+  }
+
+  public StreamKeyResponseDto getStreamKey() {
+    return BroadcastMapper.toStreamKeyResponseDto(broadcastCodeRepository
+        .findByAirTimeBetween(LocalDateTime.now().minusMinutes(60), LocalDateTime.now().plusMinutes(0))
+        .orElseThrow(() ->
+            new CustomException(messageSource.getMessage(
+                "current.broadcast.code.not.found",
+                null,
+                CustomException.DEFAULT_ERROR_MESSAGE,
+                Locale.getDefault()
+            ), HttpStatus.NOT_FOUND)
+        ).getCode()
+    );
   }
 }
