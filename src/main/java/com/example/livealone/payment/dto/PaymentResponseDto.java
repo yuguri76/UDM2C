@@ -15,4 +15,5 @@ public class PaymentResponseDto {
 	private String paymentMethod;
 	private String createdAt;
 	private String updateAt;
+	private String nextRedirectUrl;
 }
