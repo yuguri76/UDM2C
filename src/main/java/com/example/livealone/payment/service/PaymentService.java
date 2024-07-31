@@ -12,6 +12,8 @@ import com.example.livealone.user.repository.UserRepository;
 import com.example.livealone.order.repository.OrderRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 import org.slf4j.Logger;
@@ -167,6 +169,8 @@ public class PaymentService {
 	 * @param userId  사용자 ID
 	 * @return 결제 응답 DTO
 	 */
+
+	@Transactional
 	public PaymentResponseDto approveKakaoPayPayment(String pgToken, Long orderId, Long userId) {
 		String url = "https://open-api.kakaopay.com/online/v1/payment/approve";
 

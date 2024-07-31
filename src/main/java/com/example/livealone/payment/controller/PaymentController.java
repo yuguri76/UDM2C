@@ -25,11 +25,10 @@ public class PaymentController {
 	 */
 	@PostMapping("/kakao/process")
 	public ResponseEntity<PaymentResponseDto> createKakaoPayReady(@RequestBody PaymentRequestDto requestDto) {
-		// PaymentResponseDto response = paymentService.createKakaoPayReady(requestDto);
-		// if (response.getStatus().equals("FAILED")) {
-		// 	return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-		// }
 		PaymentResponseDto response = paymentService.createKakaoPayReady(requestDto);
+		if (response.getStatus().equals("FAILED")) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+		}
 		return ResponseEntity.status(HttpStatus.CREATED).body(response);
 	}
 
@@ -65,9 +64,9 @@ public class PaymentController {
 		PaymentResponseDto response = paymentService.approveKakaoPayPayment(pgToken, orderId, userId);
 		RedirectView redirectView = new RedirectView();
 		if (response.getStatus().equals("FAILED")) {
-			redirectView.setUrl("http://localhost:3000/payment");  // 실패 시 리디렉션할 URL
+			redirectView.setUrl("http://localhost:3000/payment");
 		} else {
-			redirectView.setUrl("http://localhost:3000/completepayment");  // 성공 시 리디렉션할 URL
+			redirectView.setUrl("http://localhost:3000/completepayment");
 		}
 		return redirectView;
 	}
