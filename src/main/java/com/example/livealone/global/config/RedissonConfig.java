@@ -17,6 +17,7 @@ public class RedissonConfig {
     private int redisPort;
 
     private static final String REDISSON_PREFIX = "redis://";
+    public static final String LOCK_KEY = "counterLock";
 
     @Bean
     public RedissonClient redissonClient() {
