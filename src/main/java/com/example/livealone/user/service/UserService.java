@@ -1,6 +1,7 @@
 package com.example.livealone.user.service;
 
 import com.example.livealone.global.exception.CustomException;
+import com.example.livealone.user.dto.UserAddressResponseDto;
 import com.example.livealone.user.dto.UserInfoRequestDto;
 import com.example.livealone.user.dto.UserInfoResponseDto;
 import com.example.livealone.user.entity.User;
@@ -41,6 +42,21 @@ public class UserService {
         updateCache(curUser);
 
         return UserMapper.toUserInfoResponseDto(curUser);
+    }
+
+    public UserAddressResponseDto getAddress(User user) {
+        User curUser = findUserById(user.getId());
+
+        if (curUser.getAddress() == null) {
+            throw new CustomException(messageSource.getMessage(
+                "not.register.address",
+                null,
+                CustomException.DEFAULT_ERROR_MESSAGE,
+                Locale.getDefault()
+            ), HttpStatus.NOT_FOUND);
+        }
+
+        return UserMapper.toUserAddressResponseDto(curUser);
     }
 
     public User findUserById(Long userId) {
