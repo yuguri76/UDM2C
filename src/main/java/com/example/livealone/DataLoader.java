@@ -66,20 +66,20 @@ public class DataLoader implements CommandLineRunner {
 		Product product1 = Product.builder()
 			.name("Product 1")
 			.price(10000)
-			.quantity(100L)
+			.quantity(2L)
 			.introduction("This is product 1")
 			.seller(seller)
 			.build();
 		productRepository.save(product1);
 
-		Product product2 = Product.builder()
-			.name("Product 2")
-			.price(20000)
-			.quantity(50L)
-			.introduction("This is product 2")
-			.seller(seller)
-			.build();
-		productRepository.save(product2);
+//		Product product2 = Product.builder()
+//			.name("Product 2")
+//			.price(20000)
+//			.quantity(50L)
+//			.introduction("This is product 2")
+//			.seller(seller)
+//			.build();
+//		productRepository.save(product2);
 
 		// BroadcastCode 생성
 		BroadcastCode broadcastCode = BroadcastCode.builder()
@@ -99,24 +99,24 @@ public class DataLoader implements CommandLineRunner {
 		broadcastRepository.save(broadcast);
 
 		// 더미 Order 데이터 추가
-		Order order1 = Order.builder()
-			.quantity(1)
-			.orderStatus(OrderStatus.READY)
-			.user(buyer)
-			.product(product1)
-			.broadcast(broadcast)
-			.build();
-		orderRepository.save(order1);
-		System.out.println("Order 1 ID: " + order1.getId());
-
-		Order order2 = Order.builder()
-			.quantity(2)
-			.orderStatus(OrderStatus.READY)
-			.user(buyer)
-			.product(product2)
-			.broadcast(broadcast)
-			.build();
-		orderRepository.save(order2);
-		System.out.println("Order 2 ID: " + order2.getId());
+//		Order order1 = Order.builder()
+//			.quantity(1)
+//			.orderStatus(OrderStatus.READY)
+//			.user(buyer)
+//			.product(product1)
+//			.broadcast(broadcast)
+//			.build();
+//		orderRepository.save(order1);
+//		System.out.println("Order 1 ID: " + order1.getId());
+//
+//		Order order2 = Order.builder()
+//			.quantity(2)
+//			.orderStatus(OrderStatus.READY)
+//			.user(buyer)
+//			.product(product2)
+//			.broadcast(broadcast)
+//			.build();
+//		orderRepository.save(order2);
+//		System.out.println("Order 2 ID: " + order2.getId());
 	}
 }
