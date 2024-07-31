@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.view.RedirectView;
 
 @RestController
 @RequestMapping("/payment")
@@ -25,21 +26,6 @@ public class PaymentController {
 	@PostMapping("/kakao/process")
 	public ResponseEntity<PaymentResponseDto> createKakaoPayReady(@RequestBody PaymentRequestDto requestDto) {
 		PaymentResponseDto response = paymentService.createKakaoPayReady(requestDto);
-		if (response.getStatus().equals("FAILED")) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-		}
-		return ResponseEntity.status(HttpStatus.CREATED).body(response);
-	}
-
-	/**
-	 * 토스페이 결제 준비
-	 *
-	 * @param requestDto 결제 요청 DTO
-	 * @return 결제 응답 DTO
-	 */
-	@PostMapping("/toss/process")
-	public ResponseEntity<PaymentResponseDto> createTossPayReady(@RequestBody PaymentRequestDto requestDto) {
-		PaymentResponseDto response = paymentService.createTossPayReady(requestDto);
 		if (response.getStatus().equals("FAILED")) {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
 		}
@@ -71,13 +57,18 @@ public class PaymentController {
 	 * @param userId  사용자 ID
 	 * @return 결제 응답 DTO
 	 */
-	@GetMapping("/kakao/completePayment")
-	public ResponseEntity<PaymentResponseDto> completeKakaoPayment(@RequestParam String pgToken, @RequestParam Long orderId, @RequestParam Long userId) {
+	@GetMapping("/kakao/complete")
+	public RedirectView completeKakaoPayment(@RequestParam("pg_token") String pgToken,
+											@RequestParam("order_id") Long orderId,
+											@RequestParam("user_id") Long userId) {
 		PaymentResponseDto response = paymentService.approveKakaoPayPayment(pgToken, orderId, userId);
+		RedirectView redirectView = new RedirectView();
 		if (response.getStatus().equals("FAILED")) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+			redirectView.setUrl("http://localhost:3000/payment");  // 실패 시 리디렉션할 URL
+		} else {
+			redirectView.setUrl("http://localhost:3000/completepayment");  // 성공 시 리디렉션할 URL
 		}
-		return ResponseEntity.status(HttpStatus.OK).body(response);
+		return redirectView;
 	}
 
 	/**
@@ -91,16 +82,22 @@ public class PaymentController {
 		return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
 	}
 
+
 	/**
-	 * 결제 취소
+	 * 토스페이 결제 준비
 	 *
-	 * @param paymentId 결제 ID
+	 * @param requestDto 결제 요청 DTO
 	 * @return 결제 응답 DTO
 	 */
-	@PostMapping("/{paymentId}/cancel")
-	public ResponseEntity<PaymentResponseDto> cancelPayment(@PathVariable Long paymentId) {
-		return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+	@PostMapping("/toss/process")
+	public ResponseEntity<PaymentResponseDto> createTossPayReady(@RequestBody PaymentRequestDto requestDto) {
+		PaymentResponseDto response = paymentService.createTossPayReady(requestDto);
+		if (response.getStatus().equals("FAILED")) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+		}
+		return ResponseEntity.status(HttpStatus.CREATED).body(response);
 	}
+
 
 	/**
 	 * 사용자 결제 내역 조회

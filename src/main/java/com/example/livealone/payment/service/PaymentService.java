@@ -13,14 +13,19 @@ import com.example.livealone.order.repository.OrderRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.sql.SQLOutput;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -40,11 +45,8 @@ public class PaymentService {
 	@Value("DEV1983009FCE70023372B535B4EB027DEB9824F")
 	private String secretKey;
 
-	@Value("http://localhost:8080/payment/kakao/completePayment")
+	@Value("http://localhost:8080/payment/kakao/complete")
 	private String approvalUrl;
-
-	@Value("http://localhost:3000/completepayment")
-	private String frontendApprovalUrl;
 
 	@Value("http://localhost:8080/payment")
 	private String cancelUrl;
@@ -78,8 +80,8 @@ public class PaymentService {
 
 		HashMap<String, String> params = new HashMap<>();
 		params.put("cid", "TC0ONETIME");
-		params.put("partner_order_id", "1L");
-		params.put("partner_user_id", "3L");
+		params.put("partner_order_id", "2");
+		params.put("partner_user_id", "2");
 		params.put("item_name", "초코파이");
 		params.put("quantity", "1");
 		params.put("total_amount", "2200");
@@ -95,10 +97,14 @@ public class PaymentService {
 
 		try {
 			ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, request, String.class);
-			System.out.println("response");
-			System.out.println(response);
+
+			// Debug the response
+			System.out.println("Response Body: " + response.getBody());
 
 			JsonNode jsonNode = objectMapper.readTree(response.getBody());
+
+			// Debug the parsed JSON
+			System.out.println("Parsed JSON: " + jsonNode);
 
 			User user = userRepository.findById(requestDto.getUserId())
 				.orElseThrow(() -> new IllegalArgumentException("Invalid user ID: " + requestDto.getUserId()));
@@ -108,17 +114,7 @@ public class PaymentService {
 
 			String tid = jsonNode.get("tid").asText();
 
-			int retryCount = 0;
-			//            while (paymentRepository.existsByTid(tid) && retryCount < 3) {
-			//                response = restTemplate.exchange(url, HttpMethod.POST, request, String.class);
-			//                jsonNode = objectMapper.readTree(response.getBody());
-			//                tid = jsonNode.get("tid").asText();
-			//                retryCount++;
-			//            }
-			System.out.println("hello, world!");
-
 			if (paymentRepository.existsByTid(tid)) {
-				System.out.println("hello, world!");
 				return PaymentResponseDto.builder()
 					.status("FAILED")
 					.message("결제 준비 실패: 중복된 TID")
@@ -136,12 +132,6 @@ public class PaymentService {
 
 			paymentRepository.save(payment);
 
-			System.out.println("hello world!");
-			System.out.println(jsonNode.get("next_redirect_pc_url").asText());
-			System.out.println(jsonNode.get("next_redirect_pc_url").asText());
-			System.out.println(jsonNode.get("next_redirect_pc_url").asText());
-
-
 			return PaymentResponseDto.builder()
 				.status("READY")
 				.message("결제 준비 완료")
@@ -151,8 +141,9 @@ public class PaymentService {
 				.amount(requestDto.getAmount())
 				.paymentMethod(requestDto.getPaymentMethod())
 				.createdAt(payment.getCreatedAt().toString())
-				.nextRedirectUrl(jsonNode.get("next_redirect_pc_url").asText() + "?redirect_url=" + frontendApprovalUrl) // 리디렉션 URL 수정
+				.nextRedirectUrl(jsonNode.get("next_redirect_pc_url").asText()) // Ensure this value is correctly set
 				.build();
+			// return jsonNode.get("next_redirect_pc_url").asText();
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -173,7 +164,7 @@ public class PaymentService {
 	 * @return 결제 응답 DTO
 	 */
 	public PaymentResponseDto approveKakaoPayPayment(String pgToken, Long orderId, Long userId) {
-		String url = "https://kapi.kakao.com/v1/payment/approve";
+		String url = "https://open-api.kakaopay.com/online/v1/payment/approve";
 
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
