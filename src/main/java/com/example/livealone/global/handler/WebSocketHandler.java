@@ -2,7 +2,11 @@ package com.example.livealone.global.handler;
 
 import com.example.livealone.chat.service.ChatService;
 import com.example.livealone.global.dto.SocketMessageDto;
+import com.example.livealone.global.exception.CustomException;
 import com.example.livealone.global.security.JwtService;
+import com.example.livealone.user.dto.ReissueRequestDto;
+import com.example.livealone.user.dto.TokenResponseDto;
+import com.example.livealone.user.service.AuthService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
@@ -26,10 +30,11 @@ import static com.example.livealone.global.entity.SocketMessageType.*;
 @Slf4j(topic = "WebSocket Handler")
 public class WebSocketHandler extends TextWebSocketHandler {
 
-    private static final ConcurrentHashMap<String,WebSocketSession> CLIENTS = new ConcurrentHashMap<>();
-    private final KafkaTemplate<String,String> kafkaTemplate;
+    private static final ConcurrentHashMap<String, WebSocketSession> CLIENTS = new ConcurrentHashMap<>();
+    private final KafkaTemplate<String, String> kafkaTemplate;
     private final ObjectMapper objectMapper;
     private final JwtService jwtService;
+    private final AuthService authService;
 
     private final ChatService chatService;
 
@@ -39,19 +44,19 @@ public class WebSocketHandler extends TextWebSocketHandler {
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         CLIENTS.put(session.getId(), session);
-        log.info("New Sesssion :"+session.getId());
+        log.info("New Sesssion :" + session.getId());
     }
 
     /**
      * 웹소켓 세션 아웃
      */
     @Override
-    public void afterConnectionClosed(WebSocketSession session, CloseStatus status){
+    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
 
         log.info("Exit Session :" + session.getId());
-        try{
+        try {
             CLIENTS.remove(session.getId());
-        }catch (Exception e){
+        } catch (Exception e) {
             log.error(e.getMessage());
         }
     }
@@ -64,16 +69,29 @@ public class WebSocketHandler extends TextWebSocketHandler {
         SocketMessageDto socketMessageDto = getMessageType(message.getPayload());
 
         String jsonMessage;
-        switch (socketMessageDto.getType()){
-            case AUTH -> {
+        switch (socketMessageDto.getType()) {
+            case REQUEST_AUTH -> {
                 jsonMessage = getAuthMessage(session, socketMessageDto);
-                kafkaTemplate.send("chat",jsonMessage);
+                kafkaTemplate.send("chat", jsonMessage);
             }
-            case MESSAGE -> {
+            case REQUEST_REFRESH -> {
+                try{
+                    String refresh = socketMessageDto.getMessage() == null? "invalid refreshToken" : socketMessageDto.getMessage();
+
+                    TokenResponseDto tokenResponseDto = authService.reissueAccessToken(new ReissueRequestDto(refresh));
+                    jsonMessage = getRefreshMessage(socketMessageDto, tokenResponseDto);
+                    kafkaTemplate.send("chat", jsonMessage);
+                }catch (CustomException e){
+                    SocketMessageDto anonymousUserMessage = new SocketMessageDto(ANONYMOUS_USER, "back-server", e.getMessage());
+                    jsonMessage = objectMapper.writeValueAsString(anonymousUserMessage);
+                    kafkaTemplate.send("chat",jsonMessage);
+                }
+            }
+            case CHAT_MESSAGE -> {
                 jsonMessage = message.getPayload();
-                kafkaTemplate.send("chat",jsonMessage);
+                kafkaTemplate.send("chat", jsonMessage);
             }
-            case INIT -> {
+            case REQUEST_CHAT_INIT -> {
                 // kafka로 메시지를 보내지 않고, 접속한 세션에게 바로 전송
                 chatService.writeInitMessage(session);
             }
@@ -88,14 +106,14 @@ public class WebSocketHandler extends TextWebSocketHandler {
         }
     }
 
-    public static ConcurrentHashMap<String,WebSocketSession> getClients(){
+    public static ConcurrentHashMap<String, WebSocketSession> getClients() {
         return CLIENTS;
     }
 
-    private SocketMessageDto getMessageType(String payload){
-        try{
+    private SocketMessageDto getMessageType(String payload) {
+        try {
             return objectMapper.readValue(payload, SocketMessageDto.class);
-        }catch (JsonProcessingException e){
+        } catch (JsonProcessingException e) {
             log.info(e.getMessage());
             return new SocketMessageDto(ERROR, "back-server", e.getMessage());
         }
@@ -104,22 +122,36 @@ public class WebSocketHandler extends TextWebSocketHandler {
     /**
      * AUTH메시지 생성 (Chat)
      */
-    private String getAuthMessage(WebSocketSession session,SocketMessageDto socketMessageDto) throws JsonProcessingException {
-        try{
-            String token = socketMessageDto.getMessage().replace("Bearer ","");
+    private String getAuthMessage(WebSocketSession session, SocketMessageDto socketMessageDto) throws JsonProcessingException {
+        try {
+            String token = socketMessageDto.getMessage().replace("Bearer ", "");
 
             String isValidToken = jwtService.isValidToken(token);
-            if(!Objects.equals(isValidToken,"Valid")){
-                SocketMessageDto failedMessage = new SocketMessageDto(FAILED,"back-server",isValidToken);
+            if (!Objects.equals(isValidToken, "Valid")) {
+                SocketMessageDto failedMessage = new SocketMessageDto(INVALID_TOKEN, "back-server", isValidToken);
                 return objectMapper.writeValueAsString(failedMessage);
             }
 
             Claims claims = jwtService.getClaims(token);
             String nickname = claims.get("nickname", String.class);
 
-            SocketMessageDto newMessage = new SocketMessageDto(AUTH, nickname, session.getId());
+            SocketMessageDto newMessage = new SocketMessageDto(RESPONSE_AUTH, nickname, session.getId());
             return objectMapper.writeValueAsString(newMessage);
-        }catch (IOException e){
+        } catch (IOException e) {
+            log.info(e.getMessage());
+            SocketMessageDto errorMessage = new SocketMessageDto(FAILED, "back-server", e.getMessage());
+            return objectMapper.writeValueAsString(errorMessage);
+        }
+    }
+
+    private String getRefreshMessage(SocketMessageDto socketMessageDto,TokenResponseDto tokenResponseDto) throws JsonProcessingException {
+        try{
+
+            SocketMessageDto refreshMessage = new SocketMessageDto(RESPONSE_REFRESH,socketMessageDto.getMessenger(),
+                    objectMapper.writeValueAsString(tokenResponseDto));
+            log.info("리프레쉬 요청"+tokenResponseDto.getAccess());
+            return objectMapper.writeValueAsString(refreshMessage);
+        }catch (JsonProcessingException e){
             log.info(e.getMessage());
             SocketMessageDto errorMessage = new SocketMessageDto(FAILED,"back-server",e.getMessage());
             return objectMapper.writeValueAsString(errorMessage);
@@ -129,10 +161,10 @@ public class WebSocketHandler extends TextWebSocketHandler {
     /**
      * 서버에서 발생하는 것이 아닌 프론트 혹은 외부에서 온 에러 메시지
      */
-    private String getErrorMessage(WebSocketSession session,SocketMessageDto socketMessageDto) throws JsonProcessingException {
-        try{
+    private String getErrorMessage(WebSocketSession session, SocketMessageDto socketMessageDto) throws JsonProcessingException {
+        try {
             return objectMapper.writeValueAsString(socketMessageDto);
-        }catch (JsonProcessingException e){
+        } catch (JsonProcessingException e) {
             log.info(e.getMessage());
             SocketMessageDto error = new SocketMessageDto(ERROR, "back-server", e.getMessage());
             return objectMapper.writeValueAsString(error);
