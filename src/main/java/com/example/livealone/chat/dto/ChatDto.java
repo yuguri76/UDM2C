@@ -1,5 +1,6 @@
 package com.example.livealone.chat.dto;
 
+import com.example.livealone.chat.entity.ChatMessageType;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -7,7 +8,7 @@ import lombok.Getter;
 @Getter
 public class ChatDto {
 
-    private String type;
+    private ChatMessageType type;
     private String messenger;
     private String message;
 }
