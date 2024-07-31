@@ -1,16 +1,12 @@
 package com.example.livealone.delivery.service;
 
-import com.example.livealone.broadcast.entity.Broadcast;
-import com.example.livealone.broadcast.entity.BroadcastCode;
-import com.example.livealone.broadcast.entity.BroadcastStatus;
 import com.example.livealone.delivery.dto.DeliveryHistoryResponseDto;
-import com.example.livealone.order.entity.Order;
-import com.example.livealone.order.entity.OrderStatus;
-import com.example.livealone.product.entity.Product;
-import com.example.livealone.user.entity.Social;
 import com.example.livealone.user.entity.User;
 import com.example.livealone.user.repository.UserRepository;
+import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
+import org.redisson.api.RBucket;
+import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -20,10 +16,19 @@ import java.util.List;
 public class DeliveryService {
 
     private final UserRepository userRepository;
+    private final RedissonClient redissonClient;
 
-    public List<DeliveryHistoryResponseDto> getUserDeliveryHistory(/*user*/) {
+    public List<DeliveryHistoryResponseDto> getUserDeliveryHistory(User user,int page) {
 
-        //임의로 userId 입력
-        return userRepository.findDeliveryHistoryByUserId(2L);
+        RBucket<List<DeliveryHistoryResponseDto>> bucket = redissonClient.getBucket("Delivery::" + user.getId());
+        if (bucket.get() != null) {
+            return bucket.get();
+        }
+
+        List<DeliveryHistoryResponseDto> list = userRepository.findDeliveryHistoryByUserId(user.getId(), page);
+
+        bucket.set(list, 1, TimeUnit.HOURS);
+
+        return list;
     }
 }

@@ -1,17 +1,25 @@
 ### 방송 생성
 POST http://localhost:8080/broadcast
 Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJjaGVhbWluNjMwNkBuYXZlci5jb20iLCJpZCI6MSwidXNlcm5hbWUiOiLquYDssYTrr7wiLCJuaWNrbmFtZSI6Iuq5gOyxhOuvvCIsImlhdCI6MTcyMjI0OTU1MCwiZXhwIjoxNzIyMjUwMTUwfQ.XDeWy8_3xIaxDtgDnUYfyoca1Qaa9hs3pi7_QokF_zk
 
 {
   "title": "맛있는 선산곱창 90% 할인",
-  "code": "1234abcdqwer834f",
+  "code": "1234123412341234",
   "product_id": 1
 }
 
 ### 방송 내역 조회
 GET http://localhost:8080/user/broadcast
 Content-Type: application/json
-
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJraHU0MjM3QGdtYWlsLmNvbSIsIm5pY2tuYW1lIjoi7J6Q65GQ66eM65GQIiwiaWF0IjoxNzIxOTc4MzgyLCJleHAiOjE3MjE5Nzg5ODJ9.Uj30VvGZ1OL8Rcf_4ZjHJTHuiIpsmHqgYx5hSbQaG0o
+d
 ### 방송 중단
 PATCH http://localhost:8080/broadcast
 Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJraHU0MjM3QGdtYWlsLmNvbSIsIm5pY2tuYW1lIjoi7J6Q65GQ66eM65GQIiwiaWF0IjoxNzIxOTgyMDUyLCJleHAiOjE3MjE5ODI2NTJ9.0KyUz_g9tj0F8iUV7vv-gDayxBATyyoseerqN08R1wU
+
+### 현재 진행 중인 방송 조회
+GET http://localhost:8080/broadcast
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJjaGVhbWluNjMwNkBuYXZlci5jb20iLCJpZCI6MSwidXNlcm5hbWUiOiLquYDssYTrr7wiLCJuaWNrbmFtZSI6Iuq5gOyxhOuvvCIsImlhdCI6MTcyMjI0OTU1MCwiZXhwIjoxNzIyMjUwMTUwfQ.XDeWy8_3xIaxDtgDnUYfyoca1Qaa9hs3pi7_QokF_zk

@@ -1,9 +1,11 @@
 package com.example.livealone.global.security;
 
+import com.example.livealone.user.entity.User;
 import java.security.Key;
 import java.util.Base64;
 import java.util.Date;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -19,11 +21,16 @@ import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 
 @Component
+@Slf4j
 public class JwtService {
 
 	public static final String HEADER = "Authorization";
 
-	private final String TOKEN_PREFIX = "Bearer ";
+	private static final String TOKEN_PREFIX = "Bearer ";
+
+	public static final String CLAIM_ID = "id";
+	public static final String CLAIM_USERNAME = "username";
+	public static final String CLAIM_NICKNAME = "nickname";
 
 	@Value("${jwt.key}")
 	private String SECRET_KEY;
@@ -41,13 +48,16 @@ public class JwtService {
 
 	}
 
-	public String generateToken(String email) {
+	public String generateToken(User user) {
 
 		Date curDate = new Date();
 		Date expireDate = new Date(curDate.getTime() + EXPIRE_TIME);
 
 		return TOKEN_PREFIX + Jwts.builder()
-			.setSubject(email)
+			.setSubject(user.getEmail())
+			.claim(CLAIM_ID, user.getId())
+			.claim(CLAIM_USERNAME, user.getUsername())
+			.claim(CLAIM_NICKNAME, user.getNickname())
 			.setIssuedAt(curDate)
 			.setExpiration(expireDate)
 			.signWith(key, SignatureAlgorithm.HS256)
@@ -72,6 +82,25 @@ public class JwtService {
 
 		return false;
 
+	}
+
+	public String isValidToken(String token){
+		try{
+			Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
+			return "Valid";
+		}catch (SecurityException | MalformedJwtException | io.jsonwebtoken.security.SignatureException e) {
+			log.info("error :", "Invalid JWT signature, 유효하지 않는 JWT 서명 입니다.");
+			return "Invalid JWT signature";
+		} catch (ExpiredJwtException e) {
+			log.info("error :", "Expired JWT token, 만료된 JWT token 입니다.");
+			return "Expired JWT Token";
+		} catch (UnsupportedJwtException e) {
+			log.info("error :", "Unsupported JWT token, 지원되지 않는 JWT 토큰 입니다.");
+			return "Unsupported JWT Token";
+		} catch (IllegalArgumentException e) {
+			log.info("error :", "JWT claims is empty, 잘못된 JWT 토큰 입니다.");
+			return "JWT Claims is empty";
+		}
 	}
 
 	public String getToken(HttpServletRequest request) {

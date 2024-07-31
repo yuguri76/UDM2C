@@ -1,7 +1,15 @@
 package com.example.livealone.oauth2.service;
 
+import com.example.livealone.global.security.UserDetailsImpl;
+import com.example.livealone.oauth2.userinfo.GoogleOAuth2Userinfo;
+import com.example.livealone.oauth2.userinfo.KakaoOAuth2Userinfo;
+import com.example.livealone.oauth2.userinfo.NaverOAuth2Userinfo;
+import com.example.livealone.oauth2.userinfo.OAuth2Userinfo;
+import com.example.livealone.user.entity.Social;
+import com.example.livealone.user.entity.User;
+import com.example.livealone.user.repository.UserRepository;
 import java.util.Optional;
-
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
@@ -11,17 +19,6 @@ import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
-
-import com.example.livealone.global.security.UserDetailsImpl;
-import com.example.livealone.oauth2.userinfo.GoogleOAuth2Userinfo;
-import com.example.livealone.oauth2.userinfo.KakaoOAuth2Userinfo;
-import com.example.livealone.oauth2.userinfo.NaverOAuth2Userinfo;
-import com.example.livealone.oauth2.userinfo.OAuth2Userinfo;
-import com.example.livealone.user.entity.Social;
-import com.example.livealone.user.entity.User;
-import com.example.livealone.user.repository.UserRepository;
-
-import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -38,12 +35,15 @@ public class Oauth2UserServiceImpl extends DefaultOAuth2UserService {
 		OAuth2Userinfo userInfo = getOAuth2User(userRequest.getClientRegistration().getRegistrationId());
 
 		String email = userInfo.getEmailFromAttributes(oAuth2User.getAttributes());
+		String name = userInfo.getNameFromAttributes(oAuth2User.getAttributes());
+
 		Optional<User> optionalUser = userRepository.findByEmail(email);
 		User user;
 
 		if (optionalUser.isEmpty()) {
 			user = User.builder()
-				.username(userInfo.getNameFromAttributes(oAuth2User.getAttributes()))
+				.username(name)
+				.nickname(name)
 				.email(email)
 				.social(Social.fromValue(provider))
 				.build();
