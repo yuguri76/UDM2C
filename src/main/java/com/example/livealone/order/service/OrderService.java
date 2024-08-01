@@ -1,7 +1,6 @@
 package com.example.livealone.order.service;
 
 import com.example.livealone.broadcast.entity.Broadcast;
-import com.example.livealone.broadcast.repository.BroadcastRepository;
 import com.example.livealone.broadcast.service.BroadcastService;
 import com.example.livealone.global.config.RedissonConfig;
 import com.example.livealone.global.exception.CustomException;
@@ -11,24 +10,19 @@ import com.example.livealone.order.entity.Order;
 import com.example.livealone.order.entity.OrderStatus;
 import com.example.livealone.order.repository.OrderRepository;
 import com.example.livealone.product.entity.Product;
-import com.example.livealone.product.repository.ProductRepository;
 import com.example.livealone.product.service.ProductService;
 import com.example.livealone.user.entity.User;
-import jakarta.transaction.Transactional;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.context.MessageSource;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
-import java.util.Locale;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
@@ -112,6 +106,7 @@ public class OrderService {
                         ), HttpStatus.NOT_FOUND);
                     }
 
+                    return;
                 } finally {
                     lock.unlock();
                 }

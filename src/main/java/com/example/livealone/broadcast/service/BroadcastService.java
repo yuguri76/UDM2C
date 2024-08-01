@@ -2,6 +2,7 @@ package com.example.livealone.broadcast.service;
 
 import com.example.livealone.broadcast.dto.BroadcastRequestDto;
 import com.example.livealone.broadcast.dto.BroadcastResponseDto;
+import com.example.livealone.broadcast.dto.CreateBroadcastResponseDto;
 import com.example.livealone.broadcast.dto.StreamKeyResponseDto;
 import com.example.livealone.broadcast.dto.UserBroadcastResponseDto;
 import com.example.livealone.broadcast.entity.Broadcast;
@@ -50,7 +51,7 @@ public class BroadcastService {
 
   private static final int PAGE_SIZE = 5;
 
-  public void createBroadcast(BroadcastRequestDto boardRequestDto, User user) {
+  public CreateBroadcastResponseDto createBroadcast(BroadcastRequestDto boardRequestDto, User user) {
 
     BroadcastCode code = broadcastCodeRepository.findByCode(boardRequestDto.getCode()).orElseThrow(
         () -> new CustomException(messageSource.getMessage(
@@ -74,10 +75,11 @@ public class BroadcastService {
 
     Optional<Broadcast> optionalBroadcast = broadcastRepository.findByBroadcastCode(code);
 
-    broadcastRepository.save(optionalBroadcast.isPresent() ?
+    Broadcast saveBroadcast = broadcastRepository.save(optionalBroadcast.isPresent() ?
         optionalBroadcast.get().updateBroadcast(boardRequestDto.getTitle(), user, product) :
         BroadcastMapper.toBroadcast(boardRequestDto.getTitle(), user, product, code));
 
+    return BroadcastMapper.toCreateBroadcastResponseDto(saveBroadcast);
   }
 
   public List<UserBroadcastResponseDto> getBroadcast(int page, User user) {
