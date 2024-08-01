@@ -4,6 +4,7 @@ import static com.example.livealone.global.entity.SocketMessageType.BROADCAST;
 
 import com.example.livealone.broadcast.dto.BroadcastRequestDto;
 import com.example.livealone.broadcast.dto.BroadcastResponseDto;
+import com.example.livealone.broadcast.dto.CreateBroadcastResponseDto;
 import com.example.livealone.broadcast.dto.StreamKeyResponseDto;
 import com.example.livealone.broadcast.dto.UserBroadcastResponseDto;
 import com.example.livealone.broadcast.entity.Broadcast;
@@ -48,7 +49,8 @@ public class BroadcastService {
 
   private static final int PAGE_SIZE = 5;
 
-  public void createBroadcast(BroadcastRequestDto boardRequestDto, User user)
+
+  public CreateBroadcastResponseDto createBroadcast(BroadcastRequestDto boardRequestDto, User user)
       throws JsonProcessingException {
     BroadcastCode code = broadcastCodeRepository.findByCode(boardRequestDto.getCode()).orElseThrow(
         () -> new CustomException(messageSource.getMessage(
@@ -71,13 +73,16 @@ public class BroadcastService {
     );
 
     Optional<Broadcast> optionalBroadcast = broadcastRepository.findByBroadcastCode(code);
+
     Broadcast broadcast = optionalBroadcast.isPresent() ?
         optionalBroadcast.get().updateBroadcast(boardRequestDto.getTitle(), user, product) :
         BroadcastMapper.toBroadcast(boardRequestDto.getTitle(), user, product, code);
 
-    broadcastRepository.save(broadcast);
+    Broadcast saveBroadcast = broadcastRepository.save(broadcast);
 
     sendStreamKey(BroadcastMapper.toStreamKeyResponseDto(true, broadcast.getBroadcastCode().getCode()));
+
+    return BroadcastMapper.toCreateBroadcastResponseDto(saveBroadcast);
   }
 
   public List<UserBroadcastResponseDto> getBroadcast(int page, User user) {

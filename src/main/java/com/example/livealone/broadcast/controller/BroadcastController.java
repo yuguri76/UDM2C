@@ -2,6 +2,7 @@ package com.example.livealone.broadcast.controller;
 
 import com.example.livealone.broadcast.dto.BroadcastRequestDto;
 import com.example.livealone.broadcast.dto.BroadcastResponseDto;
+import com.example.livealone.broadcast.dto.CreateBroadcastResponseDto;
 import com.example.livealone.broadcast.dto.StreamKeyResponseDto;
 import com.example.livealone.broadcast.dto.UserBroadcastResponseDto;
 import com.example.livealone.broadcast.service.BroadcastService;
@@ -28,17 +29,17 @@ public class BroadcastController {
   private final BroadcastService broadcastService;
 
   @PostMapping("/broadcast")
-  public ResponseEntity<CommonResponseDto<Void>> createBroadcast(
+  public ResponseEntity<CommonResponseDto<CreateBroadcastResponseDto>> createBroadcast(
       @Valid @RequestBody BroadcastRequestDto boardRequestDto, @AuthenticationPrincipal UserDetailsImpl userPrincipal)
       throws JsonProcessingException {
 
-    broadcastService.createBroadcast(boardRequestDto, userPrincipal.getUser());
+    CreateBroadcastResponseDto responseDto = broadcastService.createBroadcast(boardRequestDto, userPrincipal.getUser());
 
     return ResponseEntity.status(HttpStatus.CREATED).body(
         new CommonResponseDto<>(
         HttpStatus.CREATED.value(),
         "방송을 성공적으로 시작하였습니다.",
-        null)
+        responseDto)
     );
 
   }
