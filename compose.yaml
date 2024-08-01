@@ -9,11 +9,13 @@ services:
       - 'MYSQL_USER=admin'
     ports:
       - '3307:3306'
+
   redis:
     image: 'redis:latest'
     container_name: redis
     ports:
       - '6378:6379'
+
   kafka:
     image: 'apache/kafka:3.7.1'
     container_name: kafka
@@ -29,6 +31,15 @@ services:
       - 'MONGO_INITDB_DATABASE=chatdb'
       - 'MONGO_INITDB_ROOT_USERNAME=root'
       - 'MONGO_INITDB_ROOT_PASSWORD=verysecret'
+
+  nginx-rtmp:
+    image: alqutami/rtmp-hls
+    container_name: media-server
+    ports:
+      - "8081:8081"
+      - "1935:1935"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
 
 
 
