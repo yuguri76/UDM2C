@@ -2,6 +2,7 @@ package com.example.livealone.broadcast.controller;
 
 import com.example.livealone.broadcast.dto.BroadcastRequestDto;
 import com.example.livealone.broadcast.dto.BroadcastResponseDto;
+import com.example.livealone.broadcast.dto.StreamKeyResponseDto;
 import com.example.livealone.broadcast.dto.UserBroadcastResponseDto;
 import com.example.livealone.broadcast.service.BroadcastService;
 import com.example.livealone.global.dto.CommonResponseDto;
@@ -82,5 +83,15 @@ public class BroadcastController {
 
   }
 
+  @GetMapping("/broadcast/streamKey")
+  public ResponseEntity<CommonResponseDto<StreamKeyResponseDto>> getStreamKey() {
+
+    return ResponseEntity.status(HttpStatus.OK).body(
+        new CommonResponseDto<>(
+            HttpStatus.OK.value(),
+            "스트림 키를 성공적으로 가져왔습니다.",
+            broadcastService.getStreamKey())
+    );
+  }
 
 }

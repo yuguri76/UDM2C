@@ -1,17 +1,16 @@
 package com.example.livealone.chat.service;
 
-import com.example.livealone.chat.dto.ChatDto;
+import com.example.livealone.global.dto.SocketMessageDto;
 import com.example.livealone.chat.dto.ChatInitDto;
 import com.example.livealone.chat.entity.ChatErrorLog;
 import com.example.livealone.chat.entity.ChatMessage;
 import com.example.livealone.chat.entity.ChatSessionLog;
-import com.example.livealone.chat.handler.WebSocketHandler;
+import com.example.livealone.global.handler.WebSocketHandler;
 import com.example.livealone.chat.repository.ChatErrorLogRepository;
 import com.example.livealone.chat.repository.ChatMessageRepository;
 import com.example.livealone.chat.repository.ChatSessionLogRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -22,9 +21,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.stream.Stream;
 
-import static com.example.livealone.chat.entity.ChatMessageType.INIT;
+import static com.example.livealone.global.entity.SocketMessageType.RESPONSE_CHAT_INIT;
 
 @Service
 @RequiredArgsConstructor
@@ -66,8 +64,7 @@ public class ChatService {
     public void writeInitMessage(WebSocketSession session) {
 
         try {
-            List<ChatMessage> chatList = chatMessageRepository.findAll();
-            log.info("chatList :" + chatList.size());
+            List<ChatMessage> chatList = chatMessageRepository.findTop30ByOrderByIdDesc();
 
             List<ChatInitDto> initData = new ArrayList<>();
             for (ChatMessage chat : chatList) {
@@ -76,11 +73,11 @@ public class ChatService {
                 ChatInitDto init = new ChatInitDto(initNickname, initText);
                 initData.add(init);
             }
-
+            Collections.reverse(initData);
             String messageJSON = objectMapper.writeValueAsString(initData);
-            ChatDto chatDto = new ChatDto(INIT, "server", messageJSON);
+            SocketMessageDto socketMessageDto = new SocketMessageDto(RESPONSE_CHAT_INIT, "back-server", messageJSON);
 
-            String result = objectMapper.writeValueAsString(chatDto);
+            String result = objectMapper.writeValueAsString(socketMessageDto);
             TextMessage text = new TextMessage(result);
 
             session.sendMessage(text);
@@ -94,33 +91,32 @@ public class ChatService {
     private void saveMessage(String message) {
 
         try {
-            ChatDto chatDto = objectMapper.readValue(message, ChatDto.class);
+            SocketMessageDto socketMessageDto = objectMapper.readValue(message, SocketMessageDto.class);
 
-            switch (chatDto.getType()) {
-                case AUTH -> {
-                    ChatSessionLog chatSessionLog = new ChatSessionLog(chatDto.getMessenger(), chatDto.getMessage());
+            switch (socketMessageDto.getType()) {
+                case REQUEST_AUTH -> {
+                    ChatSessionLog chatSessionLog = new ChatSessionLog(socketMessageDto.getMessenger(), socketMessageDto.getMessage());
+
                     sessionLogsBuffer.add(chatSessionLog);
                     if (sessionLogsBuffer.size() > batchSize) {
                         saveSessionLogs();
                     }
                 }
-                case MESSAGE -> {
-                    ChatMessage chatMessage = new ChatMessage(chatDto.getMessenger(), chatDto.getMessage());
-                    messageBuffer.add(chatMessage);
+                case CHAT_MESSAGE -> {
+                    //ChatMessage chatMessage = new ChatMessage(socketMessageDto.getMessenger(), socketMessageDto.getMessage());
+                    chatMessageRepository.save(new ChatMessage(socketMessageDto.getMessenger(), socketMessageDto.getMessage()));
+                    //messageBuffer.add(chatMessage);
                     if (messageBuffer.size() > batchSize) {
                         saveChatMessages();
                     }
                 }
                 case FAILED -> {
-                    ChatErrorLog chatErrorLog = new ChatErrorLog(chatDto.getMessage());
+                    ChatErrorLog chatErrorLog = new ChatErrorLog(socketMessageDto.getMessage());
                     errorLogsBuffer.add(chatErrorLog);
                     if (errorLogsBuffer.size() > batchSize) {
                         saveErrorLogs();
                     }
                 }
-                case INIT -> {
-                }
-                default -> throw new IllegalStateException("Unexpected value: " + chatDto.getType());
             }
         } catch (JsonProcessingException e) {
             log.error(e.getMessage());
