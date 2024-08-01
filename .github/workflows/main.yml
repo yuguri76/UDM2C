@@ -1,0 +1,98 @@
+name: livealone-test
+
+on:
+  push:
+    # 배열로 여러 브랜치를 넣을 수 있다.
+    branches: [ develop ]
+    # github pull request 생성시
+  pull_request:
+    branches:
+      - develop # -로 여러 브랜치를 명시하는 것도 가능
+
+env:
+  DOCKER_IMAGE_TAG_NAME: livealone
+
+jobs:
+  build-and-docker-push:
+    runs-on: ubuntu-22.04 # 실행환경
+
+    # 실행 스텝 지정
+    steps:
+      - uses: actions/checkout@v3
+
+      # java version 지정
+      - name: Set up JDK 17 with OpenJDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      # 권한 부여
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      # Build
+      - name: Build with Gradle
+        run: ./gradlew clean build
+
+      #      직접 사용
+      #      # Docker Image 빌드
+      #      - name: Build the Docker image
+      #        run: docker build . --file docker/Dockerfile --tag ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_TAG_NAME }}:latest
+      #
+      #      # Docker 로큰
+      #      - name: Login to Docker Hub using Access Token
+      #        run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+      #
+      #      # 이미지 푸시
+      #      - name: Push the Docker image
+      #        run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_TAG_NAME }}:latest
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./docker/Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_TAG_NAME }}:latest
+
+  deploy-to-ec2:
+    needs: build-and-docker-push # 위의 build-and-docker-push이 끝나고 실행
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
+          script: |
+            CONTAINER_ID=$(sudo docker ps -q --filter "publish=8080-8080")
+
+            if [ ! -z "$CONTAINER_ID" ]; then
+              sudo docker stop $CONTAINER_ID
+              sudo docker rm $CONTAINER_ID
+            fi
+
+            # 여기서의 환경 변수도 여러분 상황에 맞게 작성하시면 됩니다!!!
+            sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_TAG_NAME }}:latest
+            sudo docker run -d -p 8080:8080 \
+                -e DB_USERNAME=${{ secrets.SPRING_DATASOURCE_USERNAME }} \
+                -e DB_PASSWORD=${{ secrets.SPRING_DATASOURCE_PASSWORD }} \
+                -e DB_URL=${{ secrets.SPRING_DATASOURCE_URL }} \
+                -e ADMIN_TOKEN=${{ secrets.ADMIN_TOKEN }} \
+                -e JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }} \
+                ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_TAG_NAME }}:latest
