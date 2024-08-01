@@ -8,6 +8,7 @@ import com.example.livealone.broadcast.dto.UserBroadcastResponseDto;
 import com.example.livealone.broadcast.service.BroadcastService;
 import com.example.livealone.global.dto.CommonResponseDto;
 import com.example.livealone.global.security.UserDetailsImpl;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +30,8 @@ public class BroadcastController {
 
   @PostMapping("/broadcast")
   public ResponseEntity<CommonResponseDto<CreateBroadcastResponseDto>> createBroadcast(
-      @Valid @RequestBody BroadcastRequestDto boardRequestDto, @AuthenticationPrincipal UserDetailsImpl userPrincipal) {
+      @Valid @RequestBody BroadcastRequestDto boardRequestDto, @AuthenticationPrincipal UserDetailsImpl userPrincipal)
+      throws JsonProcessingException {
 
     CreateBroadcastResponseDto responseDto = broadcastService.createBroadcast(boardRequestDto, userPrincipal.getUser());
 
@@ -71,7 +73,8 @@ public class BroadcastController {
   }
 
   @PatchMapping("/broadcast")
-  public ResponseEntity<CommonResponseDto<Void>> closeBroadcast(@AuthenticationPrincipal UserDetailsImpl userPrincipal) {
+  public ResponseEntity<CommonResponseDto<Void>> closeBroadcast(@AuthenticationPrincipal UserDetailsImpl userPrincipal)
+      throws JsonProcessingException {
 
     broadcastService.closeBroadcast(userPrincipal.getUser());
 

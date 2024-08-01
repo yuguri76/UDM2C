@@ -32,8 +32,9 @@ public class BroadcastMapper {
         .build();
   }
 
-  public static StreamKeyResponseDto toStreamKeyResponseDto(String streamKey) {
+  public static StreamKeyResponseDto toStreamKeyResponseDto(Boolean isLive, String streamKey) {
     return StreamKeyResponseDto.builder()
+        .is_live(isLive)
         .stream_key(streamKey)
         .build();
   }

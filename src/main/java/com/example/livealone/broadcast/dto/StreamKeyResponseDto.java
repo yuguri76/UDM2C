@@ -7,5 +7,6 @@ import lombok.NoArgsConstructor;
 @Getter
 @Builder
 public class StreamKeyResponseDto {
+  private Boolean is_live;
   private String stream_key;
 }
