@@ -1,6 +1,19 @@
 package com.example.livealone.payment.service;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+
 import com.example.livealone.order.entity.Order;
+import com.example.livealone.order.repository.OrderRepository;
 import com.example.livealone.payment.dto.PaymentRequestDto;
 import com.example.livealone.payment.dto.PaymentResponseDto;
 import com.example.livealone.payment.entity.Payment;
@@ -9,27 +22,11 @@ import com.example.livealone.payment.entity.PaymentStatus;
 import com.example.livealone.payment.repository.PaymentRepository;
 import com.example.livealone.user.entity.User;
 import com.example.livealone.user.repository.UserRepository;
-import com.example.livealone.order.repository.OrderRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
-import org.springframework.stereotype.Service;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.HttpServerErrorException;
-import org.springframework.web.client.RestTemplate;
-
-import java.sql.SQLOutput;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -62,16 +59,13 @@ public class PaymentService {
 	@Value("test_sk_jExPeJWYVQ1ekabzNRlxV49R5gvN")
 	private String tossSecretKey;
 
-	// @Value("test_sk_jExPeJWYVQ1ekabzNRlxV49R5gvN")
-	// private String tossSecretKey;
-
-	@Value("http://175.193.47.104:7956/completePayment")
+	@Value("http://seoldarin.iptime.org:7956/ORDER-CHECK?orderno=1")
 	private String tossRetUrl;
 
-	@Value("http://175.193.47.104:7956/payment")
+	@Value("http://seoldarin.iptime.org:7956/close")
 	private String tossRetCancelUrl;
 
-	@Value("http://175.193.47.104:7956/payment")
+	@Value("http://seoldarin.iptime.org:7956/callback")
 	private String tossResultCallback;
 
 	public PaymentResponseDto createKakaoPayReady(PaymentRequestDto requestDto) {
@@ -80,7 +74,6 @@ public class PaymentService {
 		// 인증완료 시 응답받은 pg_token과 tid로 최종 승인요청 -> online/v1/payment/approve
 
 		String url = "https://open-api.kakaopay.com/online/v1/payment/ready";
-		System.out.println("createKakaoPayReady 진입 완료!!!");
 
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
@@ -101,19 +94,11 @@ public class PaymentService {
 		params.put("fail_url", failUrl);
 
 		HttpEntity<HashMap<String, String>> request = new HttpEntity<>(params, headers);
-		System.out.println("params");
-		System.out.println(params);
 
 		try {
 			ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, request, String.class);
 
-			// Debug the response
-			System.out.println("Response Body: " + response.getBody());
-
 			JsonNode jsonNode = objectMapper.readTree(response.getBody());
-
-			// Debug the parsed JSON
-			System.out.println("Parsed JSON: " + jsonNode);
 
 			User user = userRepository.findById(requestDto.getUserId())
 				.orElseThrow(() -> new IllegalArgumentException("Invalid user ID: " + requestDto.getUserId()));
@@ -150,9 +135,8 @@ public class PaymentService {
 				.amount(requestDto.getAmount())
 				.paymentMethod(requestDto.getPaymentMethod())
 				.createdAt(payment.getCreatedAt().toString())
-				.nextRedirectUrl(jsonNode.get("next_redirect_pc_url").asText()) // Ensure this value is correctly set
+				.nextRedirectUrl(jsonNode.get("next_redirect_pc_url").asText())
 				.build();
-			// return jsonNode.get("next_redirect_pc_url").asText();
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -180,11 +164,7 @@ public class PaymentService {
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 		headers.set("Authorization", "SECRET_KEY " + secretKey);
-		headers.set("Content-type", "application/json"); // No HttpMessageConverter for java.util.HashMap and content type "application/x-www-form-urlencoded"
-
-		System.out.println(getTidByOrderId(orderId));
-		System.out.println(orderId.toString());
-		System.out.println(userId.toString());
+		headers.set("Content-type", "application/json");
 
 		Map<String, String> params = new HashMap<>();
 		params.put("cid", cid);
@@ -242,6 +222,7 @@ public class PaymentService {
 		params.put("productDesc", "토스 티셔츠");
 		params.put("apiKey", tossClientKey);
 		params.put("autoExecute", true);
+		params.put("callbackVersion", "V2");
 		params.put("resultCallback", tossResultCallback);
 		params.put("retUrl", tossRetUrl);
 		params.put("retCancelUrl", tossRetCancelUrl);
@@ -250,9 +231,6 @@ public class PaymentService {
 
 		try {
 			ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, request, String.class);
-
-			// JSON 응답 디버깅
-			System.out.println("Response Body: " + response.getBody());
 
 			JsonNode jsonNode = objectMapper.readTree(response.getBody());
 

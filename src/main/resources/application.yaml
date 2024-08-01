@@ -96,7 +96,7 @@ kakao:
 
 toss:
   api:
-    base-url : http://175.193.47.104:7956
+    base-url : http://seoldarin.iptime.org:7956
     client-key: test_ck_kYG57Eba3GPyQ4zAdxQkVpWDOxmA
     secret-key: test_sk_jExPeJWYVQ1ekabzNRlxV49R5gvN
     ret-url: /completePayment
