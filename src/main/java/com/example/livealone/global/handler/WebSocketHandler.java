@@ -1,5 +1,6 @@
 package com.example.livealone.global.handler;
 
+import com.example.livealone.broadcast.service.BroadcastService;
 import com.example.livealone.chat.service.ChatService;
 import com.example.livealone.global.dto.SocketMessageDto;
 import com.example.livealone.global.exception.CustomException;
@@ -37,6 +38,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
     private final AuthService authService;
 
     private final ChatService chatService;
+    private final BroadcastService broadcastService;
 
     /**
      * 새 웹소켓 세션 접속
@@ -101,9 +103,19 @@ public class WebSocketHandler extends TextWebSocketHandler {
 
             }
             case BROADCAST -> {
-
+                broadcastService.requestStreamKey();
             }
         }
+    }
+
+    public static void broadcast(TextMessage message) {
+        System.out.println(message);
+        CLIENTS.forEach((key, session) -> {
+            try {
+                session.sendMessage(message);
+            } catch (IOException ignored) {
+            }
+        });
     }
 
     public static ConcurrentHashMap<String, WebSocketSession> getClients() {
