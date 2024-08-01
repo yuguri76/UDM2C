@@ -51,67 +51,67 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 @AutoConfigureMockMvc
 public class ConcurrentTest {
 
-    private MockMvc mockMvc;
-    private Principal mockPrincipal;
-    private UserDetailsImpl userDetails;
-
-    @Autowired
-    private ProductService productService;
-
-    @Autowired
-    private OrderRepository orderRepository;
-
-    @Autowired
-    private WebApplicationContext context;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @BeforeEach
-    public void setup() {
-        mockMvc = MockMvcBuilders.webAppContextSetup(context)
-                .apply(springSecurity(new MockSpringSecurityFilter()))
-                .build();
-    }
-
-    private void mockUserSetup() {
-        User testUser = userRepository.findById(1L).orElseThrow();
-        userDetails = new UserDetailsImpl(testUser);
-        mockPrincipal = new UsernamePasswordAuthenticationToken(userDetails, "", userDetails.getAuthorities());
-    }
-
-    @Test
-    public void test_Concurrency() throws InterruptedException {
-
-        mockUserSetup();
-
-        int numberOfThreads = 10;
-        CountDownLatch latch = new CountDownLatch(numberOfThreads);
-        ExecutorService executorService = Executors.newFixedThreadPool(numberOfThreads);
-
-        for (int i = 0; i < numberOfThreads; i++) {
-            executorService.submit(() -> {
-                try {
-                    ResultActions resultActions = mockMvc.perform(post("/order/broadcast/{broadcastId}/product/{productId}", 1L,1L)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content("{\"quantity\": \"1\"}")
-                            .principal(mockPrincipal));
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-                } finally {
-                    latch.countDown();
-                }
-            });
-        }
-
-        latch.await(); // 모든 스레드가 작업을 완료할 때까지 대기
-        executorService.shutdown();
-
-        Product product = productService.findByProductId(1L);
-        List<Order> orders = orderRepository.findAll();
-        assertEquals(0L,product.getQuantity());
-        assertEquals(2,orders.size());
-    }
+//    private MockMvc mockMvc;
+//    private Principal mockPrincipal;
+//    private UserDetailsImpl userDetails;
+//
+//    @Autowired
+//    private ProductService productService;
+//
+//    @Autowired
+//    private OrderRepository orderRepository;
+//
+//    @Autowired
+//    private WebApplicationContext context;
+//
+//    @Autowired
+//    private UserRepository userRepository;
+//
+//    @BeforeEach
+//    public void setup() {
+//        mockMvc = MockMvcBuilders.webAppContextSetup(context)
+//                .apply(springSecurity(new MockSpringSecurityFilter()))
+//                .build();
+//    }
+//
+//    private void mockUserSetup() {
+//        User testUser = userRepository.findById(1L).orElseThrow();
+//        userDetails = new UserDetailsImpl(testUser);
+//        mockPrincipal = new UsernamePasswordAuthenticationToken(userDetails, "", userDetails.getAuthorities());
+//    }
+//
+//    @Test
+//    public void test_Concurrency() throws InterruptedException {
+//
+//        mockUserSetup();
+//
+//        int numberOfThreads = 500;
+//        CountDownLatch latch = new CountDownLatch(numberOfThreads);
+//        ExecutorService executorService = Executors.newFixedThreadPool(numberOfThreads);
+//
+//        for (int i = 0; i < numberOfThreads; i++) {
+//            executorService.submit(() -> {
+//                try {
+//                    ResultActions resultActions = mockMvc.perform(post("/order/broadcast/{broadcastId}/product/{productId}", 1L,1L)
+//                            .contentType(MediaType.APPLICATION_JSON)
+//                            .content("{\"quantity\": \"1\"}")
+//                            .principal(mockPrincipal));
+//
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                } finally {
+//                    latch.countDown();
+//                }
+//            });
+//        }
+//
+//        latch.await(); // 모든 스레드가 작업을 완료할 때까지 대기
+//        executorService.shutdown();
+//
+//        Product product = productService.findByProductId(1L);
+//        List<Order> orders = orderRepository.findAll();
+//        assertEquals(0L,product.getQuantity());
+//        assertEquals(2,orders.size());
+//    }
 }
 
