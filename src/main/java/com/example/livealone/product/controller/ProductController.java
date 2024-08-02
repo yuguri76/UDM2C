@@ -4,6 +4,8 @@ import com.example.livealone.global.dto.CommonResponseDto;
 import com.example.livealone.global.security.UserDetailsImpl;
 import com.example.livealone.product.dto.ProductRequestDto;
 import com.example.livealone.product.dto.ProductResponseDto;
+import com.example.livealone.product.entity.Product;
+import com.example.livealone.product.mapper.ProductMapper;
 import com.example.livealone.product.service.ProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -32,4 +34,14 @@ public class ProductController {
 
     return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
   }
+
+  @GetMapping("/{productId}")
+  public ResponseEntity<CommonResponseDto<ProductResponseDto>> getProduct(@PathVariable Long productId) {
+    Product product = productService.findByProductId(productId);
+    ProductResponseDto productResponseDto = ProductMapper.toProductResponseDto(product);
+    CommonResponseDto<ProductResponseDto> responseDto = new CommonResponseDto<>(HttpStatus.OK.value(), "상품 정보 조회 성공", productResponseDto);
+
+    return ResponseEntity.ok(responseDto);
+  }
+
 }
