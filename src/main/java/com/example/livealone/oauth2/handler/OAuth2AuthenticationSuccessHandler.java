@@ -28,7 +28,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
 		User user = ((UserDetailsImpl) authentication.getPrincipal()).getUser();
 
-		response.sendRedirect(UriComponentsBuilder.fromHttpUrl("http://localhost:3000/oauth2/redirect")
+		response.sendRedirect(UriComponentsBuilder.fromHttpUrl("http://livealone.shop:3000/oauth2/redirect")
 				.queryParam("access", jwtService.generateToken(user))
 				.queryParam("refresh", authService.reissueRefreshToken(user))
 				.build()
