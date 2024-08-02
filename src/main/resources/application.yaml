@@ -3,26 +3,27 @@ spring:
     name: livealone
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://ec2-43-201-46-108.ap-northeast-2.compute.amazonaws.com/live_alone
+    url: jdbc:mysql://${DATABASE_HOST}:3306/live_alone
     username: ${MYSQL_USER}
     password: ${MYSQL_PASSWORD}
   data:
     redis:
-      host: localhost
-      port: 6378
+      host: ${DATABASE_HOST}
+      port: 6379
     mongodb:
-      uri: mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@ec2-43-201-46-108.ap-northeast-2.compute.amazonaws.com/chatdb?authSource=admin
+      uri: mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@${DATABASE_HOST}:27017/chatdb?authSource=admin
       port: 27017
 
 
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
     properties:
       hibernate:
         show_sql: true
         format_sql: true
         use_sql_comments: true
+        dialect: org.hibernate.dialect.MySQL8Dialect
 
   jackson:
     property-naming-strategy: SNAKE_CASE
@@ -35,7 +36,7 @@ spring:
           google:
             client-id: ${SOCIAL_GOOGLE_CLIENT_ID}
             client-secret: ${SOCIAL_GOOGLE_CLIENT_SECRET}
-            redirect-uri: http://localhost:8080/login/oauth2/code/google
+            redirect-uri: http://${SERVER_HOST}:8080/login/oauth2/code/google
             scope:
               - profile
               - email
@@ -44,7 +45,7 @@ spring:
             client-secret: ${SOCIAL_NAVER_CLIENT_SECRET}
             client-authentication-method: client_secret_post
             authorization-grant-type: authorization_code
-            redirect-uri: http://localhost:8080/login/oauth2/code/naver
+            redirect-uri: http://${SERVER_HOST}:8080/login/oauth2/code/naver
             scope:
               - email
             client-name: Naver
@@ -56,7 +57,7 @@ spring:
             scope:
               - account_email
               - profile_nickname
-            redirect-uri: http://localhost:8080/login/oauth2/code/kakao
+            redirect-uri: http://${SERVER_HOST}:8080/login/oauth2/code/kakao
             client-name: Kakao
             provider: kakao
         provider:
@@ -74,9 +75,9 @@ spring:
             user-name-attribute: id
   kafka:
     producer:
-      bootstrap-servers: 127.0.0.1:9092
+      bootstrap-servers: ${KAFKA_HOST}:9092
     consumer:
-      bootstrap-servers: 127.0.0.1:9092
+      bootstrap-servers: ${KAFKA_HOST}:9092
 jwt:
   key: ${JWT_SECRET_KEY}
   access-expire-time: ${ACCESS_EXPIRE_TIME}
@@ -90,13 +91,13 @@ kakao:
   pay:
     cid: TC0ONETIME
     secret: DEV1983009FCE70023372B535B4EB027DEB9824F
-    approval-url: http://localhost:8080/completePayment
-    cancel-url: http://localhost:8080/payment
-    fail-url: http://localhost:8080/payment
+    approval-url: http://${SERVER_HOST}:8080/completePayment
+    cancel-url: http://${SERVER_HOST}:8080/payment
+    fail-url: http://${SERVER_HOST}:8080/payment
 
 toss:
   api:
-    base-url : http://seoldarin.iptime.org:7956
+    base-url : http://${SERVER_HOST}:7956
     client-key: test_ck_kYG57Eba3GPyQ4zAdxQkVpWDOxmA
     secret-key: test_sk_jExPeJWYVQ1ekabzNRlxV49R5gvN
     ret-url: /completePayment
