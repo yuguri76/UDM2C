@@ -34,24 +34,23 @@ public class OrderController {
      */
     @PostMapping("/order/broadcast/{broadcastId}/product/{productId}")
     public ResponseEntity<CommonResponseDto<OrderResponseDto>> createOrder(
-            @PathVariable("productId") Long productId,
-            @PathVariable("broadcastId") Long broadcastId,
-            @AuthenticationPrincipal UserDetailsImpl userDetails,
-            @RequestBody OrderRequestDto orderRequestDto
-            ) {
+        @PathVariable("productId") Long productId,
+        @PathVariable("broadcastId") Long broadcastId,
+        @AuthenticationPrincipal UserDetailsImpl userDetails,
+        @RequestBody OrderRequestDto orderRequestDto
+    ) {
 
         User user = userDetails.getUser();
 
         OrderResponseDto orderResponseDto = orderService.createOrder(productId, broadcastId, user, orderRequestDto);
 
         CommonResponseDto<OrderResponseDto> commonResponseDto = CommonResponseDto.<OrderResponseDto>builder()
-                .status(HttpStatus.OK.value())
-                .message("create order successfully")
-                .data(orderResponseDto)
-                .build();
+            .status(HttpStatus.OK.value())
+            .message("create order successfully")
+            .data(orderResponseDto)
+            .build();
 
         return ResponseEntity.ok().body(commonResponseDto);
-
     }
 
     /**

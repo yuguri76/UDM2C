@@ -122,6 +122,9 @@ public class PaymentService {
 				.paymentMethod(PaymentMethod.KAKAO_PAY)
 				.status(PaymentStatus.REQUESTED)
 				.tid(tid)
+				.orderQuantity(requestDto.getOrderQuantity())
+				.shippingAddress(requestDto.getShippingAddress())
+				.deliveryRequest(requestDto.getDeliveryRequest())
 				.build();
 
 			paymentRepository.save(payment);
@@ -249,6 +252,9 @@ public class PaymentService {
 					.paymentMethod(PaymentMethod.TOSS_PAY)
 					.status(PaymentStatus.REQUESTED)
 					.tid(jsonNode.get("payToken").asText())
+					.orderQuantity(requestDto.getOrderQuantity())
+					.shippingAddress(requestDto.getShippingAddress())
+					.deliveryRequest(requestDto.getDeliveryRequest())
 					.build();
 
 				paymentRepository.save(payment);
