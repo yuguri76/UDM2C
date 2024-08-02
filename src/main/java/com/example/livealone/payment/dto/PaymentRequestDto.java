@@ -13,4 +13,5 @@ public class PaymentRequestDto {
 	private int orderQuantity;
 	private String shippingAddress;
 	private String deliveryRequest;
+	private String itemName;
 }
