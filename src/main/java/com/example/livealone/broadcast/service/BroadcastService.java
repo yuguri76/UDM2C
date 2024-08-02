@@ -1,7 +1,10 @@
 package com.example.livealone.broadcast.service;
 
+import static com.example.livealone.global.entity.SocketMessageType.BROADCAST;
+
 import com.example.livealone.broadcast.dto.BroadcastRequestDto;
 import com.example.livealone.broadcast.dto.BroadcastResponseDto;
+import com.example.livealone.broadcast.dto.CreateBroadcastResponseDto;
 import com.example.livealone.broadcast.dto.StreamKeyResponseDto;
 import com.example.livealone.broadcast.dto.UserBroadcastResponseDto;
 import com.example.livealone.broadcast.entity.Broadcast;
@@ -18,6 +21,11 @@ import com.example.livealone.product.repository.ProductRepository;
 import com.example.livealone.user.entity.User;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
@@ -25,15 +33,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.socket.TextMessage;
-
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Locale;
-import java.util.Objects;
-import java.util.Optional;
-
-import static com.example.livealone.global.entity.SocketMessageType.BROADCAST;
 
 @Service
 @RequiredArgsConstructor
@@ -50,8 +49,9 @@ public class BroadcastService {
 
   private static final int PAGE_SIZE = 5;
 
-  public void createBroadcast(BroadcastRequestDto boardRequestDto, User user) {
 
+  public CreateBroadcastResponseDto createBroadcast(BroadcastRequestDto boardRequestDto, User user)
+      throws JsonProcessingException {
     BroadcastCode code = broadcastCodeRepository.findByCode(boardRequestDto.getCode()).orElseThrow(
         () -> new CustomException(messageSource.getMessage(
             "broadcast.code.not.found",
@@ -74,16 +74,19 @@ public class BroadcastService {
 
     Optional<Broadcast> optionalBroadcast = broadcastRepository.findByBroadcastCode(code);
 
-    broadcastRepository.save(optionalBroadcast.isPresent() ?
+    Broadcast broadcast = optionalBroadcast.isPresent() ?
         optionalBroadcast.get().updateBroadcast(boardRequestDto.getTitle(), user, product) :
-        BroadcastMapper.toBroadcast(boardRequestDto.getTitle(), user, product, code));
+        BroadcastMapper.toBroadcast(boardRequestDto.getTitle(), user, product, code);
 
+    Broadcast saveBroadcast = broadcastRepository.save(broadcast);
+
+    sendStreamKey(BroadcastMapper.toStreamKeyResponseDto(true, broadcast.getBroadcastCode().getCode()));
+
+    return BroadcastMapper.toCreateBroadcastResponseDto(saveBroadcast);
   }
 
   public List<UserBroadcastResponseDto> getBroadcast(int page, User user) {
-
     return broadcastRepository.findAllByUserId(user.getId(), page, PAGE_SIZE);
-
   }
 
   @Transactional(readOnly = true)
@@ -102,7 +105,7 @@ public class BroadcastService {
     return BroadcastMapper.toBroadcastResponseDto(broadcast, product);
   }
 
-  public void closeBroadcast(User user) {
+  public void closeBroadcast(User user) throws JsonProcessingException {
     Broadcast broadcast = broadcastRepository.findByBroadcastStatus(BroadcastStatus.ONAIR).orElseThrow(() ->
         new CustomException(messageSource.getMessage(
             "no.exit.current.broadcast",
@@ -122,6 +125,8 @@ public class BroadcastService {
     }
 
     broadcastRepository.save(broadcast.closeBroadcast());
+
+    sendStreamKey(BroadcastMapper.toStreamKeyResponseDto(false, ""));
   }
 
   private void isWithinBroadcastTime(LocalDateTime airTime, LocalDateTime now) {
@@ -143,28 +148,7 @@ public class BroadcastService {
     broadcastRepository.findByBroadcastStatus(BroadcastStatus.ONAIR)
         .ifPresent(broadcast -> broadcastRepository.save(broadcast.closeBroadcast()));
 
-    String messageJSON = objectMapper.writeValueAsString(broadcastCodeRepository
-        .findByAirTimeBetween(LocalDateTime.now().minusMinutes(1), LocalDateTime.now().plusMinutes(1))
-        .orElseThrow(() ->
-            new CustomException(messageSource.getMessage(
-                "current.broadcast.code.not.found",
-                null,
-                CustomException.DEFAULT_ERROR_MESSAGE,
-                Locale.getDefault()
-            ), HttpStatus.NOT_FOUND))
-        .getCode()
-    );
-    SocketMessageDto socketMessageDto = new SocketMessageDto(BROADCAST, "server", messageJSON);
-
-    String result = objectMapper.writeValueAsString(socketMessageDto);
-    TextMessage text = new TextMessage(result);
-
-    WebSocketHandler.getClients().forEach((key, value) -> {
-      try {
-        value.sendMessage(text);
-      } catch (IOException ignored) {
-      }
-    });
+    sendStreamKey(BroadcastMapper.toStreamKeyResponseDto(false, ""));
   }
 
   public Broadcast findByBroadcastId(Long broadcastId) {
@@ -186,16 +170,26 @@ public class BroadcastService {
   }
 
   public StreamKeyResponseDto getStreamKey() {
-    return BroadcastMapper.toStreamKeyResponseDto(broadcastCodeRepository
-        .findByAirTimeBetween(LocalDateTime.now().minusMinutes(60), LocalDateTime.now().plusMinutes(0))
-        .orElseThrow(() ->
-            new CustomException(messageSource.getMessage(
-                "current.broadcast.code.not.found",
-                null,
-                CustomException.DEFAULT_ERROR_MESSAGE,
-                Locale.getDefault()
-            ), HttpStatus.NOT_FOUND)
-        ).getCode()
-    );
+    Optional<Broadcast> broadcast = broadcastRepository.findByBroadcastStatus(BroadcastStatus.ONAIR);
+
+    if(broadcast.isPresent()) {
+      return BroadcastMapper.toStreamKeyResponseDto(true, broadcast.get().getBroadcastCode().getCode());
+    } else {
+      return BroadcastMapper.toStreamKeyResponseDto(false, "");
+    }
   }
+
+  public void requestStreamKey() throws JsonProcessingException {
+    sendStreamKey(getStreamKey());
+  }
+
+  protected void sendStreamKey(StreamKeyResponseDto responseDto) throws JsonProcessingException {
+    String messageJSON = objectMapper.writeValueAsString(responseDto);
+    SocketMessageDto socketMessageDto = new SocketMessageDto(BROADCAST, "server", messageJSON);
+
+    String result = objectMapper.writeValueAsString(socketMessageDto);
+    TextMessage text = new TextMessage(result);
+    WebSocketHandler.broadcast(text);
+  }
+
 }

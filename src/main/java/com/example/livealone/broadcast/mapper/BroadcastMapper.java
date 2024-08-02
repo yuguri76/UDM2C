@@ -1,13 +1,13 @@
 package com.example.livealone.broadcast.mapper;
 
 import com.example.livealone.broadcast.dto.BroadcastResponseDto;
+import com.example.livealone.broadcast.dto.CreateBroadcastResponseDto;
 import com.example.livealone.broadcast.dto.StreamKeyResponseDto;
 import com.example.livealone.broadcast.entity.Broadcast;
 import com.example.livealone.broadcast.entity.BroadcastCode;
 import com.example.livealone.broadcast.entity.BroadcastStatus;
 import com.example.livealone.product.entity.Product;
 import com.example.livealone.user.entity.User;
-import org.apache.kafka.common.protocol.types.Field.Str;
 
 public class BroadcastMapper {
 
@@ -32,10 +32,16 @@ public class BroadcastMapper {
         .build();
   }
 
-  public static StreamKeyResponseDto toStreamKeyResponseDto(String streamKey) {
+  public static StreamKeyResponseDto toStreamKeyResponseDto(Boolean isLive, String streamKey) {
     return StreamKeyResponseDto.builder()
+        .is_live(isLive)
         .stream_key(streamKey)
         .build();
   }
 
+  public static CreateBroadcastResponseDto toCreateBroadcastResponseDto(Broadcast broadcast) {
+    return CreateBroadcastResponseDto.builder()
+        .id(broadcast.getId())
+        .build();
+  }
 }
