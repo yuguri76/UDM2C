@@ -82,12 +82,12 @@ public class PaymentService {
 
 		HashMap<String, String> params = new HashMap<>();
 		params.put("cid", "TC0ONETIME");
-		params.put("partner_order_id", "2");
-		params.put("partner_user_id", "2");
-		params.put("item_name", "초코파이");
-		params.put("quantity", "1");
-		params.put("total_amount", "2200");
-		params.put("vat_amount", "200");
+		params.put("partner_order_id", String.valueOf(requestDto.getOrderId()));
+		params.put("partner_user_id", String.valueOf(requestDto.getUserId()));
+		params.put("item_name", requestDto.getItemName());
+		params.put("quantity", String.valueOf(requestDto.getOrderQuantity()));
+		params.put("total_amount", String.valueOf(requestDto.getAmount()));
+		params.put("vat_amount", "0");
 		params.put("tax_free_amount", "0");
 		params.put("approval_url", String.format("http://localhost:8080/payment/kakao/complete?order_id=%d&user_id=%d", 2, 2));
 		params.put("cancel_url", cancelUrl);
@@ -169,9 +169,17 @@ public class PaymentService {
 		headers.set("Authorization", "SECRET_KEY " + secretKey);
 		headers.set("Content-type", "application/json");
 
+		Payment payment = paymentRepository.findByOrder_Id(orderId);
+		if (payment == null) {
+			return PaymentResponseDto.builder()
+				.status("FAILED")
+				.message("Invalid order ID: " + orderId)
+				.build();
+		}
+
 		Map<String, String> params = new HashMap<>();
 		params.put("cid", cid);
-		params.put("tid", getTidByOrderId(orderId));
+		params.put("tid",  payment.getTid());
 		params.put("partner_order_id", orderId.toString());
 		params.put("partner_user_id", userId.toString());
 		params.put("pg_token", pgToken);
@@ -182,7 +190,6 @@ public class PaymentService {
 			ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, request, String.class);
 			JsonNode jsonNode = objectMapper.readTree(response.getBody());
 
-			Payment payment = paymentRepository.findByOrderId(orderId);
 			payment.updateStatus(PaymentStatus.COMPLETED);
 
 			return PaymentResponseDto.builder()
@@ -221,8 +228,8 @@ public class PaymentService {
 		Map<String, Object> params = new HashMap<>();
 		params.put("orderNo", requestDto.getOrderId().toString());
 		params.put("amount", requestDto.getAmount());
-		params.put("amountTaxFree", 0);
-		params.put("productDesc", "토스 티셔츠");
+		params.put("amountTaxFree", "0"); // requestDto에서 받아옴
+		params.put("productDesc", requestDto.getItemName()); // requestDto에서 받아옴
 		params.put("apiKey", tossClientKey);
 		params.put("autoExecute", true);
 		params.put("callbackVersion", "V2");
@@ -344,7 +351,7 @@ public class PaymentService {
 	 * @return tid
 	 */
 	private String getTidByOrderId(Long orderId) {
-		Payment payment = paymentRepository.findByOrderId(orderId);
+		Payment payment = paymentRepository.findByOrder_Id(orderId);
 		return payment.getTid();
 	}
 }
