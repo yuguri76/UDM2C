@@ -1,5 +1,6 @@
 package com.example.livealone.payment.controller;
 
+import com.example.livealone.global.config.URIConfig;
 import com.example.livealone.payment.dto.PaymentRequestDto;
 import com.example.livealone.payment.dto.PaymentResponseDto;
 import com.example.livealone.payment.service.PaymentService;
@@ -16,6 +17,7 @@ import org.springframework.web.servlet.view.RedirectView;
 public class PaymentController {
 
 	private final PaymentService paymentService;
+	private final URIConfig uriConfig;
 
 	/**
 	 * 카카오페이 결제 준비
@@ -64,9 +66,11 @@ public class PaymentController {
 		PaymentResponseDto response = paymentService.approveKakaoPayPayment(pgToken, orderId, userId);
 		RedirectView redirectView = new RedirectView();
 		if (response.getStatus().equals("FAILED")) {
-			redirectView.setUrl("http://localhost:3000/payment");
+			String url = "http://"+uriConfig.getServerHost()+":3000/payment";
+			redirectView.setUrl(url);
 		} else {
-			redirectView.setUrl("http://localhost:3000/completepayment");
+			String url = "http://"+uriConfig.getServerHost()+":3000/completepayment";
+			redirectView.setUrl(url);
 		}
 		return redirectView;
 	}

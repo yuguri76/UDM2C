@@ -105,5 +105,27 @@ toss:
     ret-cancel-url: /payment
     result-callback: /completePayment
 
+
 admin:
   code: ${ADMIN_CODE}
+
+uri:
+  back-server: ${SERVER_HOST}
+  front-server: ${FRONT_SERVER_HOST}
+  database: ${DATABASE_HOST}
+  kafka: ${KAFKA_HOST}
+
+payment:
+  kakao:
+    cid: ${KAKAO_CID}
+    secret-key: ${KAKAO_SECRET_KEY}
+    approval-url: http://${SERVER_HOST}:8080/payment/kakao/complete
+    cancel-url: http://${SERVER_HOST}:8080/payment
+    fail-url: http://${SERVER_HOST}:8080/payment
+  toss:
+    client-key: ${TOSS_CLIENT_KEY}
+    secret-key: ${TOSS_SECRET_KEY}
+    ret-url: http://${FRONT_SERVER_HOST}:3000/ORDER-CHECK?orderno=1
+    ret-cancel-url: http://${FRONT_SERVER_HOST}:3000/close
+    result-callback: http://${FRONT_SERVER_HOST}:3000/callback
+

@@ -3,6 +3,7 @@ package com.example.livealone.payment.service;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.example.livealone.global.config.URIConfig;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -38,34 +39,36 @@ public class PaymentService {
 	private final RestTemplate restTemplate;
 	private final ObjectMapper objectMapper;
 
-	@Value("TC0ONETIME")
+	private final URIConfig uriConfig;
+
+	@Value("${payment.kakao.cid}")
 	private String cid;
 
-	@Value("DEV1983009FCE70023372B535B4EB027DEB9824F")
+	@Value("${payment.kakao.secret-key}")
 	private String secretKey;
 
-	@Value("http://localhost:8080/payment/kakao/complete")
+	@Value("${payment.kakao.approval-url}")
 	private String approvalUrl;
 
-	@Value("http://localhost:8080/payment")
+	@Value("${payment.kakao.cancel-url}")
 	private String cancelUrl;
 
-	@Value("http://localhost:8080/payment")
+	@Value("${payment.kakao.fail-url}")
 	private String failUrl;
 
-	@Value("sk_test_w5lNQylNqa5lNQe013Nq")
+	@Value("${payment.toss.client-key}")
 	private String tossClientKey;
 
-	@Value("test_sk_jExPeJWYVQ1ekabzNRlxV49R5gvN")
+	@Value("${payment.toss.secret-key}")
 	private String tossSecretKey;
 
-	@Value("http://seoldarin.iptime.org:7956/ORDER-CHECK?orderno=1")
+	@Value("${payment.toss.ret-url}")
 	private String tossRetUrl;
 
-	@Value("http://seoldarin.iptime.org:7956/close")
+	@Value("${payment.toss.ret-cancel-url}")
 	private String tossRetCancelUrl;
 
-	@Value("http://seoldarin.iptime.org:7956/callback")
+	@Value("${payment.toss.result-callback}")
 	private String tossResultCallback;
 
 	public PaymentResponseDto createKakaoPayReady(PaymentRequestDto requestDto) {
@@ -90,7 +93,7 @@ public class PaymentService {
 		params.put("total_amount", String.valueOf(totalAmount));
 		params.put("vat_amount", "0");
 		params.put("tax_free_amount", "0");
-		params.put("approval_url", String.format("http://localhost:8080/payment/kakao/complete?order_id=%d&user_id=%d", requestDto.getOrderId(), requestDto.getUserId()));
+		params.put("approval_url", String.format("http://%s/payment/kakao/complete?order_id=%d&user_id=%d",uriConfig.getServerHost() ,requestDto.getOrderId(), requestDto.getUserId()));
 		params.put("cancel_url", cancelUrl);
 		params.put("fail_url", failUrl);
 
