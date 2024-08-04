@@ -24,6 +24,7 @@ import com.example.livealone.product.repository.ProductRepository;
 import com.example.livealone.user.entity.User;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -38,6 +39,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.socket.TextMessage;
+import org.springframework.web.socket.WebSocketSession;
 
 @Service
 @RequiredArgsConstructor
@@ -187,8 +189,16 @@ public class BroadcastService {
     }
   }
 
-  public void requestStreamKey() throws JsonProcessingException {
-    sendStreamKey(getStreamKey());
+  public void requestStreamKey(WebSocketSession session) {
+    try{
+      String messageJSON = objectMapper.writeValueAsString(getStreamKey());
+      SocketMessageDto socketMessageDto = new SocketMessageDto(BROADCAST, "server", messageJSON);
+
+      String result = objectMapper.writeValueAsString(socketMessageDto);
+      TextMessage text = new TextMessage(result);
+      session.sendMessage(text);
+    }catch (IOException ignored){
+    }
   }
 
   protected void sendStreamKey(StreamKeyResponseDto responseDto) throws JsonProcessingException {

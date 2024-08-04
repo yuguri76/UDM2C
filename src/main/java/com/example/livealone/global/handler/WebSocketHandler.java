@@ -109,7 +109,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
 
             }
             case BROADCAST -> {
-                broadcastService.requestStreamKey();
+                broadcastService.requestStreamKey(session);
             }
         }
     }
