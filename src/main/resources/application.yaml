@@ -27,7 +27,7 @@ spring:
 
   jackson:
     property-naming-strategy: SNAKE_CASE
-
+    time-zone: Asia/Seoul
 
   security:
     oauth2:
@@ -78,6 +78,7 @@ spring:
       bootstrap-servers: ${KAFKA_HOST}:9092
     consumer:
       bootstrap-servers: ${KAFKA_HOST}:9092
+
 jwt:
   key: ${JWT_SECRET_KEY}
   access-expire-time: ${ACCESS_EXPIRE_TIME}
@@ -104,3 +105,5 @@ toss:
     ret-cancel-url: /payment
     result-callback: /completePayment
 
+admin:
+  code: ${ADMIN_CODE}

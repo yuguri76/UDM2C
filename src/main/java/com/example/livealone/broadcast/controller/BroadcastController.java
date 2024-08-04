@@ -1,5 +1,7 @@
 package com.example.livealone.broadcast.controller;
 
+import com.example.livealone.broadcast.dto.BroadcastCodeRequestDto;
+import com.example.livealone.broadcast.dto.BroadcastCodeResponseDto;
 import com.example.livealone.broadcast.dto.BroadcastRequestDto;
 import com.example.livealone.broadcast.dto.BroadcastResponseDto;
 import com.example.livealone.broadcast.dto.CreateBroadcastResponseDto;
@@ -95,6 +97,17 @@ public class BroadcastController {
             HttpStatus.OK.value(),
             "스트림 키를 성공적으로 가져왔습니다.",
             broadcastService.getStreamKey())
+    );
+  }
+
+  @PostMapping("/broadcast/broadcastCode")
+  public ResponseEntity<CommonResponseDto<BroadcastCodeResponseDto>> createBroadcastCode(
+      @RequestBody BroadcastCodeRequestDto requestDto) {
+    return ResponseEntity.status(HttpStatus.OK).body(
+        new CommonResponseDto<>(
+            HttpStatus.OK.value(),
+            "방송 코드 생성 완료.",
+            broadcastService.createBroadcastCode(requestDto))
     );
   }
 

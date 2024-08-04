@@ -2,6 +2,8 @@ package com.example.livealone.broadcast.service;
 
 import static com.example.livealone.global.entity.SocketMessageType.BROADCAST;
 
+import com.example.livealone.broadcast.dto.BroadcastCodeRequestDto;
+import com.example.livealone.broadcast.dto.BroadcastCodeResponseDto;
 import com.example.livealone.broadcast.dto.BroadcastRequestDto;
 import com.example.livealone.broadcast.dto.BroadcastResponseDto;
 import com.example.livealone.broadcast.dto.CreateBroadcastResponseDto;
@@ -10,6 +12,7 @@ import com.example.livealone.broadcast.dto.UserBroadcastResponseDto;
 import com.example.livealone.broadcast.entity.Broadcast;
 import com.example.livealone.broadcast.entity.BroadcastCode;
 import com.example.livealone.broadcast.entity.BroadcastStatus;
+import com.example.livealone.broadcast.mapper.BroadcastCodeMapper;
 import com.example.livealone.broadcast.mapper.BroadcastMapper;
 import com.example.livealone.broadcast.repository.BroadcastCodeRepository;
 import com.example.livealone.broadcast.repository.BroadcastRepository;
@@ -22,11 +25,13 @@ import com.example.livealone.user.entity.User;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -49,6 +54,9 @@ public class BroadcastService {
 
   private static final int PAGE_SIZE = 5;
 
+  @Value("${admin.code}")
+  private String ADMIN_CODE;
+
 
   public CreateBroadcastResponseDto createBroadcast(BroadcastRequestDto boardRequestDto, User user)
       throws JsonProcessingException {
@@ -61,7 +69,7 @@ public class BroadcastService {
         ), HttpStatus.NOT_FOUND)
     );
 
-    isWithinBroadcastTime(code.getAirTime(), LocalDateTime.now());
+    isWithinBroadcastTime(code.getAirTime(), ZonedDateTime.now().toLocalDateTime());
 
     Product product = productRepository.findById(boardRequestDto.getProductId()).orElseThrow(
         () -> new CustomException(messageSource.getMessage(
@@ -192,4 +200,25 @@ public class BroadcastService {
     WebSocketHandler.broadcast(text);
   }
 
+  public BroadcastCodeResponseDto createBroadcastCode(BroadcastCodeRequestDto requestDto) {
+    if(requestDto.getAdmin().equals(ADMIN_CODE)) {
+      if(broadcastCodeRepository.findByAirTime(requestDto.getAirtime()).isPresent()) {
+        throw new CustomException(messageSource.getMessage(
+            "duplicate.broadcast.code",
+            null,
+            CustomException.DEFAULT_ERROR_MESSAGE,
+            Locale.getDefault()
+        ), HttpStatus.FORBIDDEN);
+      }
+      return BroadcastCodeMapper.toBroadcastResponseCodeDto(broadcastCodeRepository
+          .save(BroadcastCodeMapper.toBroadcastCode(requestDto)));
+    } else {
+      throw new CustomException(messageSource.getMessage(
+          "admin.code.not.match",
+          null,
+          CustomException.DEFAULT_ERROR_MESSAGE,
+          Locale.getDefault()
+      ), HttpStatus.FORBIDDEN);
+    }
+  }
 }
