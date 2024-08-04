@@ -10,4 +10,5 @@ public interface BroadcastCodeRepository extends JpaRepository<BroadcastCode, Lo
   Optional<BroadcastCode> findByCode(String code);
   Optional<BroadcastCode> findByAirTimeBetween(LocalDateTime airTime, LocalDateTime airTime2);
 
+  Optional<BroadcastCode> findByAirTime(LocalDateTime airtime);
 }
