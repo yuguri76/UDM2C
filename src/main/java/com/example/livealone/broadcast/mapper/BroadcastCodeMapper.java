@@ -9,7 +9,7 @@ public class BroadcastCodeMapper {
 
   public static BroadcastCode toBroadcastCode(BroadcastCodeRequestDto requestDto) {
     return BroadcastCode.builder()
-        .code(UUID.randomUUID().toString())
+        .code(UUID.randomUUID().toString().replaceAll("-", "").substring(0, 16))
         .airTime(requestDto.getAirtime())
         .build();
   }

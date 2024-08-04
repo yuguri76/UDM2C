@@ -60,6 +60,7 @@ public class WebSecurityConfig {
 		 		.requestMatchers("/auth/reissue").permitAll()
 		 		.requestMatchers( HttpMethod.GET,"/broadcast").permitAll()
 		 		.requestMatchers( HttpMethod.GET,"/product/**").permitAll()
+				.requestMatchers("/broadcast/broadcastCode").permitAll()
 		 		.anyRequest().authenticated());
 
 		http.exceptionHandling(e -> e
