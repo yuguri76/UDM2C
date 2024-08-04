@@ -2,6 +2,7 @@ package com.example.livealone.global.security.filter;
 
 import java.io.IOException;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
@@ -20,6 +21,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
+@Slf4j
 public class JwtAuthentication extends OncePerRequestFilter {
 
 	private final JwtService jwtService;
@@ -30,9 +32,10 @@ public class JwtAuthentication extends OncePerRequestFilter {
 		throws ServletException, IOException {
 
 		String token = jwtService.getToken(request);
-
+		log.info("token : {}",token);
 		if(token != null) {
 			if(jwtService.isValidToken(token, request)) {
+				log.info("validToken");
 				Claims claims = jwtService.getClaims(token);
 				setAuthentication(claims.getSubject());
 			}

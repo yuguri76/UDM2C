@@ -1,5 +1,6 @@
 package com.example.livealone.global.security.config;
 
+import com.example.livealone.global.config.URIConfig;
 import com.example.livealone.oauth2.handler.OAuth2AuthenticationSuccessHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,6 +29,7 @@ public class WebSecurityConfig {
 	private final UserDetailsServiceImpl userDetailsService;
 	private final AuthenticationEntryPointImpl authenticationEntryPointImpl;
 	private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
+	private final URIConfig uriConfig;
 
 	@Bean
 	public JwtAuthentication jwtAuthenticationFilter() {
@@ -61,7 +63,9 @@ public class WebSecurityConfig {
 		 		.requestMatchers( HttpMethod.GET,"/broadcast").permitAll()
 		 		.requestMatchers( HttpMethod.GET,"/product/**").permitAll()
 				.requestMatchers("/broadcast/broadcastCode").permitAll()
-		 		.anyRequest().authenticated());
+				.requestMatchers("/payment/**").permitAll()
+				.anyRequest().authenticated());
+
 
 		http.exceptionHandling(e -> e
 			.authenticationEntryPoint(authenticationEntryPointImpl));
