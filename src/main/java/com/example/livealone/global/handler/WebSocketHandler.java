@@ -69,7 +69,8 @@ public class WebSocketHandler extends TextWebSocketHandler {
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
         SocketMessageDto socketMessageDto = getMessageType(message.getPayload());
-        log.info("handleTextMessage :",message.getPayload());
+        log.info("handleTextMessage TYPE : {}}",socketMessageDto.getType());
+        log.info("handleTextMessage Message : {}", socketMessageDto.getMessage());
         String jsonMessage;
         switch (socketMessageDto.getType()) {
             case REQUEST_AUTH -> {
@@ -92,6 +93,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
                 }
             }
             case CHAT_MESSAGE -> {
+                log.info("Send Kafka : {}",message.getPayload());
                 jsonMessage = message.getPayload();
 
                 kafkaTemplate.send("chat", jsonMessage);
