@@ -31,7 +31,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
 		User user = ((UserDetailsImpl) authentication.getPrincipal()).getUser();
 
-		String url= String.format("http://$s:3000/oauth2/redirect", uriConfig.getServerHost());
+		String url= String.format("http://%s:3000/oauth2/redirect", uriConfig.getServerHost());
 		response.sendRedirect(UriComponentsBuilder.fromHttpUrl(url)
 				.queryParam("access", jwtService.generateToken(user))
 				.queryParam("refresh", authService.reissueRefreshToken(user))
