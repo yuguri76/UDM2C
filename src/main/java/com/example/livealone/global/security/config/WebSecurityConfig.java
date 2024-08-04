@@ -62,11 +62,6 @@ public class WebSecurityConfig {
 		 		.requestMatchers( HttpMethod.GET,"/product/**").permitAll()
 		 		.anyRequest().authenticated());
 
-		http.authorizeHttpRequests(request ->
-			request
-				.anyRequest().permitAll() // 모든 요청에 대해 인증을 요구하지 않음
-		);
-
 		http.exceptionHandling(e -> e
 			.authenticationEntryPoint(authenticationEntryPointImpl));
 
