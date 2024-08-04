@@ -86,10 +86,11 @@ public class PaymentService {
 		params.put("partner_user_id", String.valueOf(requestDto.getUserId()));
 		params.put("item_name", requestDto.getItemName());
 		params.put("quantity", String.valueOf(requestDto.getOrderQuantity()));
-		params.put("total_amount", String.valueOf(requestDto.getAmount()));
+		int totalAmount = requestDto.getAmount() * requestDto.getOrderQuantity();
+		params.put("total_amount", String.valueOf(totalAmount));
 		params.put("vat_amount", "0");
 		params.put("tax_free_amount", "0");
-		params.put("approval_url", String.format("http://localhost:8080/payment/kakao/complete?order_id=%d&user_id=%d", 2, 2));
+		params.put("approval_url", String.format("http://localhost:8080/payment/kakao/complete?order_id=%d&user_id=%d", requestDto.getOrderId(), requestDto.getUserId()));
 		params.put("cancel_url", cancelUrl);
 		params.put("fail_url", failUrl);
 
