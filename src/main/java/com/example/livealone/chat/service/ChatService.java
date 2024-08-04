@@ -61,6 +61,16 @@ public class ChatService {
         });
     }
 
+    public void responseDirectMessageToSocekt(WebSocketSession session, String jsonMessage) {
+        try{
+            TextMessage text = new TextMessage(jsonMessage);
+            session.sendMessage(text);
+        }catch (IOException e){
+            log.info(e.getMessage());
+            addErrorLogs(e.getMessage());
+        }
+    }
+
     public void writeInitMessage(WebSocketSession session) {
 
         try {
@@ -160,4 +170,5 @@ public class ChatService {
         saveErrorLogs();
         saveSessionLogs();
     }
+
 }
