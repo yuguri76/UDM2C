@@ -5,6 +5,7 @@ import com.example.livealone.payment.dto.PaymentRequestDto;
 import com.example.livealone.payment.dto.PaymentResponseDto;
 import com.example.livealone.payment.service.PaymentService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,7 +14,8 @@ import org.springframework.web.servlet.view.RedirectView;
 @RestController
 @RequestMapping("/payment")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://seoldarin.iptime.org:7956")
+@CrossOrigin(origins = "http://livealone.shop:3000")
+@Slf4j
 public class PaymentController {
 
 	private final PaymentService paymentService;
@@ -27,6 +29,7 @@ public class PaymentController {
 	 */
 	@PostMapping("/kakao/process")
 	public ResponseEntity<PaymentResponseDto> createKakaoPayReady(@RequestBody PaymentRequestDto requestDto) {
+		log.info("Get kakao API : {}",requestDto.getItemName());
 		PaymentResponseDto response = paymentService.createKakaoPayReady(requestDto);
 		if (response.getStatus().equals("FAILED")) {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
@@ -66,10 +69,10 @@ public class PaymentController {
 		PaymentResponseDto response = paymentService.approveKakaoPayPayment(pgToken, orderId, userId);
 		RedirectView redirectView = new RedirectView();
 		if (response.getStatus().equals("FAILED")) {
-			String url = "http://"+uriConfig.getServerHost()+":3000/payment";
+			String url = "http://livealone.shop:3000/payment";
 			redirectView.setUrl(url);
 		} else {
-			String url = "http://"+uriConfig.getServerHost()+":3000/completepayment";
+			String url = "http://livealone.shop:3000/completepayment";
 			redirectView.setUrl(url);
 		}
 		return redirectView;
@@ -132,9 +135,9 @@ public class PaymentController {
 		PaymentResponseDto response = paymentService.approveTossPayPayment(payToken);
 		RedirectView redirectView = new RedirectView();
 		if (response.getStatus().equals("FAILED")) {
-			redirectView.setUrl("http://seoldarin.iptime.org:7956/payment");
+			redirectView.setUrl("http://livealone.shop:3000/payment");
 		} else {
-			redirectView.setUrl("http://seoldarin.iptime.org:7956/completepayment");
+			redirectView.setUrl("http://livealone.shop:3000/completepayment");
 		}
 		return redirectView;
 	}

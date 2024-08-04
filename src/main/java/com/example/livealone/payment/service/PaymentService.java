@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.example.livealone.global.config.URIConfig;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -31,6 +32,7 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PaymentService {
 
 	private final PaymentRepository paymentRepository;
@@ -77,6 +79,8 @@ public class PaymentService {
 		// 인증완료 시 응답받은 pg_token과 tid로 최종 승인요청 -> online/v1/payment/approve
 
 		String url = "https://open-api.kakaopay.com/online/v1/payment/ready";
+
+		log.info("Create Kakao pay ready 진입 URI :{} ",url);
 
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
