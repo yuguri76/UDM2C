@@ -69,7 +69,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
         SocketMessageDto socketMessageDto = getMessageType(message.getPayload());
-
+        log.info("handleTextMessage :",message.getPayload());
         String jsonMessage;
         switch (socketMessageDto.getType()) {
             case REQUEST_AUTH -> {
