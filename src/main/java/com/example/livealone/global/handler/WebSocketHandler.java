@@ -69,12 +69,13 @@ public class WebSocketHandler extends TextWebSocketHandler {
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
         SocketMessageDto socketMessageDto = getMessageType(message.getPayload());
-
+        log.info("handleTextMessage :",message.getPayload());
         String jsonMessage;
         switch (socketMessageDto.getType()) {
             case REQUEST_AUTH -> {
                 jsonMessage = getAuthMessage(session, socketMessageDto);
-                kafkaTemplate.send("chat", jsonMessage);
+
+                chatService.responseDirectMessageToSocekt(session,jsonMessage);
             }
             case REQUEST_REFRESH -> {
                 try{
@@ -82,19 +83,22 @@ public class WebSocketHandler extends TextWebSocketHandler {
 
                     TokenResponseDto tokenResponseDto = authService.reissueAccessToken(new ReissueRequestDto(refresh));
                     jsonMessage = getRefreshMessage(socketMessageDto, tokenResponseDto);
-                    kafkaTemplate.send("chat", jsonMessage);
+
+                    chatService.responseDirectMessageToSocekt(session,jsonMessage);
                 }catch (CustomException e){
                     SocketMessageDto anonymousUserMessage = new SocketMessageDto(ANONYMOUS_USER, "back-server", e.getMessage());
                     jsonMessage = objectMapper.writeValueAsString(anonymousUserMessage);
-                    kafkaTemplate.send("chat",jsonMessage);
+                    chatService.responseDirectMessageToSocekt(session,jsonMessage);
                 }
             }
             case CHAT_MESSAGE -> {
                 jsonMessage = message.getPayload();
+
                 kafkaTemplate.send("chat", jsonMessage);
             }
             case REQUEST_CHAT_INIT -> {
                 // kafka로 메시지를 보내지 않고, 접속한 세션에게 바로 전송
+
                 chatService.writeInitMessage(session);
             }
             case ERROR -> {
