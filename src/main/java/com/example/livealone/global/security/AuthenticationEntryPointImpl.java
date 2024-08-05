@@ -23,9 +23,11 @@ public class AuthenticationEntryPointImpl implements AuthenticationEntryPoint {
 		log.info("인증 예외 처리");
 
 		boolean jwtError = request.getAttribute("error") != null;
-
+		log.info("jwtError : {}",jwtError);
 		String error = jwtError ? request.getAttribute("error").toString() : HttpStatus.UNAUTHORIZED.getReasonPhrase();
+		log.info("error : {}",error);
 		String message = jwtError ? error : "인증되지 않은 사용자입니다.";
+		log.info("error message : {}",message);
 
 		response.setStatus(HttpStatus.UNAUTHORIZED.value());
 		response.setContentType("application/json");

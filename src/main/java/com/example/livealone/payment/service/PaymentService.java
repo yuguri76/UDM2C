@@ -97,7 +97,10 @@ public class PaymentService {
 		params.put("total_amount", String.valueOf(totalAmount));
 		params.put("vat_amount", "0");
 		params.put("tax_free_amount", "0");
-		params.put("approval_url", String.format("http://%s/payment/kakao/complete?order_id=%d&user_id=%d",uriConfig.getServerHost() ,requestDto.getOrderId(), requestDto.getUserId()));
+		params.put("approval_url", String.format("http://%s:8080/payment/kakao/complete?order_id=%d&user_id=%d",
+				uriConfig.getServerHost() ,
+				requestDto.getOrderId(),
+				requestDto.getUserId()));
 		params.put("cancel_url", cancelUrl);
 		params.put("fail_url", failUrl);
 
@@ -172,6 +175,11 @@ public class PaymentService {
 	public PaymentResponseDto approveKakaoPayPayment(String pgToken, Long orderId, Long userId) {
 		String url = "https://open-api.kakaopay.com/online/v1/payment/approve";
 
+		log.info("Approve Kakao payment");
+		log.info("pgToken : {}",pgToken);
+		log.info("orderId : {}",orderId);
+		log.info("userID : {}",userId);
+
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 		headers.set("Authorization", "SECRET_KEY " + secretKey);
@@ -195,8 +203,11 @@ public class PaymentService {
 		HttpEntity<Map<String, String>> request = new HttpEntity<>(params, headers);
 
 		try {
+			log.info("Send Request");
 			ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, request, String.class);
 			JsonNode jsonNode = objectMapper.readTree(response.getBody());
+
+			log.info("jsonNode : {}",jsonNode);
 
 			payment.updateStatus(PaymentStatus.COMPLETED);
 
@@ -213,7 +224,7 @@ public class PaymentService {
 				.build();
 
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.info(e.getMessage());
 			return PaymentResponseDto.builder()
 				.status("FAILED")
 				.message("결제 승인 실패")

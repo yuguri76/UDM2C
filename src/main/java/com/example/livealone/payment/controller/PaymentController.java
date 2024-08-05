@@ -14,7 +14,7 @@ import org.springframework.web.servlet.view.RedirectView;
 @RestController
 @RequestMapping("/payment")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://livealone.shop:3000")
+@CrossOrigin(origins = {"http://livealone.shop:3000"})
 @Slf4j
 public class PaymentController {
 
@@ -47,6 +47,7 @@ public class PaymentController {
 	 */
 	@PostMapping("/kakao/approve")
 	public ResponseEntity<PaymentResponseDto> approveKakaoPayPayment(@RequestParam String pgToken, @RequestParam Long orderId, @RequestParam Long userId) {
+		log.info("Kakao apporve controller");
 		PaymentResponseDto response = paymentService.approveKakaoPayPayment(pgToken, orderId, userId);
 		if (response.getStatus().equals("FAILED")) {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
