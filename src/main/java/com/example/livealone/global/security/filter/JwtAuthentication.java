@@ -32,10 +32,10 @@ public class JwtAuthentication extends OncePerRequestFilter {
 		throws ServletException, IOException {
 
 		String token = jwtService.getToken(request);
-		log.info("token : {}",token);
+		log.debug("token : {}",token);
 		if(token != null) {
 			if(jwtService.isValidToken(token, request)) {
-				log.info("validToken");
+				log.debug("validToken");
 				Claims claims = jwtService.getClaims(token);
 				setAuthentication(claims.getSubject());
 			}

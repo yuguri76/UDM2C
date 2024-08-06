@@ -66,7 +66,7 @@ public class ChatService {
             TextMessage text = new TextMessage(jsonMessage);
             session.sendMessage(text);
         }catch (IOException e){
-            log.info(e.getMessage());
+            log.debug(e.getMessage());
             addErrorLogs(e.getMessage());
         }
     }
@@ -93,7 +93,7 @@ public class ChatService {
             session.sendMessage(text);
 
         } catch (IOException e) {
-            log.info(e.getMessage());
+            log.debug(e.getMessage());
             addErrorLogs(e.getMessage());
         }
     }
@@ -165,7 +165,7 @@ public class ChatService {
 
 
     public void flush() {
-        log.info("서버 종료 전 버퍼에 있는 데이터 저장");
+        log.debug("서버 종료 전 버퍼에 있는 데이터 저장");
         saveChatMessages();
         saveErrorLogs();
         saveSessionLogs();

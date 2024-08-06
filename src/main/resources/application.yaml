@@ -84,6 +84,9 @@ jwt:
   access-expire-time: ${ACCESS_EXPIRE_TIME}
   refresh-expire-time: ${REFRESH_EXPIRE_TIME}
 
+logging:
+  level:
+    root: ${LOGGING_LEVEL}
 
 server:
   port: 8080

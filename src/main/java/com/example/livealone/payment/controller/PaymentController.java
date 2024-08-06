@@ -32,7 +32,7 @@ public class PaymentController {
 	 */
 	@PostMapping("/payment/kakao/process")
 	public ResponseEntity<PaymentResponseDto> createKakaoPayReady(@RequestBody PaymentRequestDto requestDto) {
-		log.info("Get kakao API : {}",requestDto.getItemName());
+		log.debug("Get kakao API : {}",requestDto.getItemName());
 		PaymentResponseDto response = paymentService.createKakaoPayReady(requestDto);
 		if (response.getStatus().equals("FAILED")) {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
@@ -50,7 +50,7 @@ public class PaymentController {
 	 */
 	@PostMapping("/payment/kakao/approve")
 	public ResponseEntity<PaymentResponseDto> approveKakaoPayPayment(@RequestParam String pgToken, @RequestParam Long orderId, @RequestParam Long userId) {
-		log.info("Kakao apporve controller");
+		log.debug("Kakao apporve controller");
 		PaymentResponseDto response = paymentService.approveKakaoPayPayment(pgToken, orderId, userId);
 		if (response.getStatus().equals("FAILED")) {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
@@ -121,7 +121,7 @@ public class PaymentController {
 																   @RequestParam(required = false) String bankCode,
 																   @RequestParam(required = false) String cardCompany,
 																   HttpServletResponse response) throws IOException {
-		log.info("Ret url redirect");
+		log.debug("Ret url redirect");
 		String redirectUrl = paymentService.returnOrderCheckPage(orderno, status, orderNo, payMethod, bankCode, cardCompany);
 		response.sendRedirect(UriComponentsBuilder.fromHttpUrl(redirectUrl)
 				.build()
@@ -138,7 +138,7 @@ public class PaymentController {
 	 */
 	@PostMapping("/payment/toss/approve")
 	public ResponseEntity<PaymentResponseDto> approveTossPayPayment(@RequestParam String payToken) {
-		log.info("approveTossPayPayment");
+		log.debug("approveTossPayPayment");
 		PaymentResponseDto response = paymentService.approveTossPayPayment(payToken);
 		if (response.getStatus().equals("FAILED")) {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
@@ -158,7 +158,7 @@ public class PaymentController {
 	public RedirectView completeTossPayment(@RequestParam("payToken") String payToken,
 											@RequestParam("order_id") Long orderId,
 											@RequestParam("user_id") Long userId) {
-		log.info("completTossPayment");
+		log.debug("completTossPayment");
 		PaymentResponseDto response = paymentService.approveTossPayPayment(payToken);
 		RedirectView redirectView = new RedirectView();
 		if (response.getStatus().equals("FAILED")) {
