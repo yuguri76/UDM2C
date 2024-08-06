@@ -85,4 +85,8 @@ public class UserService {
             bucket.set(user, 30, TimeUnit.MINUTES);
         }
     }
+
+    public User saveUser(User user) {
+        return userRepository.save(user);
+    }
 }
