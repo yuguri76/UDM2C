@@ -64,6 +64,7 @@ public class WebSecurityConfig {
 		 		.requestMatchers( HttpMethod.GET,"/product/**").permitAll()
 				.requestMatchers("/broadcast/broadcastCode").permitAll()
 				.requestMatchers("/payment/**").permitAll()
+				.requestMatchers(HttpMethod.GET,"/ORDER-CHECK").permitAll()
 				.anyRequest().authenticated());
 
 
