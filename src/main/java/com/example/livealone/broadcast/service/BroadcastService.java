@@ -52,12 +52,15 @@ public class BroadcastService {
   private final ObjectMapper objectMapper;
   private final MessageSource messageSource;
 
-  private static final int BROADCAST_AFTER_STARTING = 60;
+  private static final int BROADCAST_AFTER_STARTING = 20;
 
   private static final int PAGE_SIZE = 5;
 
   @Value("${admin.code}")
   private String ADMIN_CODE;
+
+  @Value("${default.stream-key}")
+  private String DEFAULT_STREAM_KEY;
 
 
   public CreateBroadcastResponseDto createBroadcast(BroadcastRequestDto boardRequestDto, User user)
@@ -152,8 +155,9 @@ public class BroadcastService {
 
   /**
    * 매 정각마다 방송을 중단하고 스트림 키를 보내는 스케쥴러 입니다.
+   * 유저 테스트 용으로 0, 20, 40분에 실행 되도록 하였습니다.
    */
-  @Scheduled(cron = "0 0 * * * *")
+  @Scheduled(cron = "0 0,20,40 * * * *")
   public void forceCloseBroadcast() throws JsonProcessingException {
     broadcastRepository.findByBroadcastStatus(BroadcastStatus.ONAIR)
         .ifPresent(broadcast -> broadcastRepository.save(broadcast.closeBroadcast()));
@@ -185,7 +189,7 @@ public class BroadcastService {
     if(broadcast.isPresent()) {
       return BroadcastMapper.toStreamKeyResponseDto(true, broadcast.get().getBroadcastCode().getCode());
     } else {
-      return BroadcastMapper.toStreamKeyResponseDto(false, "");
+      return BroadcastMapper.toStreamKeyResponseDto(false, DEFAULT_STREAM_KEY);
     }
   }
 
