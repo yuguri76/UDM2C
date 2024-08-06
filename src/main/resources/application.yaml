@@ -108,6 +108,8 @@ toss:
 
 admin:
   code: ${ADMIN_CODE}
+default:
+  stream-key: ${DEFAULT_STREAM_KEY}
 
 uri:
   back-server: ${SERVER_HOST}
