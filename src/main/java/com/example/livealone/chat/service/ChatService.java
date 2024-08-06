@@ -144,21 +144,21 @@ public class ChatService {
 
     private synchronized void saveChatMessages() {
         if (!messageBuffer.isEmpty()) {
-            chatMessageRepository.saveAll(new LinkedList<>(messageBuffer));
+            chatMessageRepository.saveAll(new ArrayList<>(messageBuffer));
             messageBuffer.clear();
         }
     }
 
     private synchronized void saveErrorLogs() {
         if (!errorLogsBuffer.isEmpty()) {
-            chatErrorLogRepository.saveAll(new LinkedList<>(errorLogsBuffer));
+            chatErrorLogRepository.saveAll(new ArrayList<>(errorLogsBuffer));
             errorLogsBuffer.clear();
         }
     }
 
     private synchronized void saveSessionLogs() {
         if (!sessionLogsBuffer.isEmpty()) {
-            chatSessionLogRepository.saveAll(new LinkedList<>(sessionLogsBuffer));
+            chatSessionLogRepository.saveAll(new ArrayList<>(sessionLogsBuffer));
             sessionLogsBuffer.clear();
         }
     }

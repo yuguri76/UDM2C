@@ -1,5 +1,6 @@
 package com.example.livealone.payment.service;
 
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -29,6 +30,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.util.UriComponentsBuilder;
 
 @Service
 @RequiredArgsConstructor
@@ -170,7 +172,6 @@ public class PaymentService {
 	 * @param userId  사용자 ID
 	 * @return 결제 응답 DTO
 	 */
-
 	@Transactional
 	public PaymentResponseDto approveKakaoPayPayment(String pgToken, Long orderId, Long userId) {
 		String url = "https://open-api.kakaopay.com/online/v1/payment/approve";
@@ -241,27 +242,34 @@ public class PaymentService {
 	public PaymentResponseDto createTossPayReady(PaymentRequestDto requestDto) {
 		String url = "https://pay.toss.im/api/v2/payments";
 
+		log.info("Toss pay read : {}",url);
+
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_JSON);
 
 		Map<String, Object> params = new HashMap<>();
-		params.put("orderNo", requestDto.getOrderId().toString());
-		params.put("amount", requestDto.getAmount());
+		String createOrderNo = String.format("livealone:%d", requestDto.getOrderId())+ LocalDate.now();
+		params.put("orderNo", createOrderNo);
+		params.put("amount", requestDto.getAmount()*requestDto.getOrderQuantity());
 		params.put("amountTaxFree", "0"); // requestDto에서 받아옴
 		params.put("productDesc", requestDto.getItemName()); // requestDto에서 받아옴
 		params.put("apiKey", tossClientKey);
 		params.put("autoExecute", true);
 		params.put("callbackVersion", "V2");
 		params.put("resultCallback", tossResultCallback);
-		params.put("retUrl", tossRetUrl);
+		String createRetUrl = String.format("http://%s:8080/ORDER-CHECK?orderno=%s", uriConfig.getServerHost(),createOrderNo);
+		params.put("retUrl", createRetUrl);
 		params.put("retCancelUrl", tossRetCancelUrl);
+		log.info("request : {}",params);
 
 		HttpEntity<Map<String, Object>> request = new HttpEntity<>(params, headers);
 
 		try {
+			log.info("Send Request");
 			ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, request, String.class);
 
 			JsonNode jsonNode = objectMapper.readTree(response.getBody());
+			log.info("jsonNode : {}",jsonNode);
 
 			// 필드 존재 여부 체크
 			if (jsonNode.has("payToken") && jsonNode.has("checkoutPage")) {
@@ -321,6 +329,7 @@ public class PaymentService {
 	public PaymentResponseDto approveTossPayPayment(String payToken) {
 		String url = "https://pay.toss.im/api/v2/execute";
 
+		log.info("payToken : {}",payToken);
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_JSON);
 
@@ -372,5 +381,14 @@ public class PaymentService {
 	private String getTidByOrderId(Long orderId) {
 		Payment payment = paymentRepository.findByOrder_Id(orderId);
 		return payment.getTid();
+	}
+
+	public String returnOrderCheckPage(String orderno, String status, String orderNo, String payMethod, String bankCode, String cardCompany) {
+		log.info("orderno : {}",orderno);
+		log.info("status : {}",status);
+		log.info("paymeThod ; {}", payMethod);
+
+		String url = String.format("http://%s:3000/completepayment", uriConfig.getFrontServerHost());
+		return url;
 	}
 }
