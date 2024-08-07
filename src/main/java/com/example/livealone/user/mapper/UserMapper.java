@@ -14,6 +14,7 @@ public class UserMapper {
                 .nickName(entity.getNickname())
                 .birthDay(entity.getBirthDay())
                 .address(entity.getAddress())
+                .role(entity.getRole())
                 .build();
     }
 
