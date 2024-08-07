@@ -21,11 +21,9 @@ public class UserController {
 
     private final UserService userService;
 
-    @GetMapping()
-    public ResponseEntity<CommonResponseDto<UserInfoResponseDto>> getUserInfo(
-                                                                      @AuthenticationPrincipal UserDetailsImpl userDetails) {
-        User user = userDetails.getUser();
-        UserInfoResponseDto userInfoDto = userService.getUserInfo(user);
+    @GetMapping("/{userId}")
+    public ResponseEntity<CommonResponseDto<UserInfoResponseDto>> getUserInfo(@PathVariable Long userId) {
+        UserInfoResponseDto userInfoDto = userService.getUserInfo(userId);
         CommonResponseDto<UserInfoResponseDto> commonResponseDto = CommonResponseDto.<UserInfoResponseDto>builder()
                 .status(HttpStatus.OK.value())
                 .message("User data inquiry successfully")

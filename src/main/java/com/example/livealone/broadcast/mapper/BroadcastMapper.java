@@ -1,5 +1,6 @@
 package com.example.livealone.broadcast.mapper;
 
+import com.example.livealone.admin.dto.AdminBroadcastListResponseDto;
 import com.example.livealone.broadcast.dto.BroadcastResponseDto;
 import com.example.livealone.broadcast.dto.CreateBroadcastResponseDto;
 import com.example.livealone.broadcast.dto.StreamKeyResponseDto;
@@ -44,5 +45,14 @@ public class BroadcastMapper {
         return CreateBroadcastResponseDto.builder()
                 .id(broadcast.getId())
                 .build();
+    }
+
+    public static AdminBroadcastListResponseDto toAdminBroadcastListResponseDto(Broadcast broadcast) {
+        return AdminBroadcastListResponseDto.builder()
+            .id(broadcast.getId())
+            .title(broadcast.getTitle())
+            .streamer(broadcast.getStreamer().getUsername())
+            .date(broadcast.getCreatedAt().toLocalDate())
+            .build();
     }
 }
