@@ -2,21 +2,21 @@ package com.example.livealone.broadcast.service;
 
 import static com.example.livealone.global.entity.SocketMessageType.BROADCAST;
 
-import com.example.livealone.admin.dto.AdminBroadcastListResponseDto;
-import com.example.livealone.broadcast.dto.ReservationRequestDto;
-import com.example.livealone.broadcast.dto.BroadcastCodeResponseDto;
 import com.example.livealone.broadcast.dto.BroadcastRequestDto;
 import com.example.livealone.broadcast.dto.BroadcastResponseDto;
 import com.example.livealone.broadcast.dto.CreateBroadcastResponseDto;
+import com.example.livealone.broadcast.dto.ReservationRequestDto;
+import com.example.livealone.broadcast.dto.ReservationResponseDto;
 import com.example.livealone.broadcast.dto.StreamKeyResponseDto;
 import com.example.livealone.broadcast.dto.UserBroadcastResponseDto;
 import com.example.livealone.broadcast.entity.Broadcast;
 import com.example.livealone.broadcast.entity.BroadcastStatus;
 import com.example.livealone.broadcast.entity.Reservations;
-import com.example.livealone.broadcast.mapper.BroadcastCodeMapper;
 import com.example.livealone.broadcast.mapper.BroadcastMapper;
-import com.example.livealone.broadcast.repository.ReservationRepository;
+import com.example.livealone.broadcast.mapper.ReservationMapper;
 import com.example.livealone.broadcast.repository.BroadcastRepository;
+import com.example.livealone.broadcast.repository.ReservationRepository;
+import com.example.livealone.global.aop.DistributedLock;
 import com.example.livealone.global.dto.SocketMessageDto;
 import com.example.livealone.global.exception.CustomException;
 import com.example.livealone.global.handler.WebSocketHandler;
@@ -32,14 +32,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -178,16 +173,6 @@ public class BroadcastService {
     return broadcastRepository.save(broadcast);
   }
 
-  public StreamKeyResponseDto getStreamKey() {
-    Optional<Broadcast> broadcast = broadcastRepository.findByBroadcastStatus(BroadcastStatus.ONAIR);
-
-    if(broadcast.isPresent()) {
-      return BroadcastMapper.toStreamKeyResponseDto(true, broadcast.get().getReservation().getCode());
-    } else {
-      return BroadcastMapper.toStreamKeyResponseDto(false, DEFAULT_STREAM_KEY);
-    }
-  }
-
   public void requestStreamKey(WebSocketSession session) {
     try{
       String messageJSON = objectMapper.writeValueAsString(getStreamKey());
@@ -200,6 +185,31 @@ public class BroadcastService {
     }
   }
 
+  @DistributedLock(key = "'createReservation-' + #user.getId()")
+  public ReservationResponseDto createReservation(ReservationRequestDto requestDto, User user) {
+    if(reservationRepository.findByAirTime(requestDto.getAirtime()).isPresent()) {
+      throw new CustomException(messageSource.getMessage(
+          "already.occupied.reservation",
+          null,
+          CustomException.DEFAULT_ERROR_MESSAGE,
+          Locale.getDefault()
+      ), HttpStatus.FORBIDDEN);
+    }
+
+    return ReservationMapper.toReservationResponseCodeDto(reservationRepository
+        .save(ReservationMapper.toReservation(requestDto, user)));
+  }
+
+  private StreamKeyResponseDto getStreamKey() {
+    Optional<Broadcast> broadcast = broadcastRepository.findByBroadcastStatus(BroadcastStatus.ONAIR);
+
+    if(broadcast.isPresent()) {
+      return BroadcastMapper.toStreamKeyResponseDto(true, broadcast.get().getReservation().getCode());
+    } else {
+      return BroadcastMapper.toStreamKeyResponseDto(false, DEFAULT_STREAM_KEY);
+    }
+  }
+
   protected void sendStreamKey(StreamKeyResponseDto responseDto) throws JsonProcessingException {
     String messageJSON = objectMapper.writeValueAsString(responseDto);
     SocketMessageDto socketMessageDto = new SocketMessageDto(BROADCAST, "server", messageJSON);
@@ -208,20 +218,7 @@ public class BroadcastService {
     TextMessage text = new TextMessage(result);
     WebSocketHandler.broadcast(text);
   }
-
-  public BroadcastCodeResponseDto createReservation(ReservationRequestDto requestDto) {
-    if(reservationRepository.findByAirTime(requestDto.getAirtime()).isPresent()) {
-      throw new CustomException(messageSource.getMessage(
-          "duplicate.broadcast.code",
-          null,
-          CustomException.DEFAULT_ERROR_MESSAGE,
-          Locale.getDefault()
-      ), HttpStatus.FORBIDDEN);
-    }
-    return BroadcastCodeMapper.toBroadcastResponseCodeDto(reservationRepository
-        .save(BroadcastCodeMapper.toBroadcastCode(requestDto)));
-  }
-
+  
   public Page<AdminBroadcastListResponseDto> getAllBroadcastListPageable(int page, int size) {
     Pageable pageable = PageRequest.of(page, size);
     Page<Broadcast> broadcastPage = broadcastRepository.findAll(pageable);

@@ -11,3 +11,4 @@ public interface BroadcastRepository extends JpaRepository<Broadcast, Long>, Bro
 
   Optional<Broadcast> findByReservation(Reservations code);
 }
+

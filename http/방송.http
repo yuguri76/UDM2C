@@ -24,7 +24,11 @@ GET http://localhost:8080/broadcast
 Content-Type: application/json
 Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJjaGVhbWluNjMwNkBuYXZlci5jb20iLCJpZCI6MSwidXNlcm5hbWUiOiLquYDssYTrr7wiLCJuaWNrbmFtZSI6Iuq5gOyxhOuvvCIsImlhdCI6MTcyMjI0OTU1MCwiZXhwIjoxNzIyMjUwMTUwfQ.XDeWy8_3xIaxDtgDnUYfyoca1Qaa9hs3pi7_QokF_zk
 
-### 현재 시간 스트림 키 조회
-GET http://localhost:8080/broadcast/streamKey
+### 방송 예약 하기
+POST localhost:8080/broadcast/reservation
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJraHU0MjM3QGdtYWlsLmNvbSIsImlkIjozLCJ1c2VybmFtZSI6IuyekOuRkOunjOuRkCIsIm5pY2tuYW1lIjoi7J6Q65GQ66eM65GQIiwiaWF0IjoxNzIyNDIzNDI0LCJleHAiOjE3MjI0MjQwMjR9.Ed7g_XICg9Qw9noAYZ3ldjJ8rf11Rp2BaEFDbXNVmPo
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJraHU0MjM3QGdtYWlsLmNvbSIsImlkIjoxLCJ1c2VybmFtZSI6IuyekOuRkOunjOuRkCIsIm5pY2tuYW1lIjoi7J6Q65GQ66eM65GQIiwiaWF0IjoxNzIzMDIwODY2LCJleHAiOjE3MjMwMjE0NjZ9.ZWgtsYy58oyyCCEJaRAfiuzhSl91iCmVbDNvFQeduoI
+
+{
+  "airtime": "2024-08-08T14:00:00"
+}
