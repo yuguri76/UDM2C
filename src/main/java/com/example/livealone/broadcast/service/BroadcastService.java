@@ -5,6 +5,7 @@ import static com.example.livealone.global.entity.SocketMessageType.BROADCAST;
 import com.example.livealone.broadcast.dto.BroadcastRequestDto;
 import com.example.livealone.broadcast.dto.BroadcastResponseDto;
 import com.example.livealone.broadcast.dto.CreateBroadcastResponseDto;
+import com.example.livealone.broadcast.dto.ReservationStateResponseDto;
 import com.example.livealone.broadcast.dto.ReservationRequestDto;
 import com.example.livealone.broadcast.dto.ReservationResponseDto;
 import com.example.livealone.broadcast.dto.StreamKeyResponseDto;
@@ -26,8 +27,11 @@ import com.example.livealone.user.entity.User;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -217,5 +221,32 @@ public class BroadcastService {
     String result = objectMapper.writeValueAsString(socketMessageDto);
     TextMessage text = new TextMessage(result);
     WebSocketHandler.broadcast(text);
+  }
+
+  public List<ReservationStateResponseDto> getReservations(LocalDate date) {
+    List<Reservations> reservations = reservationRepository.findByAirTimeBetween(date.atStartOfDay(), date.atTime(LocalTime.MAX));
+
+    // 시간 남으면 Query DSL 사용하는 것도 생각 중.
+    List<LocalTime> reservedTimes = reservations.stream()
+        .map(reservation -> reservation.getAirTime().toLocalTime())
+        .toList();
+
+    List<ReservationStateResponseDto> responseDtoList = new ArrayList<>();
+
+    for(int hour = 0; hour < 24; hour++) {
+      for(int minute : new int[] {0, 20, 40}) {
+        LocalTime timeSlot = LocalTime.of(hour, minute);
+        boolean isReserved = reservedTimes.contains(timeSlot);
+
+        ReservationStateResponseDto dto = ReservationStateResponseDto.builder()
+            .time(timeSlot)
+            .isReserved(isReserved)
+            .build();
+
+        responseDtoList.add(dto);
+      }
+    }
+
+    return responseDtoList;
   }
 }

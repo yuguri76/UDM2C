@@ -3,6 +3,7 @@ package com.example.livealone.broadcast.controller;
 import com.example.livealone.broadcast.dto.BroadcastRequestDto;
 import com.example.livealone.broadcast.dto.BroadcastResponseDto;
 import com.example.livealone.broadcast.dto.CreateBroadcastResponseDto;
+import com.example.livealone.broadcast.dto.ReservationStateResponseDto;
 import com.example.livealone.broadcast.dto.ReservationRequestDto;
 import com.example.livealone.broadcast.dto.ReservationResponseDto;
 import com.example.livealone.broadcast.dto.UserBroadcastResponseDto;
@@ -12,6 +13,7 @@ import com.example.livealone.global.mail.MailService;
 import com.example.livealone.global.security.UserDetailsImpl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.validation.Valid;
+import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -106,6 +108,16 @@ public class BroadcastController {
             HttpStatus.OK.value(),
             "예약을 성공하였습니다.",
             null)
+    );
+  }
+
+  @GetMapping("/broadcast/reservations")
+  public ResponseEntity<CommonResponseDto<List<ReservationStateResponseDto>>> getReservations(@RequestParam LocalDate date) {
+    return ResponseEntity.status(HttpStatus.OK).body(
+        new CommonResponseDto<>(
+            HttpStatus.OK.value(),
+            "예약 목록 조회를 성공하였습니다.",
+            broadcastService.getReservations(date))
     );
   }
 
