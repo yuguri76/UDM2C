@@ -82,7 +82,7 @@ public class PaymentService {
 
 		String url = "https://open-api.kakaopay.com/online/v1/payment/ready";
 
-		log.info("Create Kakao pay ready 진입 URI :{} ",url);
+		log.debug("Create Kakao pay ready 진입 URI :{} ",url);
 
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
@@ -176,10 +176,10 @@ public class PaymentService {
 	public PaymentResponseDto approveKakaoPayPayment(String pgToken, Long orderId, Long userId) {
 		String url = "https://open-api.kakaopay.com/online/v1/payment/approve";
 
-		log.info("Approve Kakao payment");
-		log.info("pgToken : {}",pgToken);
-		log.info("orderId : {}",orderId);
-		log.info("userID : {}",userId);
+		log.debug("Approve Kakao payment");
+		log.debug("pgToken : {}",pgToken);
+		log.debug("orderId : {}",orderId);
+		log.debug("userID : {}",userId);
 
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
@@ -204,11 +204,11 @@ public class PaymentService {
 		HttpEntity<Map<String, String>> request = new HttpEntity<>(params, headers);
 
 		try {
-			log.info("Send Request");
+			log.debug("Send Request");
 			ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, request, String.class);
 			JsonNode jsonNode = objectMapper.readTree(response.getBody());
 
-			log.info("jsonNode : {}",jsonNode);
+			log.debug("jsonNode : {}",jsonNode);
 
 			payment.updateStatus(PaymentStatus.COMPLETED);
 
@@ -225,7 +225,7 @@ public class PaymentService {
 				.build();
 
 		} catch (Exception e) {
-			log.info(e.getMessage());
+			log.debug(e.getMessage());
 			return PaymentResponseDto.builder()
 				.status("FAILED")
 				.message("결제 승인 실패")
@@ -242,7 +242,7 @@ public class PaymentService {
 	public PaymentResponseDto createTossPayReady(PaymentRequestDto requestDto) {
 		String url = "https://pay.toss.im/api/v2/payments";
 
-		log.info("Toss pay read : {}",url);
+		log.debug("Toss pay read : {}",url);
 
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_JSON);
@@ -260,16 +260,16 @@ public class PaymentService {
 		String createRetUrl = String.format("http://%s:8080/ORDER-CHECK?orderno=%s", uriConfig.getServerHost(),createOrderNo);
 		params.put("retUrl", createRetUrl);
 		params.put("retCancelUrl", tossRetCancelUrl);
-		log.info("request : {}",params);
+		log.debug("request : {}",params);
 
 		HttpEntity<Map<String, Object>> request = new HttpEntity<>(params, headers);
 
 		try {
-			log.info("Send Request");
+			log.debug("Send Request");
 			ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, request, String.class);
 
 			JsonNode jsonNode = objectMapper.readTree(response.getBody());
-			log.info("jsonNode : {}",jsonNode);
+			log.debug("jsonNode : {}",jsonNode);
 
 			// 필드 존재 여부 체크
 			if (jsonNode.has("payToken") && jsonNode.has("checkoutPage")) {
@@ -329,7 +329,7 @@ public class PaymentService {
 	public PaymentResponseDto approveTossPayPayment(String payToken) {
 		String url = "https://pay.toss.im/api/v2/execute";
 
-		log.info("payToken : {}",payToken);
+		log.debug("payToken : {}",payToken);
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_JSON);
 
@@ -384,9 +384,9 @@ public class PaymentService {
 	}
 
 	public String returnOrderCheckPage(String orderno, String status, String orderNo, String payMethod, String bankCode, String cardCompany) {
-		log.info("orderno : {}",orderno);
-		log.info("status : {}",status);
-		log.info("paymeThod ; {}", payMethod);
+		log.debug("orderno : {}",orderno);
+		log.debug("status : {}",status);
+		log.debug("paymeThod ; {}", payMethod);
 
 		String url = String.format("http://%s:3000/completepayment", uriConfig.getFrontServerHost());
 		return url;
