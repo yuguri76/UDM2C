@@ -60,22 +60,13 @@ public class UserService {
     }
 
     public User findUserById(Long userId) {
-        RBucket<User> bucket = redissonClient.getBucket("User::" + userId);
-        if (bucket.get() != null) {
-            return bucket.get();
-        }
-
-        User user = userRepository.findById(userId).orElseThrow(
+        return userRepository.findById(userId).orElseThrow(
             () -> new CustomException(messageSource.getMessage(
                 "user.not.found",
                 null,
                 CustomException.DEFAULT_ERROR_MESSAGE,
                 Locale.getDefault()
             ), HttpStatus.NOT_FOUND));
-
-        bucket.set(user, 30, TimeUnit.MINUTES);
-
-        return user;
     }
 
     private void updateCache(User user) {
