@@ -2,6 +2,7 @@ package com.example.livealone.order.service;
 
 import com.example.livealone.broadcast.entity.Broadcast;
 import com.example.livealone.broadcast.service.BroadcastService;
+import com.example.livealone.global.aop.DistributedLock;
 import com.example.livealone.global.config.RedissonConfig;
 import com.example.livealone.global.exception.CustomException;
 import com.example.livealone.order.dto.OrderRequestDto;
@@ -36,97 +37,60 @@ public class OrderService {
 
     private final RedissonClient redissonClient;
 
+    @DistributedLock(key = "'createOrder-' + #user.getId()")
     public OrderResponseDto createOrder(Long productId, Long broadcastId, User user, OrderRequestDto orderRequestDto) {
 
-        RLock lock = redissonClient.getFairLock(RedissonConfig.LOCK_KEY);
+        Broadcast broadcast = broadcastService.findByBroadcastId(broadcastId);
+        Product product = productService.findByProductId(productId);
+        int orderQuantity = orderRequestDto.getQuantity();
 
-        try{
-            boolean isLocked = lock.tryLock(10, 60, TimeUnit.SECONDS);
-            if (isLocked) {
-                try {
-                    Broadcast broadcast = broadcastService.findByBroadcastId(broadcastId);
-                    Product product = productService.findByProductId(productId);
-                    int orderQuantity = orderRequestDto.getQuantity();
-
-                    if (product.getQuantity() < orderQuantity) {
-                        throw new CustomException(messageSource.getMessage(
-                                "no.exit.enough.product",
-                                null,
-                                CustomException.DEFAULT_ERROR_MESSAGE,
-                                Locale.getDefault()
-                        ), HttpStatus.NOT_FOUND);
-                    }
-
-                    product.decreaseStock(orderQuantity); //
-
-                    Order order = Order.builder()
-                            .user(user)
-                            .product(product)
-                            .quantity(orderQuantity)
-                            .orderStatus(OrderStatus.READY)
-                            .broadcast(broadcast)
-                            .build();
-
-                    productService.saveProduct(product);
-                    broadcastService.saveBroadcast(broadcast);
-                    Order curOder = orderRepository.save(order);
-
-                    return OrderResponseDto.builder().orderId(curOder.getId()).build();
-                } finally {
-                    lock.unlock();
-                }
-            }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
+        if (product.getQuantity() < orderQuantity) {
+            throw new CustomException(messageSource.getMessage(
+                    "no.exit.enough.product",
+                    null,
+                    CustomException.DEFAULT_ERROR_MESSAGE,
+                    Locale.getDefault()
+            ), HttpStatus.NOT_FOUND);
         }
 
-        throw new CustomException(messageSource.getMessage(
-                        "can.not.get.lock.key",
-                        null,
-                        CustomException.DEFAULT_ERROR_MESSAGE,
-                        Locale.getDefault()
-                ), HttpStatus.NOT_FOUND);
+        product.decreaseStock(orderQuantity);
+
+        Order order = Order.builder()
+                .user(user)
+                .product(product)
+                .quantity(orderQuantity)
+                .orderStatus(OrderStatus.READY)
+                .broadcast(broadcast)
+                .build();
+
+        productService.saveProduct(product);
+        broadcastService.saveBroadcast(broadcast);
+        Order curOder = orderRepository.save(order);
+
+        return OrderResponseDto.builder().orderId(curOder.getId()).build();
+
     }
 
+    @DistributedLock(key = "'checkStock-' + #productId")
     public void checkStock(Long productId) {
-        RLock lock = redissonClient.getFairLock(RedissonConfig.LOCK_KEY);
 
-        try{
-            boolean isLocked = lock.tryLock(10, 60, TimeUnit.SECONDS);
-            if (isLocked) {
-                try {
-                    Product product = productService.findByProductId(productId);
+        Product product = productService.findByProductId(productId);
 
-                    if (product.getQuantity() < 1) {
-                        throw new CustomException(messageSource.getMessage(
-                                "no.exit.enough.product",
-                                null,
-                                CustomException.DEFAULT_ERROR_MESSAGE,
-                                Locale.getDefault()
-                        ), HttpStatus.NOT_FOUND);
-                    }
-
-                    return;
-                } finally {
-                    lock.unlock();
-                }
-            }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
+        if (product.getQuantity() < 1) {
+            throw new CustomException(messageSource.getMessage(
+                    "no.exit.enough.product",
+                    null,
+                    CustomException.DEFAULT_ERROR_MESSAGE,
+                    Locale.getDefault()
+            ), HttpStatus.NOT_FOUND);
         }
-
-        throw new CustomException(messageSource.getMessage(
-                "can.not.get.lock.key",
-                null,
-                CustomException.DEFAULT_ERROR_MESSAGE,
-                Locale.getDefault()
-        ), HttpStatus.NOT_FOUND);
     }
 
     /**
      * 제한 시간 지났는지 확인 하는 메서드
      * @param user
      */
+    @DistributedLock(key = "'checkTimeExpired-' + #productId")
     public void checkTimeExpired(User user, Long productId) {
         Order order = orderRepository.findByUser(user).orElseThrow(
                 () -> new CustomException(messageSource.getMessage(
@@ -139,33 +103,13 @@ public class OrderService {
 
         long timeDifference = ChronoUnit.MINUTES.between(order.getCreatedAt(), LocalDateTime.now());
 
-        if(timeDifference >=10) {
-            RLock lock = redissonClient.getFairLock(RedissonConfig.LOCK_KEY);
+        if (timeDifference >= 10) {
 
-            try{
-                boolean isLocked = lock.tryLock(10, 60, TimeUnit.SECONDS);
-                if (isLocked) {
-                    try {
+            Product product = productService.findByProductId(productId);
+            product.rollbackStock(order.getQuantity());
+            productService.saveProduct(product);
+            orderRepository.delete(order);
 
-                        Product product = productService.findByProductId(productId);
-                        product.rollbackStock(order.getQuantity());
-                        productService.saveProduct(product);
-                        orderRepository.delete(order);
-
-                    } finally {
-                        lock.unlock();
-                    }
-                }
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-
-            throw new CustomException(messageSource.getMessage(
-                    "can.not.get.lock.key",
-                    null,
-                    CustomException.DEFAULT_ERROR_MESSAGE,
-                    Locale.getDefault()
-            ), HttpStatus.NOT_FOUND);
         }
     }
 
