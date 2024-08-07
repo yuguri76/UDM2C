@@ -1,5 +1,6 @@
 package com.example.livealone.user.service;
 
+import com.example.livealone.admin.dto.AdminUserListResponseDto;
 import com.example.livealone.global.exception.CustomException;
 import com.example.livealone.user.dto.UserAddressResponseDto;
 import com.example.livealone.user.dto.UserInfoRequestDto;
@@ -8,12 +9,18 @@ import com.example.livealone.user.entity.User;
 import com.example.livealone.user.mapper.UserMapper;
 import com.example.livealone.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
+import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;
 import org.springframework.context.MessageSource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 

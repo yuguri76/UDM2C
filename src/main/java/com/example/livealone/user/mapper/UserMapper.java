@@ -1,5 +1,6 @@
 package com.example.livealone.user.mapper;
 
+import com.example.livealone.admin.dto.AdminUserListResponseDto;
 import com.example.livealone.user.dto.UserAddressResponseDto;
 import com.example.livealone.user.dto.UserInfoResponseDto;
 import com.example.livealone.user.entity.User;
