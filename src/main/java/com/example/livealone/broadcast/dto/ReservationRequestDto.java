@@ -1,11 +1,11 @@
 package com.example.livealone.broadcast.dto;
 
 import java.time.LocalDateTime;
-import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
-@Builder
+@NoArgsConstructor
 public class ReservationRequestDto {
   private LocalDateTime airtime;
 }
