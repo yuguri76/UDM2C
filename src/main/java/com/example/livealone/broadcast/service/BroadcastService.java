@@ -2,7 +2,7 @@ package com.example.livealone.broadcast.service;
 
 import static com.example.livealone.global.entity.SocketMessageType.BROADCAST;
 
-import com.example.livealone.broadcast.dto.BroadcastCodeRequestDto;
+import com.example.livealone.broadcast.dto.ReservationRequestDto;
 import com.example.livealone.broadcast.dto.BroadcastCodeResponseDto;
 import com.example.livealone.broadcast.dto.BroadcastRequestDto;
 import com.example.livealone.broadcast.dto.BroadcastResponseDto;
@@ -10,11 +10,11 @@ import com.example.livealone.broadcast.dto.CreateBroadcastResponseDto;
 import com.example.livealone.broadcast.dto.StreamKeyResponseDto;
 import com.example.livealone.broadcast.dto.UserBroadcastResponseDto;
 import com.example.livealone.broadcast.entity.Broadcast;
-import com.example.livealone.broadcast.entity.BroadcastCode;
 import com.example.livealone.broadcast.entity.BroadcastStatus;
+import com.example.livealone.broadcast.entity.Reservations;
 import com.example.livealone.broadcast.mapper.BroadcastCodeMapper;
 import com.example.livealone.broadcast.mapper.BroadcastMapper;
-import com.example.livealone.broadcast.repository.BroadcastCodeRepository;
+import com.example.livealone.broadcast.repository.ReservationRepository;
 import com.example.livealone.broadcast.repository.BroadcastRepository;
 import com.example.livealone.global.dto.SocketMessageDto;
 import com.example.livealone.global.exception.CustomException;
@@ -46,7 +46,7 @@ import org.springframework.web.socket.WebSocketSession;
 public class BroadcastService {
 
   private final BroadcastRepository broadcastRepository;
-  private final BroadcastCodeRepository broadcastCodeRepository;
+  private final ReservationRepository reservationRepository;
   private final ProductRepository productRepository;
 
   private final ObjectMapper objectMapper;
@@ -56,25 +56,25 @@ public class BroadcastService {
 
   private static final int PAGE_SIZE = 5;
 
-  @Value("${admin.code}")
-  private String ADMIN_CODE;
-
   @Value("${default.stream-key}")
   private String DEFAULT_STREAM_KEY;
 
 
   public CreateBroadcastResponseDto createBroadcast(BroadcastRequestDto boardRequestDto, User user)
       throws JsonProcessingException {
-    BroadcastCode code = broadcastCodeRepository.findByCode(boardRequestDto.getCode()).orElseThrow(
-        () -> new CustomException(messageSource.getMessage(
-            "broadcast.code.not.found",
-            null,
-            CustomException.DEFAULT_ERROR_MESSAGE,
-            Locale.getDefault()
-        ), HttpStatus.NOT_FOUND)
-    );
 
-    isWithinBroadcastTime(code.getAirTime(), ZonedDateTime.now().toLocalDateTime());
+    LocalDateTime now = ZonedDateTime.now().toLocalDateTime();
+
+    Reservations reservations = reservationRepository
+        .findByAirTimeBetweenAndStreamer(now.minusMinutes(BROADCAST_AFTER_STARTING), now, user)
+        .orElseThrow(
+            () -> new CustomException(messageSource.getMessage(
+                "reservation.not.found",
+                null,
+                CustomException.DEFAULT_ERROR_MESSAGE,
+                Locale.getDefault()
+            ), HttpStatus.NOT_FOUND)
+        );
 
     Product product = productRepository.findById(boardRequestDto.getProductId()).orElseThrow(
         () -> new CustomException(messageSource.getMessage(
@@ -85,15 +85,15 @@ public class BroadcastService {
         ), HttpStatus.NOT_FOUND)
     );
 
-    Optional<Broadcast> optionalBroadcast = broadcastRepository.findByBroadcastCode(code);
+    Optional<Broadcast> optionalBroadcast = broadcastRepository.findByReservation(reservations);
 
     Broadcast broadcast = optionalBroadcast.isPresent() ?
         optionalBroadcast.get().updateBroadcast(boardRequestDto.getTitle(), user, product) :
-        BroadcastMapper.toBroadcast(boardRequestDto.getTitle(), user, product, code);
+        BroadcastMapper.toBroadcast(boardRequestDto.getTitle(), user, product, reservations);
 
     Broadcast saveBroadcast = broadcastRepository.save(broadcast);
 
-    sendStreamKey(BroadcastMapper.toStreamKeyResponseDto(true, broadcast.getBroadcastCode().getCode()));
+    sendStreamKey(BroadcastMapper.toStreamKeyResponseDto(true, broadcast.getReservation().getCode()));
 
     return BroadcastMapper.toCreateBroadcastResponseDto(saveBroadcast);
   }
@@ -142,17 +142,6 @@ public class BroadcastService {
     sendStreamKey(BroadcastMapper.toStreamKeyResponseDto(false, ""));
   }
 
-  private void isWithinBroadcastTime(LocalDateTime airTime, LocalDateTime now) {
-    if(now.isAfter(airTime.plusMinutes(BROADCAST_AFTER_STARTING)) || now.isBefore(airTime)) {
-      throw new CustomException(messageSource.getMessage(
-          "not.air.time",
-          null,
-          CustomException.DEFAULT_ERROR_MESSAGE,
-          Locale.getDefault()
-      ), HttpStatus.FORBIDDEN);
-    }
-  }
-
   /**
    * 매 정각마다 방송을 중단하고 스트림 키를 보내는 스케쥴러 입니다.
    * 유저 테스트 용으로 0, 20, 40분에 실행 되도록 하였습니다.
@@ -187,7 +176,7 @@ public class BroadcastService {
     Optional<Broadcast> broadcast = broadcastRepository.findByBroadcastStatus(BroadcastStatus.ONAIR);
 
     if(broadcast.isPresent()) {
-      return BroadcastMapper.toStreamKeyResponseDto(true, broadcast.get().getBroadcastCode().getCode());
+      return BroadcastMapper.toStreamKeyResponseDto(true, broadcast.get().getReservation().getCode());
     } else {
       return BroadcastMapper.toStreamKeyResponseDto(false, DEFAULT_STREAM_KEY);
     }
@@ -214,25 +203,16 @@ public class BroadcastService {
     WebSocketHandler.broadcast(text);
   }
 
-  public BroadcastCodeResponseDto createBroadcastCode(BroadcastCodeRequestDto requestDto) {
-    if(requestDto.getAdmin().equals(ADMIN_CODE)) {
-      if(broadcastCodeRepository.findByAirTime(requestDto.getAirtime()).isPresent()) {
-        throw new CustomException(messageSource.getMessage(
-            "duplicate.broadcast.code",
-            null,
-            CustomException.DEFAULT_ERROR_MESSAGE,
-            Locale.getDefault()
-        ), HttpStatus.FORBIDDEN);
-      }
-      return BroadcastCodeMapper.toBroadcastResponseCodeDto(broadcastCodeRepository
-          .save(BroadcastCodeMapper.toBroadcastCode(requestDto)));
-    } else {
+  public BroadcastCodeResponseDto createReservation(ReservationRequestDto requestDto) {
+    if(reservationRepository.findByAirTime(requestDto.getAirtime()).isPresent()) {
       throw new CustomException(messageSource.getMessage(
-          "admin.code.not.match",
+          "duplicate.broadcast.code",
           null,
           CustomException.DEFAULT_ERROR_MESSAGE,
           Locale.getDefault()
       ), HttpStatus.FORBIDDEN);
     }
+    return BroadcastCodeMapper.toBroadcastResponseCodeDto(reservationRepository
+        .save(BroadcastCodeMapper.toBroadcastCode(requestDto)));
   }
 }

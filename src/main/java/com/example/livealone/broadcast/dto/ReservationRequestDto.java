@@ -6,7 +6,6 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class BroadcastCodeRequestDto {
-  private String admin;
+public class ReservationRequestDto {
   private LocalDateTime airtime;
 }
