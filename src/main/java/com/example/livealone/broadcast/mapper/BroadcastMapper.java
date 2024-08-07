@@ -4,21 +4,20 @@ import com.example.livealone.broadcast.dto.BroadcastResponseDto;
 import com.example.livealone.broadcast.dto.CreateBroadcastResponseDto;
 import com.example.livealone.broadcast.dto.StreamKeyResponseDto;
 import com.example.livealone.broadcast.entity.Broadcast;
-import com.example.livealone.broadcast.entity.BroadcastCode;
+import com.example.livealone.broadcast.entity.Reservations;
 import com.example.livealone.broadcast.entity.BroadcastStatus;
 import com.example.livealone.product.entity.Product;
 import com.example.livealone.user.entity.User;
 
 public class BroadcastMapper {
 
-    public static Broadcast toBroadcast(String title, User streamer, Product product, BroadcastCode broadcastCode) {
+    public static Broadcast toBroadcast(String title, User streamer, Product product, Reservations reservation) {
         return Broadcast.builder()
                 .title(title)
                 .broadcastStatus(BroadcastStatus.ONAIR)
-                .broadcastCode(broadcastCode)
+                .reservation(reservation)
                 .streamer(streamer)
                 .product(product)
-                .broadcastCode(broadcastCode)
                 .build();
     }
 

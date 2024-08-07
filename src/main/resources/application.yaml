@@ -111,6 +111,7 @@ toss:
 
 admin:
   code: ${ADMIN_CODE}
+  token: ${ADMIN_TOKEN}
 default:
   stream-key: ${DEFAULT_STREAM_KEY}
 

@@ -27,7 +27,7 @@ public class BroadcastRepositoryQueryImpl implements BroadcastRepositoryQuery {
           broadcast.title,
           broadcast.broadcastStatus,
           broadcast.product.name,
-          broadcast.broadcastCode.airTime
+          broadcast.reservation.airTime
         ))
         .from(broadcast)
         .where(broadcast.streamer.id.eq(userId))

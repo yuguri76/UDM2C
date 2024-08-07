@@ -1,6 +1,6 @@
 package com.example.livealone.broadcast.controller;
 
-import com.example.livealone.broadcast.dto.BroadcastCodeRequestDto;
+import com.example.livealone.broadcast.dto.ReservationRequestDto;
 import com.example.livealone.broadcast.dto.BroadcastCodeResponseDto;
 import com.example.livealone.broadcast.dto.BroadcastRequestDto;
 import com.example.livealone.broadcast.dto.BroadcastResponseDto;
@@ -100,14 +100,14 @@ public class BroadcastController {
     );
   }
 
-  @PostMapping("/broadcast/broadcastCode")
-  public ResponseEntity<CommonResponseDto<BroadcastCodeResponseDto>> createBroadcastCode(
-      @RequestBody BroadcastCodeRequestDto requestDto) {
+  @PostMapping("/reservation")
+  public ResponseEntity<CommonResponseDto<BroadcastCodeResponseDto>> createReservation(
+      @RequestBody ReservationRequestDto requestDto) {
     return ResponseEntity.status(HttpStatus.OK).body(
         new CommonResponseDto<>(
             HttpStatus.OK.value(),
-            "방송 코드 생성 완료.",
-            broadcastService.createBroadcastCode(requestDto))
+            "예약 완료.",
+            broadcastService.createReservation(requestDto))
     );
   }
 
