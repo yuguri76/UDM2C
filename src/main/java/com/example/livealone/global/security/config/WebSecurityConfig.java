@@ -53,20 +53,10 @@ public class WebSecurityConfig {
 
 		http.sessionManagement(configurer -> configurer.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
-		 http.authorizeHttpRequests(request ->
-		 	request
-		 		.requestMatchers("/ws").permitAll()
-		 		.requestMatchers("/auth/kakao/login").permitAll()
-		 		.requestMatchers("/auth/naver/login").permitAll()
-		 		.requestMatchers("/auth/google/login").permitAll()
-		 		.requestMatchers("/auth/reissue").permitAll()
-		 		.requestMatchers( HttpMethod.GET,"/broadcast").permitAll()
-		 		.requestMatchers( HttpMethod.GET,"/broadcast/**").permitAll()
-		 		.requestMatchers( HttpMethod.GET,"/product/**").permitAll()
-				.requestMatchers("/broadcast/broadcastCode").permitAll()
-				.requestMatchers("/payment/**").permitAll()
-				.requestMatchers(HttpMethod.GET,"/ORDER-CHECK").permitAll()
-				.anyRequest().authenticated());
+		http.authorizeHttpRequests(request ->
+			request
+				.anyRequest().permitAll()
+		);
 
 
 		http.exceptionHandling(e -> e

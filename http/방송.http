@@ -27,10 +27,10 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJjaGVhbWluNjMwNkBuYXZlci5jb
 ### 방송 예약 하기
 POST ec2-3-36-126-237.ap-northeast-2.compute.amazonaws.com:8080/broadcast/reservation
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqOTk3NkBuYXZlci5jb20iLCJpZCI6MywidXNlcm5hbWUiOiLqt5zrpqwiLCJuaWNrbmFtZSI6Iuq3nOumrCIsImlhdCI6MTcyMzExNDE0MCwiZXhwIjoxNzIzMTM1NzQwfQ.NAg4uVhpcUkwFpSFJTsrJqFfcAxMMPYzhsXlt5C4baQ
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqOTk3NkBuYXZlci5jb20iLCJpZCI6MywidXNlcm5hbWUiOiLqt5zrpqwiLCJuaWNrbmFtZSI6Iuq3nOumrCIsImlhdCI6MTcyMzEzMzc5NSwiZXhwIjoxNzIzMTU1Mzk1fQ.kBZh8CmIxE_dnPWdxOHhObT4WfqDy0tQroBsKI_z8UY
 
 {
-  "airtime": "2024-08-08T20:00:00"
+  "airtime": "2024-08-09T03:40:00"
 }
 
 ### 특정 일자 예약 상황 조회

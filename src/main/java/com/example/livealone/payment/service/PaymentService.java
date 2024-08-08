@@ -259,7 +259,7 @@ public class PaymentService {
 		headers.setContentType(MediaType.APPLICATION_JSON);
 
 		Map<String, Object> params = new HashMap<>();
-		String createOrderNo = String.format("livealone:%d", requestDto.getOrderId()) + LocalDate.now();
+		String createOrderNo = String.format("livealone:%d", requestDto.getOrderId()) + ":" + LocalDate.now();
 		params.put("orderNo", createOrderNo);
 		params.put("amount", requestDto.getAmount() * requestDto.getOrderQuantity());
 		params.put("amountTaxFree", "0"); // requestDto에서 받아옴
@@ -333,67 +333,73 @@ public class PaymentService {
 		}
 	}
 
-	/**
-	 * 토스페이 결제 승인
-	 *
-	 * @param payToken 결제 고유 토큰
-	 * @return 결제 응답 DTO
-	 */
+	// /**
+	//  * 토스페이 결제 승인
+	//  *
+	//  * @param payToken 결제 고유 토큰
+	//  * @return 결제 응답 DTO
+	//  */
+	// @Transactional
+	// public PaymentResponseDto approveTossPayPayment(String payToken) {
+	// 	String url = "https://pay.toss.im/api/v2/execute";
+	//
+	// 	log.debug("payToken : {}", payToken);
+	// 	HttpHeaders headers = new HttpHeaders();
+	// 	headers.setContentType(MediaType.APPLICATION_JSON);
+	//
+	// 	Map<String, String> params = new HashMap<>();
+	// 	params.put("apiKey", tossSecretKey);
+	// 	params.put("payToken", payToken);
+	//
+	// 	HttpEntity<Map<String, String>> request = new HttpEntity<>(params, headers);
+	//
+	// 	try {
+	// 		ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, request, String.class);
+	// 		JsonNode jsonNode = objectMapper.readTree(response.getBody());
+	//
+	// 		Payment payment = paymentRepository.findByTid(payToken);
+	// 		if (payment == null) {
+	// 			throw new IllegalArgumentException("Invalid payToken: " + payToken);
+	// 		}
+	//
+	// 		payment.updateStatus(PaymentStatus.COMPLETED);
+	//
+	// 		return PaymentResponseDto.builder()
+	// 			.status("COMPLETED")
+	// 			.message("결제 완료")
+	// 			.paymentId(payment.getId())
+	// 			.userId(payment.getUser().getId())
+	// 			.orderId(payment.getOrder().getId())
+	// 			.amount(payment.getAmount())
+	// 			.paymentMethod(payment.getPaymentMethod().name())
+	// 			.createdAt(payment.getCreatedAt().toString())
+	// 			.updateAt(jsonNode.get("approved_at").asText())
+	// 			.build();
+	//
+	// 	} catch (Exception e) {
+	// 		e.printStackTrace();
+	// 		return PaymentResponseDto.builder()
+	// 			.status("FAILED")
+	// 			.message("결제 승인 실패")
+	// 			.build();
+	// 	}
+	// }
+
 	@Transactional
-	public PaymentResponseDto approveTossPayPayment(String payToken) {
-		String url = "https://pay.toss.im/api/v2/execute";
+	public void rollbackAndDeleteOrder(Long orderId) {
+		Order order = orderRepository.findById(orderId)
+			.orElseThrow(() -> new IllegalArgumentException("Invalid order ID: " + orderId));
+		Product product = order.getProduct();
 
-		log.debug("payToken : {}", payToken);
-		HttpHeaders headers = new HttpHeaders();
-		headers.setContentType(MediaType.APPLICATION_JSON);
-
-		Map<String, String> params = new HashMap<>();
-		params.put("apiKey", tossSecretKey);
-		params.put("payToken", payToken);
-
-		HttpEntity<Map<String, String>> request = new HttpEntity<>(params, headers);
-
-		try {
-			ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, request, String.class);
-			JsonNode jsonNode = objectMapper.readTree(response.getBody());
-
-			Payment payment = paymentRepository.findByTid(payToken);
-			if (payment == null) {
-				throw new IllegalArgumentException("Invalid payToken: " + payToken);
-			}
-
-			payment.updateStatus(PaymentStatus.COMPLETED);
-
-			return PaymentResponseDto.builder()
-				.status("COMPLETED")
-				.message("결제 완료")
-				.paymentId(payment.getId())
-				.userId(payment.getUser().getId())
-				.orderId(payment.getOrder().getId())
-				.amount(payment.getAmount())
-				.paymentMethod(payment.getPaymentMethod().name())
-				.createdAt(payment.getCreatedAt().toString())
-				.updateAt(jsonNode.get("approved_at").asText())
-				.build();
-
-		} catch (Exception e) {
-			e.printStackTrace();
-			return PaymentResponseDto.builder()
-				.status("FAILED")
-				.message("결제 승인 실패")
-				.build();
-		}
-	}
-
-	/**
-	 * 주문 ID로 tid 조회
-	 *
-	 * @param orderId 주문 ID
-	 * @return tid
-	 */
-	private String getTidByOrderId(Long orderId) {
 		Payment payment = paymentRepository.findByOrder_Id(orderId);
-		return payment.getTid();
+
+		// 재고 롤백
+		product.rollbackStock(order.getQuantity());
+		productService.saveProduct(product);
+
+		// 주문 삭제
+		paymentRepository.delete(payment);
+		orderRepository.delete(order);
 	}
 
 	/**
@@ -424,7 +430,9 @@ public class PaymentService {
 		log.debug("paymeThod ; {}", payMethod);
 
 		// 결제 상태 업데이트 로직 추가
-		Payment payment = paymentRepository.findByTid(orderno);
+		String[] tokens = orderno.split(":");
+		Long orderId = Long.parseLong(tokens[1]);
+		Payment payment = paymentRepository.findByOrder_Id(orderId);
 		if (payment == null) {
 			throw new IllegalArgumentException("Invalid orderno: " + orderno);
 		}
