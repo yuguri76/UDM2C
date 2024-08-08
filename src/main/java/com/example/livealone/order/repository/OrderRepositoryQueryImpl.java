@@ -7,33 +7,31 @@ import com.example.livealone.user.entity.QUser;
 import com.example.livealone.user.entity.User;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
-
-import java.util.List;
 
 @Repository
 @RequiredArgsConstructor
 public class OrderRepositoryQueryImpl implements OrderRepositoryQuery {
 
-  private final JPAQueryFactory jpaQueryFactory;
+    private final JPAQueryFactory jpaQueryFactory;
 
-  @Override
-  public Long sumQuantityByBroadcastId(Long broadcastId) {
-    QOrder order = QOrder.order;
+    @Override
+    public Long sumQuantityByBroadcastId(Long broadcastId) {
+        QOrder order = QOrder.order;
 
-          Integer sum = jpaQueryFactory.select(order.quantity.sum())
-        .from(order)
-        .where(order.broadcast.id.eq(broadcastId))
-        .fetchOne();
+        Integer sum = jpaQueryFactory.select(order.quantity.sum())
+                .from(order)
+                .where(order.broadcast.id.eq(broadcastId))
+                .fetchOne();
 
-          if (sum == null) {
-              sum = 0;
-          }
+        if (sum == null) {
+            sum = 0;
+        }
 
-          return (long) sum;
-      }
+        return (long) sum;
+    }
+
     @Override
     public Order findCurrentOrderByUserAndProduct(User user, Long productId) {
 
