@@ -91,10 +91,10 @@ public class BroadcastService {
 
     Product product = productRepository.findById(boardRequestDto.getProductId()).orElseThrow(
         () -> new CustomException(messageSource.getMessage(
-            "product.not.found",
-            null,
-            CustomException.DEFAULT_ERROR_MESSAGE,
-            Locale.getDefault()
+          "product.not.found",
+          null,
+          CustomException.DEFAULT_ERROR_MESSAGE,
+          Locale.getDefault()
         ), HttpStatus.NOT_FOUND)
     );
 
@@ -106,8 +106,7 @@ public class BroadcastService {
 
     Broadcast saveBroadcast = broadcastRepository.save(broadcast);
 
-    sendStreamKey(
-        BroadcastMapper.toStreamKeyResponseDto(true, broadcast.getReservation().getCode()));
+    sendStreamKey(BroadcastMapper.toStreamKeyResponseDto(true, broadcast.getReservation().getCode()));
 
     return BroadcastMapper.toCreateBroadcastResponseDto(saveBroadcast);
   }
@@ -118,15 +117,14 @@ public class BroadcastService {
 
   @Transactional(readOnly = true)
   public BroadcastResponseDto inquiryCurrentBroadcast() {
-    Broadcast broadcast = broadcastRepository.findByBroadcastStatus(BroadcastStatus.ONAIR)
-        .orElseThrow(() ->
-            new CustomException(messageSource.getMessage(
-                "no.exit.current.broadcast",
-                null,
-                CustomException.DEFAULT_ERROR_MESSAGE,
-                Locale.getDefault()
-            ), HttpStatus.NOT_FOUND)
-        );
+    Broadcast broadcast = broadcastRepository.findByBroadcastStatus(BroadcastStatus.ONAIR).orElseThrow(() ->
+        new CustomException(messageSource.getMessage(
+            "no.exit.current.broadcast",
+            null,
+            CustomException.DEFAULT_ERROR_MESSAGE,
+            Locale.getDefault()
+        ), HttpStatus.NOT_FOUND)
+    );
 
     Product product = broadcast.getProduct();
 
@@ -134,17 +132,16 @@ public class BroadcastService {
   }
 
   public void closeBroadcast(User user) throws JsonProcessingException {
-    Broadcast broadcast = broadcastRepository.findByBroadcastStatus(BroadcastStatus.ONAIR)
-        .orElseThrow(() ->
-            new CustomException(messageSource.getMessage(
-                "no.exit.current.broadcast",
-                null,
-                CustomException.DEFAULT_ERROR_MESSAGE,
-                Locale.getDefault()
-            ), HttpStatus.NOT_FOUND)
-        );
+    Broadcast broadcast = broadcastRepository.findByBroadcastStatus(BroadcastStatus.ONAIR).orElseThrow(() ->
+        new CustomException(messageSource.getMessage(
+            "no.exit.current.broadcast",
+            null,
+            CustomException.DEFAULT_ERROR_MESSAGE,
+            Locale.getDefault()
+        ), HttpStatus.NOT_FOUND)
+    );
 
-    if (!Objects.equals(broadcast.getStreamer().getId(), user.getId())) {
+    if(!Objects.equals(broadcast.getStreamer().getId(), user.getId())) {
       throw new CustomException(messageSource.getMessage(
           "user.not.match",
           null,
@@ -159,7 +156,8 @@ public class BroadcastService {
   }
 
   /**
-   * 매 정각마다 방송을 중단하고 스트림 키를 보내는 스케쥴러 입니다. 유저 테스트 용으로 0, 20, 40분에 실행 되도록 하였습니다.
+   * 매 정각마다 방송을 중단하고 스트림 키를 보내는 스케쥴러 입니다.
+   * 유저 테스트 용으로 0, 20, 40분에 실행 되도록 하였습니다.
    */
   @Scheduled(cron = "0 0,20,40 * * * *")
   public void forceCloseBroadcast() throws JsonProcessingException {
@@ -172,12 +170,12 @@ public class BroadcastService {
   public Broadcast findByBroadcastId(Long broadcastId) {
 
     return broadcastRepository.findById(broadcastId).orElseThrow(
-        () -> new CustomException(messageSource.getMessage(
-            "broadcast.not.found",
-            null,
-            CustomException.DEFAULT_ERROR_MESSAGE,
-            Locale.getDefault()
-        ), HttpStatus.NOT_FOUND)
+            () -> new CustomException(messageSource.getMessage(
+                    "broadcast.not.found",
+                    null,
+                    CustomException.DEFAULT_ERROR_MESSAGE,
+                    Locale.getDefault()
+            ), HttpStatus.NOT_FOUND)
     );
 
   }
@@ -236,24 +234,23 @@ public class BroadcastService {
   }
 
   public List<ReservationStateResponseDto> getReservations(LocalDate date) {
-    List<Reservations> reservations = reservationRepository.findByAirTimeBetween(
-        date.atStartOfDay(), date.atTime(LocalTime.MAX));
+    LocalDateTime currentBroadcastTime = LocalDateTime.now().minusMinutes(BROADCAST_AFTER_STARTING);
 
-    // 시간 남으면 Query DSL 사용하는 것도 생각 중.
-    List<LocalTime> reservedTimes = reservations.stream()
-        .map(reservation -> reservation.getAirTime().toLocalTime())
-        .toList();
+    List<LocalDateTime> reservedTimes = reservationRepository
+        .findByAirTimeBetween(date.atStartOfDay(), date.atTime(LocalTime.MAX));
 
     List<ReservationStateResponseDto> responseDtoList = new ArrayList<>();
 
-    for (int hour = 0; hour < 24; hour++) {
-      for (int minute : new int[]{0, 20, 40}) {
-        LocalTime timeSlot = LocalTime.of(hour, minute);
-        boolean isReserved = reservedTimes.contains(timeSlot);
+    for(int hour = 0; hour < 24; hour++) {
+      for(int minute : new int[] {0, 20, 40}) {
+        LocalDateTime timeSlot = LocalDateTime.of(date, LocalTime.of(hour, minute));
+        if(timeSlot.isBefore(currentBroadcastTime)) {
+          continue;
+        }
 
         ReservationStateResponseDto dto = ReservationStateResponseDto.builder()
-            .time(timeSlot)
-            .isReserved(isReserved)
+            .time(timeSlot.toLocalTime())
+            .isReserved(reservedTimes.contains(timeSlot))
             .build();
 
         responseDtoList.add(dto);
@@ -281,7 +278,7 @@ public class BroadcastService {
     Page<Broadcast> broadcastPage = broadcastRepository.findAll(pageable);
 
     List<AdminBroadcastListResponseDto> adminBroadcastListResponseDtoList = broadcastPage.stream()
-        .map(broadcast -> AdminMapper.toAdminBroadcastListResponseDto(broadcast))
+        .map(AdminMapper::toAdminBroadcastListResponseDto)
         .collect(Collectors.toList());
 
     return new PageImpl<>(adminBroadcastListResponseDtoList, pageable,

@@ -108,7 +108,7 @@ public class BroadcastController {
     return ResponseEntity.status(HttpStatus.OK).body(
         new CommonResponseDto<>(
             HttpStatus.OK.value(),
-            "예약을 성공하였습니다.",
+            "예약을 성공하였습니다. 이메일은 순차적으로 발송됩니다.",
             null)
     );
   }
