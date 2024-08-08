@@ -15,6 +15,7 @@ import org.springframework.web.servlet.view.RedirectView;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -113,40 +114,40 @@ public class PaymentController {
 
 
 	/**
-	 * 리팩토링
+	 * 리팩토링: ORDER-CHECK 처리
 	 */
 	@GetMapping("/ORDER-CHECK")
 	public void returnOrderCheckPage(@RequestParam String orderno,
-																   @RequestParam String status,
-																   @RequestParam String orderNo,
-																   @RequestParam String payMethod,
-																   @RequestParam(required = false) String bankCode,
-																   @RequestParam(required = false) String cardCompany,
-																   HttpServletResponse response) throws IOException {
+		@RequestParam String status,
+		@RequestParam String orderNo,
+		@RequestParam String payMethod,
+		@RequestParam(required = false) String bankCode,
+		@RequestParam(required = false) String cardCompany,
+		HttpServletResponse response) throws IOException {
 		log.debug("Ret url redirect");
 		String redirectUrl = paymentService.returnOrderCheckPage(orderno, status, orderNo, payMethod, bankCode, cardCompany);
 		response.sendRedirect(UriComponentsBuilder.fromHttpUrl(redirectUrl)
-				.build()
-				.toUriString()
+			.build()
+			.toUriString()
 		);
 	}
 
 
-	/**
-	 * 토스페이 결제 승인
-	 *
-	 * @param payToken 결제 고유 토큰
-	 * @return 결제 응답 DTO
-	 */
-	@PostMapping("/payment/toss/approve")
-	public ResponseEntity<PaymentResponseDto> approveTossPayPayment(@RequestParam String payToken) {
-		log.debug("approveTossPayPayment");
-		PaymentResponseDto response = paymentService.approveTossPayPayment(payToken);
-		if (response.getStatus().equals("FAILED")) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-		}
-		return ResponseEntity.ok(response);
-	}
+	// /**
+	//  * 토스페이 결제 승인
+	//  *
+	//  * @param payToken 결제 고유 토큰
+	//  * @return 결제 응답 DTO
+	//  */
+	// @PostMapping("/payment/toss/approve")
+	// public ResponseEntity<PaymentResponseDto> approveTossPayPayment(@RequestParam String payToken) {
+	// 	log.debug("approveTossPayPayment");
+	// 	PaymentResponseDto response = paymentService.approveTossPayPayment(payToken);
+	// 	if (response.getStatus().equals("FAILED")) {
+	// 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+	// 	}
+	// 	return ResponseEntity.ok(response);
+	// }
 
 	/**
 	 * 토스페이 결제 완료 처리
@@ -158,16 +159,14 @@ public class PaymentController {
 	 */
 	@GetMapping("/payment/toss/complete")
 	public RedirectView completeTossPayment(@RequestParam("payToken") String payToken,
-											@RequestParam("order_id") Long orderId,
-											@RequestParam("user_id") Long userId) {
+		@RequestParam("order_id") Long orderId,
+		@RequestParam("user_id") Long userId) {
 		log.debug("completTossPayment");
-		PaymentResponseDto response = paymentService.approveTossPayPayment(payToken);
+		String status = "completed"; // 토스페이의 경우 결제 완료 후에 상태가 completed로 설정됨
+		String orderNo = String.format("livealone:%d", orderId) + LocalDate.now();
+		String redirectUrl = paymentService.returnOrderCheckPage(orderNo, status, orderNo, "TOSS_PAY", null, null);
 		RedirectView redirectView = new RedirectView();
-		if (response.getStatus().equals("FAILED")) {
-			redirectView.setUrl("http://livealone.shop:3000/payment");
-		} else {
-			redirectView.setUrl("http://livealone.shop:3000/completepayment");
-		}
+		redirectView.setUrl(redirectUrl);
 		return redirectView;
 	}
 

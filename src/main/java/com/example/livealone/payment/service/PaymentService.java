@@ -129,6 +129,7 @@ public class PaymentService {
 			String tid = jsonNode.get("tid").asText();
 
 			if (paymentRepository.existsByTid(tid)) {
+				rollbackAndDeleteOrder(requestDto.getOrderId());
 				return PaymentResponseDto.builder()
 					.status("FAILED")
 					.message("결제 준비 실패: 중복된 TID")
@@ -163,6 +164,7 @@ public class PaymentService {
 
 		} catch (Exception e) {
 			e.printStackTrace();
+			rollbackAndDeleteOrder(requestDto.getOrderId());
 			return PaymentResponseDto.builder()
 				.status("FAILED")
 				.message("결제 준비 실패")
@@ -218,6 +220,7 @@ public class PaymentService {
 			log.debug("jsonNode : {}", jsonNode);
 
 			payment.updateStatus(PaymentStatus.COMPLETED);
+			paymentRepository.save(payment);
 
 			return PaymentResponseDto.builder()
 				.status("COMPLETED")
@@ -265,7 +268,8 @@ public class PaymentService {
 		params.put("autoExecute", true);
 		params.put("callbackVersion", "V2");
 		params.put("resultCallback", tossResultCallback);
-		String createRetUrl = String.format(tossRetUrl, createOrderNo);
+		String createRetUrl = String.format("http://%s:8080/ORDER-CHECK?orderno=%s", uriConfig.getServerHost(),
+			createOrderNo);
 		params.put("retUrl", createRetUrl);
 		params.put("retCancelUrl", tossRetCancelUrl);
 		log.debug("request : {}", params);
@@ -313,6 +317,7 @@ public class PaymentService {
 					.nextRedirectUrl(jsonNode.get("checkoutPage").asText())
 					.build();
 			} else {
+				rollbackAndDeleteOrder(requestDto.getOrderId());
 				return PaymentResponseDto.builder()
 					.status("FAILED")
 					.message("결제 준비 실패: 필요한 필드가 응답에 없습니다.")
@@ -320,6 +325,7 @@ public class PaymentService {
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
+			rollbackAndDeleteOrder(requestDto.getOrderId());
 			return PaymentResponseDto.builder()
 				.status("FAILED")
 				.message("결제 준비 실패")
@@ -409,6 +415,7 @@ public class PaymentService {
 		orderRepository.delete(order);
 	}
 
+
 	@Transactional
 	public String returnOrderCheckPage(String orderno, String status, String orderNo, String payMethod, String bankCode,
 		String cardCompany) {
@@ -427,6 +434,7 @@ public class PaymentService {
 			payment.updateStatus(PaymentStatus.FAILED);
 			rollbackAndDeleteOrder(payment.getOrder().getId());
 		}
+		paymentRepository.save(payment);
 
 		String url = String.format("http://%s:3000/completepayment", uriConfig.getFrontServerHost());
 		return url;

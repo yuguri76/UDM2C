@@ -25,12 +25,12 @@ Content-Type: application/json
 Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJjaGVhbWluNjMwNkBuYXZlci5jb20iLCJpZCI6MSwidXNlcm5hbWUiOiLquYDssYTrr7wiLCJuaWNrbmFtZSI6Iuq5gOyxhOuvvCIsImlhdCI6MTcyMjI0OTU1MCwiZXhwIjoxNzIyMjUwMTUwfQ.XDeWy8_3xIaxDtgDnUYfyoca1Qaa9hs3pi7_QokF_zk
 
 ### 방송 예약 하기
-POST localhost:8080/broadcast/reservation
+POST ec2-3-36-126-237.ap-northeast-2.compute.amazonaws.com:8080/broadcast/reservation
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJraHU0MjM3QGdtYWlsLmNvbSIsImlkIjoxLCJ1c2VybmFtZSI6IuyekOuRkOunjOuRkCIsIm5pY2tuYW1lIjoi7J6Q65GQ66eM65GQIiwiaWF0IjoxNzIzMDI5MDg0LCJleHAiOjE3MjMwMjk2ODR9.ErumBQ18Xz-IfySMGeeuyO4k8mMN8MltWsgetLUzMSI
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqOTk3NkBuYXZlci5jb20iLCJpZCI6MywidXNlcm5hbWUiOiLqt5zrpqwiLCJuaWNrbmFtZSI6Iuq3nOumrCIsImlhdCI6MTcyMzExNDE0MCwiZXhwIjoxNzIzMTM1NzQwfQ.NAg4uVhpcUkwFpSFJTsrJqFfcAxMMPYzhsXlt5C4baQ
 
 {
-  "airtime": "2024-08-08T18:40:00"
+  "airtime": "2024-08-08T20:00:00"
 }
 
 ### 특정 일자 예약 상황 조회

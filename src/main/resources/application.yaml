@@ -109,8 +109,8 @@ kakao:
     cid: TC0ONETIME
     secret: DEV1983009FCE70023372B535B4EB027DEB9824F
     approval-url: http://${SERVER_HOST}:8080/completePayment
-    cancel-url: http://${SERVER_HOST}:8080/payment
-    fail-url: http://${SERVER_HOST}:8080/payment
+    cancel-url: http://${FRONT_SERVER_HOST}:3000/streaming
+    fail-url: http://${FRONT_SERVER_HOST}:3000/streaming
 
 toss:
   api:
@@ -144,7 +144,7 @@ payment:
   toss:
     client-key: ${TOSS_CLIENT_KEY}
     secret-key: ${TOSS_SECRET_KEY}
-    ret-url: http://${FRONT_SERVER_HOST}:3000/ORDER-CHECK?orderno=%s
+    ret-url: http://${FRONT_SERVER_HOST}:3000/ORDER-CHECK?orderno=1
     ret-cancel-url: http://${FRONT_SERVER_HOST}:3000/streaming
     result-callback: http://${FRONT_SERVER_HOST}:3000/streaming
 
