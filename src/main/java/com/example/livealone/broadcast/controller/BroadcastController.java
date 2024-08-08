@@ -2,6 +2,7 @@ package com.example.livealone.broadcast.controller;
 
 import com.example.livealone.broadcast.dto.BroadcastRequestDto;
 import com.example.livealone.broadcast.dto.BroadcastResponseDto;
+import com.example.livealone.broadcast.dto.BroadcastTitleResponseDto;
 import com.example.livealone.broadcast.dto.CreateBroadcastResponseDto;
 import com.example.livealone.broadcast.dto.ReservationStateResponseDto;
 import com.example.livealone.broadcast.dto.ReservationRequestDto;
@@ -21,6 +22,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -121,4 +123,15 @@ public class BroadcastController {
     );
   }
 
+  @GetMapping("/broadcast/{broadcastId}")
+  public ResponseEntity<CommonResponseDto<BroadcastTitleResponseDto>> getBroadcastTitle(@PathVariable Long broadcastId) {
+    BroadcastTitleResponseDto broadcastTitleResponseDto = broadcastService.getBroadcastTitle(broadcastId);
+
+    return ResponseEntity.status(HttpStatus.OK).body(
+        new CommonResponseDto<>(
+            HttpStatus.OK.value(),
+            "방송 제목을 조회하였습니다.",
+            broadcastTitleResponseDto)
+    );
+  }
 }
