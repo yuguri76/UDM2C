@@ -1,6 +1,6 @@
-package com.example.livealone.broadcast.repository;
+package com.example.livealone.reservation.repository;
 
-import static com.example.livealone.broadcast.entity.QReservations.reservations;
+import static com.example.livealone.reservation.entity.QReservations.reservations;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.time.LocalDateTime;

@@ -1,4 +1,4 @@
-package com.example.livealone.broadcast.repository;
+package com.example.livealone.reservation.repository;
 
 import java.time.LocalDateTime;
 import java.util.List;

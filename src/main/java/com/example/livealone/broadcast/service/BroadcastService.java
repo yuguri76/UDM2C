@@ -8,33 +8,23 @@ import com.example.livealone.broadcast.dto.BroadcastRequestDto;
 import com.example.livealone.broadcast.dto.BroadcastResponseDto;
 import com.example.livealone.broadcast.dto.BroadcastTitleResponseDto;
 import com.example.livealone.broadcast.dto.CreateBroadcastResponseDto;
-import com.example.livealone.broadcast.dto.ReservationStateResponseDto;
-import com.example.livealone.broadcast.dto.ReservationRequestDto;
-import com.example.livealone.broadcast.dto.ReservationResponseDto;
 import com.example.livealone.broadcast.dto.StreamKeyResponseDto;
 import com.example.livealone.broadcast.dto.UserBroadcastResponseDto;
 import com.example.livealone.broadcast.entity.Broadcast;
 import com.example.livealone.broadcast.entity.BroadcastStatus;
-import com.example.livealone.broadcast.entity.Reservations;
+import com.example.livealone.reservation.entity.Reservations;
 import com.example.livealone.broadcast.mapper.BroadcastMapper;
-import com.example.livealone.broadcast.mapper.ReservationMapper;
 import com.example.livealone.broadcast.repository.BroadcastRepository;
-import com.example.livealone.broadcast.repository.ReservationRepository;
-import com.example.livealone.global.aop.DistributedLock;
 import com.example.livealone.global.dto.SocketMessageDto;
 import com.example.livealone.global.exception.CustomException;
 import com.example.livealone.global.handler.WebSocketHandler;
 import com.example.livealone.product.entity.Product;
 import com.example.livealone.product.repository.ProductRepository;
+import com.example.livealone.reservation.service.ReservationService;
 import com.example.livealone.user.entity.User;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -58,14 +48,13 @@ import org.springframework.web.socket.WebSocketSession;
 @RequiredArgsConstructor
 public class BroadcastService {
 
+  private final ReservationService reservationService;
+
   private final BroadcastRepository broadcastRepository;
-  private final ReservationRepository reservationRepository;
   private final ProductRepository productRepository;
 
   private final ObjectMapper objectMapper;
   private final MessageSource messageSource;
-
-  private static final int BROADCAST_AFTER_STARTING = 20;
 
   private static final int PAGE_SIZE = 5;
 
@@ -75,19 +64,7 @@ public class BroadcastService {
 
   public CreateBroadcastResponseDto createBroadcast(BroadcastRequestDto boardRequestDto, User user)
       throws JsonProcessingException {
-
-    LocalDateTime now = ZonedDateTime.now().toLocalDateTime();
-
-    Reservations reservations = reservationRepository
-        .findByAirTimeBetweenAndStreamer(now.minusMinutes(BROADCAST_AFTER_STARTING), now, user)
-        .orElseThrow(
-            () -> new CustomException(messageSource.getMessage(
-                "reservation.not.found",
-                null,
-                CustomException.DEFAULT_ERROR_MESSAGE,
-                Locale.getDefault()
-            ), HttpStatus.NOT_FOUND)
-        );
+    Reservations reservations = reservationService.findReservation(user);
 
     Product product = productRepository.findById(boardRequestDto.getProductId()).orElseThrow(
         () -> new CustomException(messageSource.getMessage(
@@ -197,21 +174,6 @@ public class BroadcastService {
     }
   }
 
-  @DistributedLock(key = "'createReservation-' + #user.getId()")
-  public ReservationResponseDto createReservation(ReservationRequestDto requestDto, User user) {
-    if (reservationRepository.findByAirTime(requestDto.getAirtime()).isPresent()) {
-      throw new CustomException(messageSource.getMessage(
-          "already.occupied.reservation",
-          null,
-          CustomException.DEFAULT_ERROR_MESSAGE,
-          Locale.getDefault()
-      ), HttpStatus.FORBIDDEN);
-    }
-
-    return ReservationMapper.toReservationResponseCodeDto(reservationRepository
-        .save(ReservationMapper.toReservation(requestDto, user)));
-  }
-
   private StreamKeyResponseDto getStreamKey() {
     Optional<Broadcast> broadcast = broadcastRepository.findByBroadcastStatus(
         BroadcastStatus.ONAIR);
@@ -231,33 +193,6 @@ public class BroadcastService {
     String result = objectMapper.writeValueAsString(socketMessageDto);
     TextMessage text = new TextMessage(result);
     WebSocketHandler.broadcast(text);
-  }
-
-  public List<ReservationStateResponseDto> getReservations(LocalDate date) {
-    LocalDateTime currentBroadcastTime = LocalDateTime.now().minusMinutes(BROADCAST_AFTER_STARTING);
-
-    List<LocalDateTime> reservedTimes = reservationRepository
-        .findByAirTimeBetween(date.atStartOfDay(), date.atTime(LocalTime.MAX));
-
-    List<ReservationStateResponseDto> responseDtoList = new ArrayList<>();
-
-    for(int hour = 0; hour < 24; hour++) {
-      for(int minute : new int[] {0, 20, 40}) {
-        LocalDateTime timeSlot = LocalDateTime.of(date, LocalTime.of(hour, minute));
-        if(timeSlot.isBefore(currentBroadcastTime)) {
-          continue;
-        }
-
-        ReservationStateResponseDto dto = ReservationStateResponseDto.builder()
-            .time(timeSlot.toLocalTime())
-            .isReserved(reservedTimes.contains(timeSlot))
-            .build();
-
-        responseDtoList.add(dto);
-      }
-    }
-
-    return responseDtoList;
   }
 
   public BroadcastTitleResponseDto getBroadcastTitle(Long broadcastId) {
