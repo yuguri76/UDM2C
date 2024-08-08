@@ -1,6 +1,7 @@
 package com.example.livealone.payment.controller;
 
 import com.example.livealone.global.config.URIConfig;
+import com.example.livealone.global.dto.CommonResponseDto;
 import com.example.livealone.payment.dto.PaymentRequestDto;
 import com.example.livealone.payment.dto.PaymentResponseDto;
 import com.example.livealone.payment.service.PaymentService;
@@ -14,6 +15,7 @@ import org.springframework.web.servlet.view.RedirectView;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -170,13 +172,19 @@ public class PaymentController {
 	}
 
 	/**
-	 * 사용자 결제 내역 조회
+	 * 사용자별 결제 내역 조회
 	 *
 	 * @param userId 사용자 ID
 	 * @return 결제 내역 리스트
 	 */
-	@GetMapping("/payment/user/{userId}/payment")
-	public ResponseEntity<?> getUserPaymentHistory(@PathVariable Long userId) {
-		return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+	@GetMapping("/payment/user/{userId}/completed")
+	public ResponseEntity<CommonResponseDto<List<PaymentResponseDto>>> getCompletedPaymentsByUserId(@PathVariable Long userId) {
+		List<PaymentResponseDto> paymentResponses = paymentService.getCompletedPaymentsByUserId(userId);
+		CommonResponseDto<List<PaymentResponseDto>> responseDto = CommonResponseDto.<List<PaymentResponseDto>>builder()
+			.status(200)
+			.message("결제 내역 조회 성공")
+			.data(paymentResponses)
+			.build();
+		return ResponseEntity.ok(responseDto);
 	}
 }

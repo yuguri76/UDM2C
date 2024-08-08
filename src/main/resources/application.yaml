@@ -118,7 +118,7 @@ toss:
     client-key: test_ck_kYG57Eba3GPyQ4zAdxQkVpWDOxmA
     secret-key: test_sk_jExPeJWYVQ1ekabzNRlxV49R5gvN
     ret-url: /completePayment
-    ret-cancel-url: /payment
+    ret-cancel-url: /streaming
     result-callback: /completePayment
 
 
@@ -144,7 +144,7 @@ payment:
   toss:
     client-key: ${TOSS_CLIENT_KEY}
     secret-key: ${TOSS_SECRET_KEY}
-    ret-url: http://${FRONT_SERVER_HOST}:3000/ORDER-CHECK?orderno=1
-    ret-cancel-url: http://${FRONT_SERVER_HOST}:3000/close
-    result-callback: http://${FRONT_SERVER_HOST}:3000/callback
+    ret-url: http://${FRONT_SERVER_HOST}:3000/ORDER-CHECK?orderno=%s
+    ret-cancel-url: http://${FRONT_SERVER_HOST}:3000/streaming
+    result-callback: http://${FRONT_SERVER_HOST}:3000/streaming
 

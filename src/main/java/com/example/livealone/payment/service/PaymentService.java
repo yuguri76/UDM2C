@@ -2,7 +2,9 @@ package com.example.livealone.payment.service;
 
 import java.time.LocalDate;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import com.example.livealone.global.config.URIConfig;
 import lombok.extern.slf4j.Slf4j;
@@ -17,12 +19,15 @@ import org.springframework.web.client.RestTemplate;
 
 import com.example.livealone.order.entity.Order;
 import com.example.livealone.order.repository.OrderRepository;
+import com.example.livealone.order.service.OrderService;
 import com.example.livealone.payment.dto.PaymentRequestDto;
 import com.example.livealone.payment.dto.PaymentResponseDto;
 import com.example.livealone.payment.entity.Payment;
 import com.example.livealone.payment.entity.PaymentMethod;
 import com.example.livealone.payment.entity.PaymentStatus;
 import com.example.livealone.payment.repository.PaymentRepository;
+import com.example.livealone.product.entity.Product;
+import com.example.livealone.product.service.ProductService;
 import com.example.livealone.user.entity.User;
 import com.example.livealone.user.repository.UserRepository;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -42,6 +47,8 @@ public class PaymentService {
 	private final OrderRepository orderRepository;
 	private final RestTemplate restTemplate;
 	private final ObjectMapper objectMapper;
+	private final ProductService productService;
+	private final OrderService orderService;
 
 	private final URIConfig uriConfig;
 
@@ -82,7 +89,7 @@ public class PaymentService {
 
 		String url = "https://open-api.kakaopay.com/online/v1/payment/ready";
 
-		log.debug("Create Kakao pay ready 진입 URI :{} ",url);
+		log.debug("Create Kakao pay ready 진입 URI :{} ", url);
 
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
@@ -100,9 +107,9 @@ public class PaymentService {
 		params.put("vat_amount", "0");
 		params.put("tax_free_amount", "0");
 		params.put("approval_url", String.format("http://%s:8080/payment/kakao/complete?order_id=%d&user_id=%d",
-				uriConfig.getServerHost() ,
-				requestDto.getOrderId(),
-				requestDto.getUserId()));
+			uriConfig.getServerHost(),
+			requestDto.getOrderId(),
+			requestDto.getUserId()));
 		params.put("cancel_url", cancelUrl);
 		params.put("fail_url", failUrl);
 
@@ -163,7 +170,6 @@ public class PaymentService {
 		}
 	}
 
-
 	/**
 	 * 카카오페이 결제 승인
 	 *
@@ -177,9 +183,9 @@ public class PaymentService {
 		String url = "https://open-api.kakaopay.com/online/v1/payment/approve";
 
 		log.debug("Approve Kakao payment");
-		log.debug("pgToken : {}",pgToken);
-		log.debug("orderId : {}",orderId);
-		log.debug("userID : {}",userId);
+		log.debug("pgToken : {}", pgToken);
+		log.debug("orderId : {}", orderId);
+		log.debug("userID : {}", userId);
 
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
@@ -188,6 +194,7 @@ public class PaymentService {
 
 		Payment payment = paymentRepository.findByOrder_Id(orderId);
 		if (payment == null) {
+			rollbackAndDeleteOrder(orderId);
 			return PaymentResponseDto.builder()
 				.status("FAILED")
 				.message("Invalid order ID: " + orderId)
@@ -196,7 +203,7 @@ public class PaymentService {
 
 		Map<String, String> params = new HashMap<>();
 		params.put("cid", cid);
-		params.put("tid",  payment.getTid());
+		params.put("tid", payment.getTid());
 		params.put("partner_order_id", orderId.toString());
 		params.put("partner_user_id", userId.toString());
 		params.put("pg_token", pgToken);
@@ -208,7 +215,7 @@ public class PaymentService {
 			ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, request, String.class);
 			JsonNode jsonNode = objectMapper.readTree(response.getBody());
 
-			log.debug("jsonNode : {}",jsonNode);
+			log.debug("jsonNode : {}", jsonNode);
 
 			payment.updateStatus(PaymentStatus.COMPLETED);
 
@@ -225,6 +232,7 @@ public class PaymentService {
 				.build();
 
 		} catch (Exception e) {
+			rollbackAndDeleteOrder(orderId);
 			log.debug(e.getMessage());
 			return PaymentResponseDto.builder()
 				.status("FAILED")
@@ -242,25 +250,25 @@ public class PaymentService {
 	public PaymentResponseDto createTossPayReady(PaymentRequestDto requestDto) {
 		String url = "https://pay.toss.im/api/v2/payments";
 
-		log.debug("Toss pay read : {}",url);
+		log.debug("Toss pay read : {}", url);
 
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_JSON);
 
 		Map<String, Object> params = new HashMap<>();
-		String createOrderNo = String.format("livealone:%d", requestDto.getOrderId())+ LocalDate.now();
+		String createOrderNo = String.format("livealone:%d", requestDto.getOrderId()) + LocalDate.now();
 		params.put("orderNo", createOrderNo);
-		params.put("amount", requestDto.getAmount()*requestDto.getOrderQuantity());
+		params.put("amount", requestDto.getAmount() * requestDto.getOrderQuantity());
 		params.put("amountTaxFree", "0"); // requestDto에서 받아옴
 		params.put("productDesc", requestDto.getItemName()); // requestDto에서 받아옴
 		params.put("apiKey", tossClientKey);
 		params.put("autoExecute", true);
 		params.put("callbackVersion", "V2");
 		params.put("resultCallback", tossResultCallback);
-		String createRetUrl = String.format("http://%s:8080/ORDER-CHECK?orderno=%s", uriConfig.getServerHost(),createOrderNo);
+		String createRetUrl = String.format(tossRetUrl, createOrderNo);
 		params.put("retUrl", createRetUrl);
 		params.put("retCancelUrl", tossRetCancelUrl);
-		log.debug("request : {}",params);
+		log.debug("request : {}", params);
 
 		HttpEntity<Map<String, Object>> request = new HttpEntity<>(params, headers);
 
@@ -269,7 +277,7 @@ public class PaymentService {
 			ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, request, String.class);
 
 			JsonNode jsonNode = objectMapper.readTree(response.getBody());
-			log.debug("jsonNode : {}",jsonNode);
+			log.debug("jsonNode : {}", jsonNode);
 
 			// 필드 존재 여부 체크
 			if (jsonNode.has("payToken") && jsonNode.has("checkoutPage")) {
@@ -329,7 +337,7 @@ public class PaymentService {
 	public PaymentResponseDto approveTossPayPayment(String payToken) {
 		String url = "https://pay.toss.im/api/v2/execute";
 
-		log.debug("payToken : {}",payToken);
+		log.debug("payToken : {}", payToken);
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_JSON);
 
@@ -371,7 +379,6 @@ public class PaymentService {
 		}
 	}
 
-
 	/**
 	 * 주문 ID로 tid 조회
 	 *
@@ -383,12 +390,68 @@ public class PaymentService {
 		return payment.getTid();
 	}
 
-	public String returnOrderCheckPage(String orderno, String status, String orderNo, String payMethod, String bankCode, String cardCompany) {
-		log.debug("orderno : {}",orderno);
-		log.debug("status : {}",status);
+	/**
+	 * 결제 만료 또는 취소 시 재고 롤백 및 주문 삭제 메서드
+	 *
+	 * @param orderId 주문 ID
+	 */
+	@Transactional
+	public void rollbackAndDeleteOrder(Long orderId) {
+		Order order = orderRepository.findById(orderId)
+			.orElseThrow(() -> new IllegalArgumentException("Invalid order ID: " + orderId));
+		Product product = order.getProduct();
+
+		// 재고 롤백
+		product.rollbackStock(order.getQuantity());
+		productService.saveProduct(product);
+
+		// 주문 삭제
+		orderRepository.delete(order);
+	}
+
+	@Transactional
+	public String returnOrderCheckPage(String orderno, String status, String orderNo, String payMethod, String bankCode,
+		String cardCompany) {
+		log.debug("orderno : {}", orderno);
+		log.debug("status : {}", status);
 		log.debug("paymeThod ; {}", payMethod);
+
+		// 결제 상태 업데이트 로직 추가
+		Payment payment = paymentRepository.findByTid(orderno);
+		if (payment == null) {
+			throw new IllegalArgumentException("Invalid orderno: " + orderno);
+		}
+		if (status.equals("completed")) {
+			payment.updateStatus(PaymentStatus.COMPLETED);
+		} else {
+			payment.updateStatus(PaymentStatus.FAILED);
+			rollbackAndDeleteOrder(payment.getOrder().getId());
+		}
 
 		String url = String.format("http://%s:3000/completepayment", uriConfig.getFrontServerHost());
 		return url;
+	}
+
+	/**
+	 * 사용자별 결제 상태가 COMPLETED인 결제 내역 조회
+	 *
+	 * @param userId 사용자 ID
+	 * @return 결제 내역 리스트
+	 */
+	public List<PaymentResponseDto> getCompletedPaymentsByUserId(Long userId) {
+		List<Payment> payments = paymentRepository.findByUserIdAndStatus(userId, PaymentStatus.COMPLETED);
+		return payments.stream()
+			.map(payment -> PaymentResponseDto.builder()
+				.status(payment.getStatus().name())
+				.message("결제 완료")
+				.paymentId(payment.getId())
+				.userId(payment.getUser().getId())
+				.orderId(payment.getOrder().getId())
+				.amount(payment.getAmount())
+				.paymentMethod(payment.getPaymentMethod().name())
+				.createdAt(payment.getCreatedAt().toString())
+				.updateAt(payment.getUpdatedAt().toString())
+				.build())
+			.collect(Collectors.toList());
 	}
 }
