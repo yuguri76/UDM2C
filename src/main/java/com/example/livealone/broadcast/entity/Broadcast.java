@@ -2,6 +2,7 @@ package com.example.livealone.broadcast.entity;
 
 import com.example.livealone.global.entity.Timestamp;
 import com.example.livealone.product.entity.Product;
+import com.example.livealone.reservation.entity.Reservations;
 import com.example.livealone.user.entity.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

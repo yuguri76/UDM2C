@@ -6,7 +6,7 @@ import com.example.livealone.broadcast.dto.CreateBroadcastResponseDto;
 import com.example.livealone.broadcast.dto.StreamKeyResponseDto;
 import com.example.livealone.broadcast.entity.Broadcast;
 import com.example.livealone.broadcast.entity.BroadcastStatus;
-import com.example.livealone.broadcast.entity.Reservations;
+import com.example.livealone.reservation.entity.Reservations;
 import com.example.livealone.product.entity.Product;
 import com.example.livealone.user.entity.User;
 
