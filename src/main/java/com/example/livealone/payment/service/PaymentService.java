@@ -110,8 +110,9 @@ public class PaymentService {
 			uriConfig.getServerHost(),
 			requestDto.getOrderId(),
 			requestDto.getUserId()));
-		params.put("cancel_url", cancelUrl);
-		params.put("fail_url", failUrl);
+		String failCancelUrl = String.format("http://%s:8080/payment/kakao/cancel?order_id=%d", uriConfig.getServerHost(), requestDto.getOrderId());
+		params.put("cancel_url", failCancelUrl);
+		params.put("fail_url", failCancelUrl);
 
 		HttpEntity<HashMap<String, String>> request = new HttpEntity<>(params, headers);
 
@@ -231,7 +232,7 @@ public class PaymentService {
 				.amount(payment.getAmount())
 				.paymentMethod(payment.getPaymentMethod().name())
 				.createdAt(jsonNode.get("created_at").asText())
-				.updateAt(jsonNode.get("approved_at").asText())
+				.updatedAt(jsonNode.get("approved_at").asText())
 				.build();
 
 		} catch (Exception e) {
@@ -242,6 +243,15 @@ public class PaymentService {
 				.message("결제 승인 실패")
 				.build();
 		}
+	}
+
+	/**
+	 * 카카오페이 결제 중 취소
+	 * @param orderId 주문 ID
+	 */
+	@Transactional
+	public void cancelKakaoPayment(Long orderId) {
+		rollbackAndDeleteOrder(orderId);
 	}
 
 	/**
@@ -268,10 +278,14 @@ public class PaymentService {
 		params.put("autoExecute", true);
 		params.put("callbackVersion", "V2");
 		params.put("resultCallback", tossResultCallback);
+
 		String createRetUrl = String.format("http://%s:8080/ORDER-CHECK?orderno=%s", uriConfig.getServerHost(),
 			createOrderNo);
 		params.put("retUrl", createRetUrl);
-		params.put("retCancelUrl", tossRetCancelUrl);
+
+		String cancelUrl = String.format("http://%s:8080/payment/toss/cancel?orderno=%s", uriConfig.getServerHost(), createOrderNo);
+		params.put("retCancelUrl", cancelUrl);
+
 		log.debug("request : {}", params);
 
 		HttpEntity<Map<String, Object>> request = new HttpEntity<>(params, headers);
@@ -402,32 +416,17 @@ public class PaymentService {
 		orderRepository.delete(order);
 	}
 
-	/**
-	 * 결제 만료 또는 취소 시 재고 롤백 및 주문 삭제 메서드
-	 *
-	 * @param orderId 주문 ID
-	 */
-	@Transactional
-	public void rollbackAndDeleteOrder(Long orderId) {
-		Order order = orderRepository.findById(orderId)
-			.orElseThrow(() -> new IllegalArgumentException("Invalid order ID: " + orderId));
-		Product product = order.getProduct();
-
-		// 재고 롤백
-		product.rollbackStock(order.getQuantity());
-		productService.saveProduct(product);
-
-		// 주문 삭제
-		orderRepository.delete(order);
-	}
-
 
 	@Transactional
 	public String returnOrderCheckPage(String orderno, String status, String orderNo, String payMethod, String bankCode,
 		String cardCompany) {
-		log.debug("orderno : {}", orderno);
+		log.debug("orderno : {}", orderno); // livealone:192024-08-08
 		log.debug("status : {}", status);
 		log.debug("paymeThod ; {}", payMethod);
+
+		// livealone:192024-08-08
+		// livealone:19:2024-08-08 (: 로 tokenize) -> [livealone, 19, 2024-08-08]
+		// findByOrder_Id(19)
 
 		// 결제 상태 업데이트 로직 추가
 		String[] tokens = orderno.split(":");
@@ -436,15 +435,39 @@ public class PaymentService {
 		if (payment == null) {
 			throw new IllegalArgumentException("Invalid orderno: " + orderno);
 		}
-		if (status.equals("completed")) {
+
+		if (status.equals("PAY_COMPLETE")) {
 			payment.updateStatus(PaymentStatus.COMPLETED);
+			paymentRepository.save(payment);
 		} else {
 			payment.updateStatus(PaymentStatus.FAILED);
 			rollbackAndDeleteOrder(payment.getOrder().getId());
 		}
-		paymentRepository.save(payment);
 
 		String url = String.format("http://%s:3000/completepayment", uriConfig.getFrontServerHost());
+		return url;
+	}
+
+	@Transactional
+	public String cancelOrderCheckPage(String orderno) {
+		log.debug("orderno : {}", orderno); // livealone:192024-08-08
+
+		// livealone:192024-08-08
+		// livealone:19:2024-08-08 (: 로 tokenize) -> [livealone, 19, 2024-08-08]
+		// findByOrder_Id(19)
+
+		// 결제 상태 업데이트 로직 추가
+		String[] tokens = orderno.split(":");
+		Long orderId = Long.parseLong(tokens[1]);
+		Payment payment = paymentRepository.findByOrder_Id(orderId);
+		if (payment == null) {
+			throw new IllegalArgumentException("Invalid orderno: " + orderno);
+		}
+
+		payment.updateStatus(PaymentStatus.FAILED);
+		rollbackAndDeleteOrder(payment.getOrder().getId());
+
+		String url = String.format("http://%s:3000/streaming", uriConfig.getFrontServerHost());
 		return url;
 	}
 
@@ -463,10 +486,12 @@ public class PaymentService {
 				.paymentId(payment.getId())
 				.userId(payment.getUser().getId())
 				.orderId(payment.getOrder().getId())
+				.productName(payment.getOrder().getProduct().getName())
+				.quantity(payment.getOrder().getQuantity())
 				.amount(payment.getAmount())
 				.paymentMethod(payment.getPaymentMethod().name())
 				.createdAt(payment.getCreatedAt().toString())
-				.updateAt(payment.getUpdatedAt().toString())
+				.updatedAt(payment.getUpdatedAt().toString())
 				.build())
 			.collect(Collectors.toList());
 	}
