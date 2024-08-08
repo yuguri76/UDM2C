@@ -1,28 +1,33 @@
 package com.example.livealone.chat.service;
 
-import com.example.livealone.global.dto.SocketMessageDto;
 import com.example.livealone.chat.dto.ChatInitDto;
 import com.example.livealone.chat.entity.ChatErrorLog;
 import com.example.livealone.chat.entity.ChatMessage;
 import com.example.livealone.chat.entity.ChatSessionLog;
-import com.example.livealone.global.handler.WebSocketHandler;
 import com.example.livealone.chat.repository.ChatErrorLogRepository;
 import com.example.livealone.chat.repository.ChatMessageRepository;
 import com.example.livealone.chat.repository.ChatSessionLogRepository;
+import com.example.livealone.global.dto.SocketMessageDto;
+import com.example.livealone.global.entity.SocketMessageType;
+import com.example.livealone.global.security.JwtService;
+import com.example.livealone.user.dto.ReissueRequestDto;
+import com.example.livealone.user.dto.TokenResponseDto;
+import com.example.livealone.user.service.AuthService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.web.socket.TextMessage;
-import org.springframework.web.socket.WebSocketSession;
 
 import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import static com.example.livealone.global.entity.SocketMessageType.RESPONSE_CHAT_INIT;
+import static com.example.livealone.global.entity.SocketMessageType.*;
 
 @Service
 @RequiredArgsConstructor
@@ -33,76 +38,78 @@ public class ChatService {
     private final ChatErrorLogRepository chatErrorLogRepository;
     private final ChatSessionLogRepository chatSessionLogRepository;
     private final ObjectMapper objectMapper;
+    private final JwtService jwtService;
+    private final AuthService authService;
 
     private static final int batchSize = 100;
     private final ConcurrentLinkedQueue<ChatMessage> messageBuffer = new ConcurrentLinkedQueue<>();
     private final ConcurrentLinkedQueue<ChatErrorLog> errorLogsBuffer = new ConcurrentLinkedQueue<>();
     private final ConcurrentLinkedQueue<ChatSessionLog> sessionLogsBuffer = new ConcurrentLinkedQueue<>();
 
-    /**
-     * 현재 연결되어있는 세션에 모두 메시지 전송
-     */
-    public void write(String message) {
-        saveMessage(message);
+    public String createSessionReply(SocketMessageDto socketMessageDto) throws JsonProcessingException {
+        SocketMessageDto messageDto = null;
 
-        ConcurrentHashMap<String, WebSocketSession> clients = WebSocketHandler.getClients();
-        TextMessage text = new TextMessage(message);
+        SocketMessageType type = socketMessageDto.getType();
+        switch (type) {
+            case REQUEST_AUTH -> {
+                String token = socketMessageDto.getMessage();
+                if (!token.startsWith("Bearer ")) {
+                    messageDto = new SocketMessageDto(ERROR, "back-server", token);
+                    break;
+                }
+                String replaceToken = token.replace("Bearer ", "");
+                String isValidToken = jwtService.isValidToken(replaceToken);
+                if (!Objects.equals(isValidToken, "Valid")) {
+                    messageDto = new SocketMessageDto(INVALID_TOKEN, "back-server", isValidToken);
+                    break;
+                }
+                Claims claims = jwtService.getClaims(replaceToken);
+                String nickname = claims.get("nickname", String.class);
 
-        clients.forEach((key, value) -> {
-            try {
-                value.sendMessage(text);
-            } catch (IOException e) {
-                ChatErrorLog chatErrorLog = new ChatErrorLog((e.getMessage()));
-                errorLogsBuffer.add(chatErrorLog);
-                if(errorLogsBuffer.size()>batchSize){
-                    saveErrorLogs();
+                messageDto = new SocketMessageDto(RESPONSE_AUTH, nickname, "색깔이라도 넣어줄까?");
+            }
+
+            case REQUEST_REFRESH -> {
+                try {
+                    String refreshToken = socketMessageDto.getMessage() == null ? "invalid RefreshToken" : socketMessageDto.getMessage();
+                    TokenResponseDto tokenResponseDto = authService.reissueAccessToken(new ReissueRequestDto(refreshToken));
+
+                    messageDto = new SocketMessageDto(SocketMessageType.RESPONSE_REFRESH, "back-server", objectMapper.writeValueAsString(tokenResponseDto));
+                } catch (Exception e) {
+                    messageDto = new SocketMessageDto((ANONYMOUS_USER), "back-server", e.getMessage());
                 }
             }
-        });
-    }
-
-    public void responseDirectMessageToSocekt(WebSocketSession session, String jsonMessage) {
-        try{
-            TextMessage text = new TextMessage(jsonMessage);
-            session.sendMessage(text);
-        }catch (IOException e){
-            log.debug(e.getMessage());
-            addErrorLogs(e.getMessage());
-        }
-    }
-
-    public void writeInitMessage(WebSocketSession session) {
-
-        try {
-            List<ChatMessage> chatList = chatMessageRepository.findTop30ByOrderByIdDesc();
-
-            List<ChatInitDto> initData = new ArrayList<>();
-            for (ChatMessage chat : chatList) {
-                String initNickname = chat.getNickname();
-                String initText = chat.getMessage();
-                ChatInitDto init = new ChatInitDto(initNickname, initText);
-                initData.add(init);
+            case REQUEST_CHAT_INIT -> {
+                messageDto = writeInitMessages();
             }
-            Collections.reverse(initData);
-            String messageJSON = objectMapper.writeValueAsString(initData);
-            SocketMessageDto socketMessageDto = new SocketMessageDto(RESPONSE_CHAT_INIT, "back-server", messageJSON);
+        }
 
-            String result = objectMapper.writeValueAsString(socketMessageDto);
-            TextMessage text = new TextMessage(result);
+        return objectMapper.writeValueAsString(messageDto);
+    }
 
-            session.sendMessage(text);
+    public SocketMessageDto write(String message) {
 
-        } catch (IOException e) {
-            log.debug(e.getMessage());
-            addErrorLogs(e.getMessage());
+        try {
+            return objectMapper.readValue(message, SocketMessageDto.class);
+        } catch (JsonProcessingException e) {
+            return new SocketMessageDto(ERROR, "back-server", "메시지 전송 실패");
         }
     }
 
-    private void saveMessage(String message) {
+    public String createKafkaMessage(SocketMessageDto chat) throws JsonProcessingException {
+        try {
+            saveMessage(chat);
+            return objectMapper.writeValueAsString(chat);
+        } catch (JsonProcessingException e) {
+            SocketMessageDto dto = new SocketMessageDto(ERROR, "back-server", "JSON데이터 생성 실패");
+
+            return objectMapper.writeValueAsString(dto);
+        }
+    }
+
+    private void saveMessage(SocketMessageDto socketMessageDto) {
 
         try {
-            SocketMessageDto socketMessageDto = objectMapper.readValue(message, SocketMessageDto.class);
-
             switch (socketMessageDto.getType()) {
                 case REQUEST_AUTH -> {
                     ChatSessionLog chatSessionLog = new ChatSessionLog(socketMessageDto.getMessenger(), socketMessageDto.getMessage());
@@ -113,9 +120,7 @@ public class ChatService {
                     }
                 }
                 case CHAT_MESSAGE -> {
-                    //ChatMessage chatMessage = new ChatMessage(socketMessageDto.getMessenger(), socketMessageDto.getMessage());
                     chatMessageRepository.save(new ChatMessage(socketMessageDto.getMessenger(), socketMessageDto.getMessage()));
-                    //messageBuffer.add(chatMessage);
                     if (messageBuffer.size() > batchSize) {
                         saveChatMessages();
                     }
@@ -128,16 +133,16 @@ public class ChatService {
                     }
                 }
             }
-        } catch (JsonProcessingException e) {
+        } catch (Exception e) {
             log.error(e.getMessage());
             addErrorLogs(e.getMessage());
         }
     }
 
-    private void addErrorLogs(String message){
+    private void addErrorLogs(String message) {
         ChatErrorLog chatErrorLog = new ChatErrorLog((message));
         errorLogsBuffer.add(chatErrorLog);
-        if(errorLogsBuffer.size()>batchSize){
+        if (errorLogsBuffer.size() > batchSize) {
             saveErrorLogs();
         }
     }
@@ -171,4 +176,25 @@ public class ChatService {
         saveSessionLogs();
     }
 
+    private SocketMessageDto writeInitMessages() {
+        try {
+            List<ChatMessage> chatList = chatMessageRepository.findTop30ByOrderByIdDesc();
+
+            List<ChatInitDto> initData = new ArrayList<>();
+            for (ChatMessage chat : chatList) {
+                String initNickname = chat.getNickname();
+                String initText = chat.getMessage();
+                ChatInitDto init = new ChatInitDto(initNickname, initText);
+                initData.add(init);
+            }
+            Collections.reverse(initData);
+            String messageJSON = objectMapper.writeValueAsString(initData);
+            return new SocketMessageDto(RESPONSE_CHAT_INIT, "back-server", messageJSON);
+
+        } catch (IOException e) {
+            log.debug(e.getMessage());
+            addErrorLogs(e.getMessage());
+            return new SocketMessageDto(ERROR, "back-server", "메시지 초기화 실패");
+        }
+    }
 }

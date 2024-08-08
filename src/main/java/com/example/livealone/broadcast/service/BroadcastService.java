@@ -1,16 +1,7 @@
 package com.example.livealone.broadcast.service;
 
-import static com.example.livealone.global.entity.SocketMessageType.BROADCAST;
-
 import com.example.livealone.admin.dto.AdminBroadcastListResponseDto;
-import com.example.livealone.broadcast.dto.BroadcastRequestDto;
-import com.example.livealone.broadcast.dto.BroadcastResponseDto;
-import com.example.livealone.broadcast.dto.CreateBroadcastResponseDto;
-import com.example.livealone.broadcast.dto.ReservationStateResponseDto;
-import com.example.livealone.broadcast.dto.ReservationRequestDto;
-import com.example.livealone.broadcast.dto.ReservationResponseDto;
-import com.example.livealone.broadcast.dto.StreamKeyResponseDto;
-import com.example.livealone.broadcast.dto.UserBroadcastResponseDto;
+import com.example.livealone.broadcast.dto.*;
 import com.example.livealone.broadcast.entity.Broadcast;
 import com.example.livealone.broadcast.entity.BroadcastStatus;
 import com.example.livealone.broadcast.entity.Reservations;
@@ -21,23 +12,11 @@ import com.example.livealone.broadcast.repository.ReservationRepository;
 import com.example.livealone.global.aop.DistributedLock;
 import com.example.livealone.global.dto.SocketMessageDto;
 import com.example.livealone.global.exception.CustomException;
-import com.example.livealone.global.handler.WebSocketHandler;
 import com.example.livealone.product.entity.Product;
 import com.example.livealone.product.repository.ProductRepository;
 import com.example.livealone.user.entity.User;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.IOException;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
@@ -46,11 +25,22 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
+
+import java.io.IOException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZonedDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static com.example.livealone.global.entity.SocketMessageType.BROADCAST;
 
 @Service
 @RequiredArgsConstructor
@@ -62,6 +52,7 @@ public class BroadcastService {
 
   private final ObjectMapper objectMapper;
   private final MessageSource messageSource;
+  private final SimpMessagingTemplate messagingTemplate;
 
   private static final int BROADCAST_AFTER_STARTING = 20;
 
@@ -224,11 +215,8 @@ public class BroadcastService {
     String messageJSON = objectMapper.writeValueAsString(responseDto);
     SocketMessageDto socketMessageDto = new SocketMessageDto(BROADCAST, "server", messageJSON);
 
-    String result = objectMapper.writeValueAsString(socketMessageDto);
-    TextMessage text = new TextMessage(result);
-    WebSocketHandler.broadcast(text);
+    messagingTemplate.convertAndSend("/queue/message",socketMessageDto);
   }
-
   public List<ReservationStateResponseDto> getReservations(LocalDate date) {
     List<Reservations> reservations = reservationRepository.findByAirTimeBetween(date.atStartOfDay(), date.atTime(LocalTime.MAX));
 
