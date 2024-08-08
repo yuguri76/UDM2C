@@ -1,9 +1,9 @@
 package com.example.livealone.order.service;
 
+import com.example.livealone.admin.dto.AdminConsumerResponseDto;
 import com.example.livealone.broadcast.entity.Broadcast;
 import com.example.livealone.broadcast.service.BroadcastService;
 import com.example.livealone.global.aop.DistributedLock;
-import com.example.livealone.global.config.RedissonConfig;
 import com.example.livealone.global.exception.CustomException;
 import com.example.livealone.order.dto.OrderRequestDto;
 import com.example.livealone.order.dto.OrderResponseDto;
@@ -16,13 +16,11 @@ import com.example.livealone.user.entity.User;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Locale;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.context.MessageSource;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -93,14 +91,16 @@ public class OrderService {
      */
     @DistributedLock(key = "'checkTimeExpired-' + #productId")
     public void checkTimeExpired(User user, Long productId) {
-        Order order = orderRepository.findByUser(user).orElseThrow(
-                () -> new CustomException(messageSource.getMessage(
-                        "order.not.found",
-                        null,
-                        CustomException.DEFAULT_ERROR_MESSAGE,
-                        Locale.getDefault()
-                ), HttpStatus.NOT_FOUND)
-        );
+        Order order = orderRepository.findCurrentOrderByUserAndProduct(user,productId);
+
+        if(order == null){
+            throw new CustomException(messageSource.getMessage(
+                    "order.not.found",
+                    null,
+                    CustomException.DEFAULT_ERROR_MESSAGE,
+                    Locale.getDefault()
+            ), HttpStatus.NOT_FOUND);
+        }
 
         long timeDifference = ChronoUnit.MINUTES.between(order.getCreatedAt(), LocalDateTime.now());
 
@@ -111,6 +111,13 @@ public class OrderService {
             productService.saveProduct(product);
             orderRepository.delete(order);
 
+        } else {
+            throw new CustomException(messageSource.getMessage(
+                    "ten.minutes.yet",
+                    null,
+                    CustomException.DEFAULT_ERROR_MESSAGE,
+                    Locale.getDefault()
+            ), HttpStatus.NOT_FOUND);
         }
     }
 
@@ -121,5 +128,16 @@ public class OrderService {
      */
     public Long sumOrderQuantity(Long broadcastId) {
         return orderRepository.sumQuantityByBroadcastId(broadcastId);
+    }
+
+    /**
+     * 해당 방송 모든 주문 정보 가져오는 메서드
+     * @param broadcastId
+     * @param page
+     * @param size
+     * @return
+     */
+    public Page<AdminConsumerResponseDto> getAllOrderByBroadcastId(Long broadcastId, int page, int size) {
+        return orderRepository.findAllByBroadcastId(broadcastId, page, size);
     }
 }

@@ -2,6 +2,7 @@ package com.example.livealone.admin.controller;
 
 import com.example.livealone.admin.dto.AdminBroadcastDetailResponseDto;
 import com.example.livealone.admin.dto.AdminBroadcastListResponseDto;
+import com.example.livealone.admin.dto.AdminConsumerResponseDto;
 import com.example.livealone.admin.dto.AdminRequestDto;
 import com.example.livealone.admin.dto.AdminRoleResponseDto;
 import com.example.livealone.admin.dto.AdminUserListResponseDto;
@@ -84,6 +85,18 @@ public class AdminController {
             HttpStatus.OK.value(),
             "방송 상세 정보를 조회하였습니다.",
             adminBroadcastDetailResponseDto)
+    );
+  }
+
+  @GetMapping("/admin/broadcast/{broadcastId}/consumer")
+  public ResponseEntity<CommonResponseDto<Page<AdminConsumerResponseDto>>> getConsumers(@AuthenticationPrincipal UserDetailsImpl userDetails, @PathVariable Long broadcastId, @RequestParam(defaultValue = "1") int page) {
+    Page<AdminConsumerResponseDto> adminConsumerResponseDtos = adminService.getConsumers(userDetails.getUser(), broadcastId, page);
+
+    return ResponseEntity.status(HttpStatus.OK).body(
+        new CommonResponseDto<>(
+            HttpStatus.OK.value(),
+            "구매자 목록을 조회하였습니다.",
+            adminConsumerResponseDtos)
     );
   }
 }

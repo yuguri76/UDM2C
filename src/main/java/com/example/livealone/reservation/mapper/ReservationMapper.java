@@ -1,8 +1,8 @@
-package com.example.livealone.broadcast.mapper;
+package com.example.livealone.reservation.mapper;
 
-import com.example.livealone.broadcast.dto.ReservationRequestDto;
-import com.example.livealone.broadcast.dto.ReservationResponseDto;
-import com.example.livealone.broadcast.entity.Reservations;
+import com.example.livealone.reservation.dto.ReservationRequestDto;
+import com.example.livealone.reservation.dto.ReservationResponseDto;
+import com.example.livealone.reservation.entity.Reservations;
 import com.example.livealone.user.entity.User;
 import java.util.UUID;
 
