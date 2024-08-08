@@ -1,12 +1,15 @@
 package com.example.livealone.admin.service;
 
+import com.example.livealone.admin.dto.AdminBroadcastDetailResponseDto;
 import com.example.livealone.admin.dto.AdminBroadcastListResponseDto;
 import com.example.livealone.admin.dto.AdminRequestDto;
 import com.example.livealone.admin.dto.AdminRoleResponseDto;
 import com.example.livealone.admin.dto.AdminUserListResponseDto;
 import com.example.livealone.admin.mapper.AdminMapper;
+import com.example.livealone.broadcast.entity.Broadcast;
 import com.example.livealone.broadcast.service.BroadcastService;
 import com.example.livealone.global.exception.CustomException;
+import com.example.livealone.order.service.OrderService;
 import com.example.livealone.user.entity.User;
 import com.example.livealone.user.entity.UserRole;
 import com.example.livealone.user.service.UserService;
@@ -31,6 +34,8 @@ public class AdminService {
 
   private final UserService userService;
   private final BroadcastService broadcastService;
+  private final OrderService orderService;
+
   private final MessageSource messageSource;
 
   @Transactional
@@ -67,6 +72,18 @@ public class AdminService {
     return userService.getAllUserListPageable(page - 1, PAGEABLE_SIZE);
   }
 
+  public AdminBroadcastDetailResponseDto getBroadcastDetails(User user, Long broadcastId) {
+
+    checkAdmin(user);
+
+    Broadcast broadcast = broadcastService.findByBroadcastId(broadcastId);
+
+    Long totalOrderCount = orderService.sumOrderQuantity(broadcastId);
+    Long totalSalePrice = totalOrderCount * broadcast.getProduct().getPrice();
+
+    return AdminMapper.toAdminBroadcastDetailResponseDto(broadcast, broadcast.getProduct(), totalOrderCount, totalSalePrice);
+  }
+
   private void checkAdmin(User user) {
     if (!Objects.equals(UserRole.ADMIN, user.getRole())) {
       throw new CustomException(messageSource.getMessage(
@@ -77,4 +94,5 @@ public class AdminService {
       ), HttpStatus.NOT_FOUND);
     }
   }
+
 }

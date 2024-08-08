@@ -16,6 +16,7 @@ import com.example.livealone.user.entity.User;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -113,4 +114,12 @@ public class OrderService {
         }
     }
 
+    /**
+     * 해당 방송의 총 주문 개수를 반환하는 메서드
+     * @param broadcastId
+     * @return
+     */
+    public Long sumOrderQuantity(Long broadcastId) {
+        return orderRepository.sumQuantityByBroadcastId(broadcastId);
+    }
 }

@@ -7,6 +7,6 @@ import com.example.livealone.order.entity.Order;
 
 import java.util.Optional;
 
-public interface OrderRepository extends JpaRepository<Order,Long> {
+public interface OrderRepository extends JpaRepository<Order,Long>, OrderRepositoryQuery {
     Optional<Order> findByUser(User user);
 }

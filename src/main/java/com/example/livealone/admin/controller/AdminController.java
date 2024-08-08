@@ -1,5 +1,6 @@
 package com.example.livealone.admin.controller;
 
+import com.example.livealone.admin.dto.AdminBroadcastDetailResponseDto;
 import com.example.livealone.admin.dto.AdminBroadcastListResponseDto;
 import com.example.livealone.admin.dto.AdminRequestDto;
 import com.example.livealone.admin.dto.AdminRoleResponseDto;
@@ -75,8 +76,14 @@ public class AdminController {
   }
 
   @GetMapping("/admin/broadcast/{broadcastId}")
-  public void getBroadcast(@AuthenticationPrincipal UserDetailsImpl userDetails, @PathVariable Long broadcastId) {
-    System.out.println("input!!!!!");
-    System.out.println(broadcastId);
+  public ResponseEntity<CommonResponseDto<AdminBroadcastDetailResponseDto>> getBroadcastDetails(@AuthenticationPrincipal UserDetailsImpl userDetails, @PathVariable Long broadcastId) {
+    AdminBroadcastDetailResponseDto adminBroadcastDetailResponseDto = adminService.getBroadcastDetails(userDetails.getUser(), broadcastId);
+
+    return ResponseEntity.status(HttpStatus.OK).body(
+        new CommonResponseDto<>(
+            HttpStatus.OK.value(),
+            "방송 상세 정보를 조회하였습니다.",
+            adminBroadcastDetailResponseDto)
+    );
   }
 }
