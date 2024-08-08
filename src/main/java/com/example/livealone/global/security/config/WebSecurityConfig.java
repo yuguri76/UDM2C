@@ -61,6 +61,7 @@ public class WebSecurityConfig {
 		 		.requestMatchers("/auth/google/login").permitAll()
 		 		.requestMatchers("/auth/reissue").permitAll()
 		 		.requestMatchers( HttpMethod.GET,"/broadcast").permitAll()
+		 		.requestMatchers( HttpMethod.GET,"/broadcast/**").permitAll()
 		 		.requestMatchers( HttpMethod.GET,"/product/**").permitAll()
 				.requestMatchers("/broadcast/broadcastCode").permitAll()
 				.requestMatchers("/payment/**").permitAll()

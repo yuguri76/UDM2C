@@ -6,3 +6,8 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJraW1jaGFlbWluMDcwN0BnbWFpb
 {
   "password": "wrongpassword"
 }
+
+### 방송 상세 정보 가져오기
+GET http://localhost:8080/admin/broadcast/1
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJjaGVhbWluNjMwNkBuYXZlci5jb20iLCJpZCI6MSwidXNlcm5hbWUiOiLquYDssYTrr7wiLCJuaWNrbmFtZSI6Iuq5gOyxhOuvvCIsImlhdCI6MTcyMzA4MTM1MywiZXhwIjoxNzIzMDgxOTUzfQ.rdsG25beo-1n6PrGm9s2N2Unp577wlBOwD7nZMWkehE
