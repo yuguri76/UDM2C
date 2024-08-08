@@ -25,6 +25,7 @@ import org.redisson.api.RedissonClient;
 import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -93,14 +94,16 @@ public class OrderService {
      */
     @DistributedLock(key = "'checkTimeExpired-' + #productId")
     public void checkTimeExpired(User user, Long productId) {
-        Order order = orderRepository.findByUser(user).orElseThrow(
-                () -> new CustomException(messageSource.getMessage(
-                        "order.not.found",
-                        null,
-                        CustomException.DEFAULT_ERROR_MESSAGE,
-                        Locale.getDefault()
-                ), HttpStatus.NOT_FOUND)
-        );
+        Order order = orderRepository.findCurrentOrderByUserAndProduct(user,productId);
+
+        if(order == null){
+            throw new CustomException(messageSource.getMessage(
+                    "order.not.found",
+                    null,
+                    CustomException.DEFAULT_ERROR_MESSAGE,
+                    Locale.getDefault()
+            ), HttpStatus.NOT_FOUND);
+        }
 
         long timeDifference = ChronoUnit.MINUTES.between(order.getCreatedAt(), LocalDateTime.now());
 
@@ -111,6 +114,13 @@ public class OrderService {
             productService.saveProduct(product);
             orderRepository.delete(order);
 
+        } else {
+            throw new CustomException(messageSource.getMessage(
+                    "ten.minutes.yet",
+                    null,
+                    CustomException.DEFAULT_ERROR_MESSAGE,
+                    Locale.getDefault()
+            ), HttpStatus.NOT_FOUND);
         }
     }
 
