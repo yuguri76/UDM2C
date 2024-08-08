@@ -3,8 +3,10 @@ package com.example.livealone.broadcast.service;
 import static com.example.livealone.global.entity.SocketMessageType.BROADCAST;
 
 import com.example.livealone.admin.dto.AdminBroadcastListResponseDto;
+import com.example.livealone.admin.mapper.AdminMapper;
 import com.example.livealone.broadcast.dto.BroadcastRequestDto;
 import com.example.livealone.broadcast.dto.BroadcastResponseDto;
+import com.example.livealone.broadcast.dto.BroadcastTitleResponseDto;
 import com.example.livealone.broadcast.dto.CreateBroadcastResponseDto;
 import com.example.livealone.broadcast.dto.ReservationStateResponseDto;
 import com.example.livealone.broadcast.dto.ReservationRequestDto;
@@ -89,10 +91,10 @@ public class BroadcastService {
 
     Product product = productRepository.findById(boardRequestDto.getProductId()).orElseThrow(
         () -> new CustomException(messageSource.getMessage(
-          "product.not.found",
-          null,
-          CustomException.DEFAULT_ERROR_MESSAGE,
-          Locale.getDefault()
+            "product.not.found",
+            null,
+            CustomException.DEFAULT_ERROR_MESSAGE,
+            Locale.getDefault()
         ), HttpStatus.NOT_FOUND)
     );
 
@@ -104,7 +106,8 @@ public class BroadcastService {
 
     Broadcast saveBroadcast = broadcastRepository.save(broadcast);
 
-    sendStreamKey(BroadcastMapper.toStreamKeyResponseDto(true, broadcast.getReservation().getCode()));
+    sendStreamKey(
+        BroadcastMapper.toStreamKeyResponseDto(true, broadcast.getReservation().getCode()));
 
     return BroadcastMapper.toCreateBroadcastResponseDto(saveBroadcast);
   }
@@ -115,14 +118,15 @@ public class BroadcastService {
 
   @Transactional(readOnly = true)
   public BroadcastResponseDto inquiryCurrentBroadcast() {
-    Broadcast broadcast = broadcastRepository.findByBroadcastStatus(BroadcastStatus.ONAIR).orElseThrow(() ->
-        new CustomException(messageSource.getMessage(
-            "no.exit.current.broadcast",
-            null,
-            CustomException.DEFAULT_ERROR_MESSAGE,
-            Locale.getDefault()
-        ), HttpStatus.NOT_FOUND)
-    );
+    Broadcast broadcast = broadcastRepository.findByBroadcastStatus(BroadcastStatus.ONAIR)
+        .orElseThrow(() ->
+            new CustomException(messageSource.getMessage(
+                "no.exit.current.broadcast",
+                null,
+                CustomException.DEFAULT_ERROR_MESSAGE,
+                Locale.getDefault()
+            ), HttpStatus.NOT_FOUND)
+        );
 
     Product product = broadcast.getProduct();
 
@@ -130,16 +134,17 @@ public class BroadcastService {
   }
 
   public void closeBroadcast(User user) throws JsonProcessingException {
-    Broadcast broadcast = broadcastRepository.findByBroadcastStatus(BroadcastStatus.ONAIR).orElseThrow(() ->
-        new CustomException(messageSource.getMessage(
-            "no.exit.current.broadcast",
-            null,
-            CustomException.DEFAULT_ERROR_MESSAGE,
-            Locale.getDefault()
-        ), HttpStatus.NOT_FOUND)
-    );
+    Broadcast broadcast = broadcastRepository.findByBroadcastStatus(BroadcastStatus.ONAIR)
+        .orElseThrow(() ->
+            new CustomException(messageSource.getMessage(
+                "no.exit.current.broadcast",
+                null,
+                CustomException.DEFAULT_ERROR_MESSAGE,
+                Locale.getDefault()
+            ), HttpStatus.NOT_FOUND)
+        );
 
-    if(!Objects.equals(broadcast.getStreamer().getId(), user.getId())) {
+    if (!Objects.equals(broadcast.getStreamer().getId(), user.getId())) {
       throw new CustomException(messageSource.getMessage(
           "user.not.match",
           null,
@@ -154,8 +159,7 @@ public class BroadcastService {
   }
 
   /**
-   * 매 정각마다 방송을 중단하고 스트림 키를 보내는 스케쥴러 입니다.
-   * 유저 테스트 용으로 0, 20, 40분에 실행 되도록 하였습니다.
+   * 매 정각마다 방송을 중단하고 스트림 키를 보내는 스케쥴러 입니다. 유저 테스트 용으로 0, 20, 40분에 실행 되도록 하였습니다.
    */
   @Scheduled(cron = "0 0,20,40 * * * *")
   public void forceCloseBroadcast() throws JsonProcessingException {
@@ -168,12 +172,12 @@ public class BroadcastService {
   public Broadcast findByBroadcastId(Long broadcastId) {
 
     return broadcastRepository.findById(broadcastId).orElseThrow(
-            () -> new CustomException(messageSource.getMessage(
-                    "broadcast.not.found",
-                    null,
-                    CustomException.DEFAULT_ERROR_MESSAGE,
-                    Locale.getDefault()
-            ), HttpStatus.NOT_FOUND)
+        () -> new CustomException(messageSource.getMessage(
+            "broadcast.not.found",
+            null,
+            CustomException.DEFAULT_ERROR_MESSAGE,
+            Locale.getDefault()
+        ), HttpStatus.NOT_FOUND)
     );
 
   }
@@ -184,20 +188,20 @@ public class BroadcastService {
   }
 
   public void requestStreamKey(WebSocketSession session) {
-    try{
+    try {
       String messageJSON = objectMapper.writeValueAsString(getStreamKey());
       SocketMessageDto socketMessageDto = new SocketMessageDto(BROADCAST, "server", messageJSON);
 
       String result = objectMapper.writeValueAsString(socketMessageDto);
       TextMessage text = new TextMessage(result);
       session.sendMessage(text);
-    }catch (IOException ignored){
+    } catch (IOException ignored) {
     }
   }
 
   @DistributedLock(key = "'createReservation-' + #user.getId()")
   public ReservationResponseDto createReservation(ReservationRequestDto requestDto, User user) {
-    if(reservationRepository.findByAirTime(requestDto.getAirtime()).isPresent()) {
+    if (reservationRepository.findByAirTime(requestDto.getAirtime()).isPresent()) {
       throw new CustomException(messageSource.getMessage(
           "already.occupied.reservation",
           null,
@@ -211,10 +215,12 @@ public class BroadcastService {
   }
 
   private StreamKeyResponseDto getStreamKey() {
-    Optional<Broadcast> broadcast = broadcastRepository.findByBroadcastStatus(BroadcastStatus.ONAIR);
+    Optional<Broadcast> broadcast = broadcastRepository.findByBroadcastStatus(
+        BroadcastStatus.ONAIR);
 
-    if(broadcast.isPresent()) {
-      return BroadcastMapper.toStreamKeyResponseDto(true, broadcast.get().getReservation().getCode());
+    if (broadcast.isPresent()) {
+      return BroadcastMapper.toStreamKeyResponseDto(true,
+          broadcast.get().getReservation().getCode());
     } else {
       return BroadcastMapper.toStreamKeyResponseDto(false, DEFAULT_STREAM_KEY);
     }
@@ -230,7 +236,8 @@ public class BroadcastService {
   }
 
   public List<ReservationStateResponseDto> getReservations(LocalDate date) {
-    List<Reservations> reservations = reservationRepository.findByAirTimeBetween(date.atStartOfDay(), date.atTime(LocalTime.MAX));
+    List<Reservations> reservations = reservationRepository.findByAirTimeBetween(
+        date.atStartOfDay(), date.atTime(LocalTime.MAX));
 
     // 시간 남으면 Query DSL 사용하는 것도 생각 중.
     List<LocalTime> reservedTimes = reservations.stream()
@@ -239,8 +246,8 @@ public class BroadcastService {
 
     List<ReservationStateResponseDto> responseDtoList = new ArrayList<>();
 
-    for(int hour = 0; hour < 24; hour++) {
-      for(int minute : new int[] {0, 20, 40}) {
+    for (int hour = 0; hour < 24; hour++) {
+      for (int minute : new int[]{0, 20, 40}) {
         LocalTime timeSlot = LocalTime.of(hour, minute);
         boolean isReserved = reservedTimes.contains(timeSlot);
 
@@ -255,15 +262,30 @@ public class BroadcastService {
 
     return responseDtoList;
   }
-  
+
+  public BroadcastTitleResponseDto getBroadcastTitle(Long broadcastId) {
+    Broadcast broadcast = broadcastRepository.findById(broadcastId).orElseThrow(() ->
+        new CustomException(messageSource.getMessage(
+            "broadcast.not.found",
+            null,
+            CustomException.DEFAULT_ERROR_MESSAGE,
+            Locale.getDefault()
+        ), HttpStatus.FORBIDDEN)
+    );
+
+    return BroadcastMapper.toBroadcastTitleResponseDto(broadcast);
+  }
+
   public Page<AdminBroadcastListResponseDto> getAllBroadcastListPageable(int page, int size) {
     Pageable pageable = PageRequest.of(page, size);
     Page<Broadcast> broadcastPage = broadcastRepository.findAll(pageable);
 
     List<AdminBroadcastListResponseDto> adminBroadcastListResponseDtoList = broadcastPage.stream()
-        .map(broadcast -> BroadcastMapper.toAdminBroadcastListResponseDto(broadcast))
+        .map(broadcast -> AdminMapper.toAdminBroadcastListResponseDto(broadcast))
         .collect(Collectors.toList());
 
-    return new PageImpl<>(adminBroadcastListResponseDtoList, pageable, broadcastPage.getTotalElements());
+    return new PageImpl<>(adminBroadcastListResponseDtoList, pageable,
+        broadcastPage.getTotalElements());
   }
+
 }
