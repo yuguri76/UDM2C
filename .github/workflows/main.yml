@@ -77,8 +77,8 @@ jobs:
             # 여기서의 환경 변수도 여러분 상황에 맞게 작성하시면 됩니다!!!
             sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_TAG_NAME }}:latest
             sudo docker run -d -p 8080:8080 \
-                -e MYSQL_USER=${{ secrets.SPRING_DATASOURCE_USERNAME }} \
-                -e MYSQL_PASSWORD=${{ secrets.SPRING_DATASOURCE_PASSWORD }} \
+                -e MYSQL_USER=${{ secrets.MYSQL_USER}} \
+                -e MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }} \
                 -e JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }} \
                 ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_TAG_NAME }}:latest \
                 -e ACCESS_EXPIRE_TIME=${{ secrets.ACCESS_EXPIRE_TIME }} \
@@ -90,5 +90,17 @@ jobs:
                 -e SOCIAL_KAKAO_CLIENT_ID=${{ secrets.SOCIAL_KAKAO_CLIENT_ID }} \
                 -e SOCIAL_KAKAO_CLIENT_SECRET=${{ secrets.SOCIAL_KAKAO_CLIENT_SECRET }} \
                 -e MONGO_INITDB_ROOT_USERNAME=${{ secrets.MONGO_INITDB_ROOT_USERNAME }} \
-                -e MONGO_INITDB_ROOT_PASSWORD=${{ secrets.MONGO_INITDB_ROOT_PASSWORD }} 
+                -e MONGO_INITDB_ROOT_PASSWORD=${{ secrets.MONGO_INITDB_ROOT_PASSWORD }} \
+                -e DATABASE_HOST=${{secrets.DATABASE_HOST}} \
+                -e SERVER_HOST=${{secrets.SERVER_HOST}} \
+                -e FRONT_SERVER_HOST=${{secrets.KAFKA_HOST}} \
+                -e KAKAO_CID=${{secrets.KAKAO_CID}} \
+                -e KAKAO_SECRET_KEY=${{secrets.KAKAO_SECRET_KEY}} \
+                -e ADMIN_CODE=${{secrets.ADMIN_CODE}} \
+                -e DEFAULT_STREAM_KEY=${{secrets.DEFAULT_STREAM_KEY}} \
+                -e LOGGING_LEVEL=${{secrets.LOGGING_LEVEL}} \
+                -e ADMIN_TOKEN=${{secrets.ADMIN_TOKEN}} \
+                -e MAIL_USERNAME=${{secrets.MAIL_USERNAME}} \
+                -e MAIL_PASSWORD=${{secrets.MAIL_PASSWORD}} \
+                -e MAIL_TIMEOUT=${{secrets.MAIL_TIMEOUT}} \
                 
