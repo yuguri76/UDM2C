@@ -68,7 +68,7 @@ jobs:
             fi
 
             sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_TAG_NAME }}:latest
-            sudo docker run -d -p 8080:8080 ${{ secrets.DOCKERHUB_USERNAME }}/${{env.DOCKER_IMAGE_TAG_NAME}} \
+            sudo docker run -d -p 8080:8080 \
                 -e MYSQL_USER=${{ secrets.MYSQL_USER}} \
                 -e MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }} \
                 -e JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }} \
@@ -93,4 +93,5 @@ jobs:
                 -e ADMIN_TOKEN=${{secrets.ADMIN_TOKEN}} \
                 -e MAIL_USERNAME=${{secrets.MAIL_USERNAME}} \
                 -e MAIL_PASSWORD=${{secrets.MAIL_PASSWORD}} \
-                -e MAIL_TIMEOUT=${{secrets.MAIL_TIMEOUT}}
+                -e MAIL_TIMEOUT=${{secrets.MAIL_TIMEOUT}} \
+                ${{ secrets.DOCKERHUB_USERNAME }}/${{env.DOCKER_IMAGE_TAG_NAME}}:latest
