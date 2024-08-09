@@ -8,6 +8,7 @@ on:
   pull_request:
     branches:
       - develop # -로 여러 브랜치를 명시하는 것도 가능
+      
 
 env:
   DOCKER_IMAGE_TAG_NAME: livealone
