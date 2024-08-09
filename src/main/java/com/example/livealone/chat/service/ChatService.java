@@ -1,5 +1,6 @@
 package com.example.livealone.chat.service;
 
+import com.example.livealone.broadcast.service.BroadcastService;
 import com.example.livealone.chat.dto.ChatInitDto;
 import com.example.livealone.chat.entity.ChatErrorLog;
 import com.example.livealone.chat.entity.ChatMessage;
@@ -41,6 +42,7 @@ public class ChatService {
     private final ObjectMapper objectMapper;
     private final JwtService jwtService;
     private final AuthService authService;
+    private final BroadcastService broadcastService;
     private final Random random = new Random();
 
     private static final int batchSize = 100;

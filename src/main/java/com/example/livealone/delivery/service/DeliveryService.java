@@ -16,19 +16,8 @@ import java.util.List;
 public class DeliveryService {
 
     private final UserRepository userRepository;
-    private final RedissonClient redissonClient;
 
     public List<DeliveryHistoryResponseDto> getUserDeliveryHistory(User user,int page) {
-
-        RBucket<List<DeliveryHistoryResponseDto>> bucket = redissonClient.getBucket("Delivery::" + user.getId());
-        if (bucket.get() != null) {
-            return bucket.get();
-        }
-
-        List<DeliveryHistoryResponseDto> list = userRepository.findDeliveryHistoryByUserId(user.getId(), page);
-
-        bucket.set(list, 1, TimeUnit.HOURS);
-
-        return list;
+        return userRepository.findDeliveryHistoryByUserId(user.getId(), page);
     }
 }

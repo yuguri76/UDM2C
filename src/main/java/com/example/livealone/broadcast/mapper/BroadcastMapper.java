@@ -1,12 +1,12 @@
 package com.example.livealone.broadcast.mapper;
 
-import com.example.livealone.admin.dto.AdminBroadcastListResponseDto;
 import com.example.livealone.broadcast.dto.BroadcastResponseDto;
+import com.example.livealone.broadcast.dto.BroadcastTitleResponseDto;
 import com.example.livealone.broadcast.dto.CreateBroadcastResponseDto;
 import com.example.livealone.broadcast.dto.StreamKeyResponseDto;
 import com.example.livealone.broadcast.entity.Broadcast;
-import com.example.livealone.broadcast.entity.Reservations;
 import com.example.livealone.broadcast.entity.BroadcastStatus;
+import com.example.livealone.reservation.entity.Reservations;
 import com.example.livealone.product.entity.Product;
 import com.example.livealone.user.entity.User;
 
@@ -47,12 +47,9 @@ public class BroadcastMapper {
                 .build();
     }
 
-    public static AdminBroadcastListResponseDto toAdminBroadcastListResponseDto(Broadcast broadcast) {
-        return AdminBroadcastListResponseDto.builder()
-            .id(broadcast.getId())
+    public static BroadcastTitleResponseDto toBroadcastTitleResponseDto(Broadcast broadcast) {
+        return BroadcastTitleResponseDto.builder()
             .title(broadcast.getTitle())
-            .streamer(broadcast.getStreamer().getUsername())
-            .date(broadcast.getCreatedAt().toLocalDate())
             .build();
     }
 }

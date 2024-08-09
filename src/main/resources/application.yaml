@@ -3,13 +3,13 @@ spring:
     name: livealone
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://${DATABASE_HOST}:3306/live_alone
+    url: jdbc:mysql://${DATABASE_HOST}:3307/live_alone
     username: ${MYSQL_USER}
     password: ${MYSQL_PASSWORD}
   data:
     redis:
       host: ${DATABASE_HOST}
-      port: 6379
+      port: 6378
     mongodb:
       uri: mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@${DATABASE_HOST}:27017/chatdb?authSource=admin
       port: 27017
@@ -31,6 +31,8 @@ spring:
 
   security:
     oauth2:
+      redirect:
+        url: http://${FRONT_SERVER_HOST}:3000/oauth2/redirect
       client:
         registration:
           google:
@@ -109,8 +111,8 @@ kakao:
     cid: TC0ONETIME
     secret: DEV1983009FCE70023372B535B4EB027DEB9824F
     approval-url: http://${SERVER_HOST}:8080/completePayment
-    cancel-url: http://${SERVER_HOST}:8080/payment
-    fail-url: http://${SERVER_HOST}:8080/payment
+    cancel-url: http://${FRONT_SERVER_HOST}:3000/streaming
+    fail-url: http://${FRONT_SERVER_HOST}:3000/streaming
 
 toss:
   api:
@@ -118,7 +120,7 @@ toss:
     client-key: test_ck_kYG57Eba3GPyQ4zAdxQkVpWDOxmA
     secret-key: test_sk_jExPeJWYVQ1ekabzNRlxV49R5gvN
     ret-url: /completePayment
-    ret-cancel-url: /payment
+    ret-cancel-url: /streaming
     result-callback: /completePayment
 
 
@@ -145,6 +147,6 @@ payment:
     client-key: ${TOSS_CLIENT_KEY}
     secret-key: ${TOSS_SECRET_KEY}
     ret-url: http://${FRONT_SERVER_HOST}:3000/ORDER-CHECK?orderno=1
-    ret-cancel-url: http://${FRONT_SERVER_HOST}:3000/close
-    result-callback: http://${FRONT_SERVER_HOST}:3000/callback
+    ret-cancel-url: http://${FRONT_SERVER_HOST}:3000/streaming
+    result-callback: http://${FRONT_SERVER_HOST}:3000/streaming
 

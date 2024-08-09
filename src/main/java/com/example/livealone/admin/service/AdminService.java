@@ -2,6 +2,7 @@ package com.example.livealone.admin.service;
 
 import com.example.livealone.admin.dto.AdminBroadcastDetailResponseDto;
 import com.example.livealone.admin.dto.AdminBroadcastListResponseDto;
+import com.example.livealone.admin.dto.AdminConsumerResponseDto;
 import com.example.livealone.admin.dto.AdminRequestDto;
 import com.example.livealone.admin.dto.AdminRoleResponseDto;
 import com.example.livealone.admin.dto.AdminUserListResponseDto;
@@ -84,6 +85,13 @@ public class AdminService {
     return AdminMapper.toAdminBroadcastDetailResponseDto(broadcast, broadcast.getProduct(), totalOrderCount, totalSalePrice);
   }
 
+  public Page<AdminConsumerResponseDto> getConsumers(User user, Long broadcastId, int page) {
+
+    checkAdmin(user);
+
+    return orderService.getAllOrderByBroadcastId(broadcastId, page - 1, PAGEABLE_SIZE);
+  }
+
   private void checkAdmin(User user) {
     if (!Objects.equals(UserRole.ADMIN, user.getRole())) {
       throw new CustomException(messageSource.getMessage(
@@ -94,5 +102,4 @@ public class AdminService {
       ), HttpStatus.NOT_FOUND);
     }
   }
-
 }

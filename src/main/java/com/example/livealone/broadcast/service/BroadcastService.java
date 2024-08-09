@@ -1,23 +1,44 @@
 package com.example.livealone.broadcast.service;
 
+import static com.example.livealone.global.entity.SocketMessageType.BROADCAST;
+import static com.example.livealone.global.entity.SocketMessageType.ERROR;
+
 import com.example.livealone.admin.dto.AdminBroadcastListResponseDto;
-import com.example.livealone.broadcast.dto.*;
+import com.example.livealone.admin.mapper.AdminMapper;
+import com.example.livealone.broadcast.dto.BroadcastRequestDto;
+import com.example.livealone.broadcast.dto.BroadcastResponseDto;
+import com.example.livealone.broadcast.dto.BroadcastTitleResponseDto;
+import com.example.livealone.broadcast.dto.CreateBroadcastResponseDto;
+import com.example.livealone.broadcast.dto.StreamKeyResponseDto;
+import com.example.livealone.broadcast.dto.UserBroadcastResponseDto;
 import com.example.livealone.broadcast.entity.Broadcast;
 import com.example.livealone.broadcast.entity.BroadcastStatus;
-import com.example.livealone.broadcast.entity.Reservations;
+import com.example.livealone.product.dto.ProductResponseDto;
+import com.example.livealone.product.service.ProductService;
+import com.example.livealone.reservation.entity.Reservations;
 import com.example.livealone.broadcast.mapper.BroadcastMapper;
-import com.example.livealone.broadcast.mapper.ReservationMapper;
 import com.example.livealone.broadcast.repository.BroadcastRepository;
-import com.example.livealone.broadcast.repository.ReservationRepository;
-import com.example.livealone.global.aop.DistributedLock;
 import com.example.livealone.global.dto.SocketMessageDto;
 import com.example.livealone.global.exception.CustomException;
 import com.example.livealone.product.entity.Product;
 import com.example.livealone.product.repository.ProductRepository;
+import com.example.livealone.reservation.service.ReservationService;
 import com.example.livealone.user.entity.User;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.redisson.api.RBucket;
+import org.redisson.api.RTransaction;
+import org.redisson.api.RedissonClient;
+import org.redisson.api.TransactionOptions;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
 import org.springframework.data.domain.Page;
@@ -29,34 +50,24 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.socket.TextMessage;
-import org.springframework.web.socket.WebSocketSession;
 
-import java.io.IOException;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.ZonedDateTime;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import static com.example.livealone.global.entity.SocketMessageType.BROADCAST;
-
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class BroadcastService {
 
+  private final ReservationService reservationService;
+
   private final BroadcastRepository broadcastRepository;
-  private final ReservationRepository reservationRepository;
   private final ProductRepository productRepository;
 
   private final ObjectMapper objectMapper;
   private final MessageSource messageSource;
+  private final RedissonClient redissonClient;
   private final SimpMessagingTemplate messagingTemplate;
 
-  private static final int BROADCAST_AFTER_STARTING = 20;
-
   private static final int PAGE_SIZE = 5;
+  public static final String REDIS_ONAIR_BROADCAST_KEY = "OnAirBroadcast";
 
   @Value("${default.stream-key}")
   private String DEFAULT_STREAM_KEY;
@@ -64,26 +75,16 @@ public class BroadcastService {
 
   public CreateBroadcastResponseDto createBroadcast(BroadcastRequestDto boardRequestDto, User user)
       throws JsonProcessingException {
+    RBucket<BroadcastResponseDto> bucket = redissonClient.getBucket(REDIS_ONAIR_BROADCAST_KEY);
 
-    LocalDateTime now = ZonedDateTime.now().toLocalDateTime();
-
-    Reservations reservations = reservationRepository
-        .findByAirTimeBetweenAndStreamer(now.minusMinutes(BROADCAST_AFTER_STARTING), now, user)
-        .orElseThrow(
-            () -> new CustomException(messageSource.getMessage(
-                "reservation.not.found",
-                null,
-                CustomException.DEFAULT_ERROR_MESSAGE,
-                Locale.getDefault()
-            ), HttpStatus.NOT_FOUND)
-        );
+    Reservations reservations = reservationService.findReservation(user);
 
     Product product = productRepository.findById(boardRequestDto.getProductId()).orElseThrow(
         () -> new CustomException(messageSource.getMessage(
-          "product.not.found",
-          null,
-          CustomException.DEFAULT_ERROR_MESSAGE,
-          Locale.getDefault()
+            "product.not.found",
+            null,
+            CustomException.DEFAULT_ERROR_MESSAGE,
+            Locale.getDefault()
         ), HttpStatus.NOT_FOUND)
     );
 
@@ -95,7 +96,11 @@ public class BroadcastService {
 
     Broadcast saveBroadcast = broadcastRepository.save(broadcast);
 
-    sendStreamKey(BroadcastMapper.toStreamKeyResponseDto(true, broadcast.getReservation().getCode()));
+    BroadcastResponseDto redis = BroadcastMapper.toBroadcastResponseDto(saveBroadcast, saveBroadcast.getProduct());
+    bucket.set(redis, 1, TimeUnit.HOURS);
+
+    sendStreamKey(
+        BroadcastMapper.toStreamKeyResponseDto(true, broadcast.getReservation().getCode()));
 
     return BroadcastMapper.toCreateBroadcastResponseDto(saveBroadcast);
   }
@@ -106,14 +111,20 @@ public class BroadcastService {
 
   @Transactional(readOnly = true)
   public BroadcastResponseDto inquiryCurrentBroadcast() {
-    Broadcast broadcast = broadcastRepository.findByBroadcastStatus(BroadcastStatus.ONAIR).orElseThrow(() ->
-        new CustomException(messageSource.getMessage(
-            "no.exit.current.broadcast",
-            null,
-            CustomException.DEFAULT_ERROR_MESSAGE,
-            Locale.getDefault()
-        ), HttpStatus.NOT_FOUND)
-    );
+    RBucket<BroadcastResponseDto> bucket = redissonClient.getBucket(REDIS_ONAIR_BROADCAST_KEY);
+    if (bucket.isExists()) {
+      return bucket.get();
+    }
+
+    Broadcast broadcast = broadcastRepository.findByBroadcastStatus(BroadcastStatus.ONAIR)
+        .orElseThrow(() ->
+            new CustomException(messageSource.getMessage(
+                "no.exit.current.broadcast",
+                null,
+                CustomException.DEFAULT_ERROR_MESSAGE,
+                Locale.getDefault()
+            ), HttpStatus.NOT_FOUND)
+        );
 
     Product product = broadcast.getProduct();
 
@@ -121,50 +132,84 @@ public class BroadcastService {
   }
 
   public void closeBroadcast(User user) throws JsonProcessingException {
-    Broadcast broadcast = broadcastRepository.findByBroadcastStatus(BroadcastStatus.ONAIR).orElseThrow(() ->
-        new CustomException(messageSource.getMessage(
-            "no.exit.current.broadcast",
+
+    RTransaction redisTransaction = redissonClient.createTransaction(TransactionOptions.defaults());
+
+    try {
+      Broadcast broadcast = broadcastRepository.findByBroadcastStatus(BroadcastStatus.ONAIR)
+          .orElseThrow(() ->
+              new CustomException(messageSource.getMessage(
+                  "no.exit.current.broadcast",
+                  null,
+                  CustomException.DEFAULT_ERROR_MESSAGE,
+                  Locale.getDefault()
+              ), HttpStatus.NOT_FOUND)
+          );
+
+      RBucket<BroadcastResponseDto> broadcastBucket = redissonClient.getBucket(REDIS_ONAIR_BROADCAST_KEY);
+      RBucket<ProductResponseDto> productBucket = redissonClient.getBucket(ProductService.REDIS_PRODUCT_KEY + broadcast.getProduct().getId());
+
+      if (!Objects.equals(broadcast.getStreamer().getId(), user.getId())) {
+        throw new CustomException(messageSource.getMessage(
+            "user.not.match",
             null,
             CustomException.DEFAULT_ERROR_MESSAGE,
             Locale.getDefault()
-        ), HttpStatus.NOT_FOUND)
-    );
+        ), HttpStatus.FORBIDDEN);
+      }
 
-    if(!Objects.equals(broadcast.getStreamer().getId(), user.getId())) {
-      throw new CustomException(messageSource.getMessage(
-          "user.not.match",
-          null,
-          CustomException.DEFAULT_ERROR_MESSAGE,
-          Locale.getDefault()
-      ), HttpStatus.FORBIDDEN);
+      broadcastRepository.save(broadcast.closeBroadcast());
+
+      deleteCache(broadcastBucket);
+      deleteCache(productBucket);
+
+      redisTransaction.commit();
+
+      sendStreamKey(BroadcastMapper.toStreamKeyResponseDto(false, ""));
+    } catch (Exception error) {
+      redisTransaction.rollback();
+      throw error;
     }
-
-    broadcastRepository.save(broadcast.closeBroadcast());
-
-    sendStreamKey(BroadcastMapper.toStreamKeyResponseDto(false, ""));
   }
 
   /**
-   * 매 정각마다 방송을 중단하고 스트림 키를 보내는 스케쥴러 입니다.
-   * 유저 테스트 용으로 0, 20, 40분에 실행 되도록 하였습니다.
+   * 매 정각마다 방송을 중단하고 스트림 키를 보내는 스케쥴러 입니다. 유저 테스트 용으로 0, 20, 40분에 실행 되도록 하였습니다.
    */
   @Scheduled(cron = "0 0,20,40 * * * *")
   public void forceCloseBroadcast() throws JsonProcessingException {
-    broadcastRepository.findByBroadcastStatus(BroadcastStatus.ONAIR)
-        .ifPresent(broadcast -> broadcastRepository.save(broadcast.closeBroadcast()));
+    RTransaction redisTransaction = redissonClient.createTransaction(TransactionOptions.defaults());
 
-    sendStreamKey(BroadcastMapper.toStreamKeyResponseDto(false, ""));
+    try {
+      RBucket<BroadcastResponseDto> broadcastBucket = redissonClient.getBucket(REDIS_ONAIR_BROADCAST_KEY);
+      if(!broadcastBucket.isExists())
+        return;
+      RBucket<Product> productBucket = redissonClient.getBucket(ProductService.REDIS_PRODUCT_KEY + broadcastBucket.get().getProductId());
+
+      broadcastRepository.findByBroadcastStatus(BroadcastStatus.ONAIR)
+          .ifPresent(broadcast -> broadcastRepository.save(broadcast.closeBroadcast()));
+
+      deleteCache(broadcastBucket);
+      deleteCache(productBucket);
+
+      redisTransaction.commit();
+
+      sendStreamKey(BroadcastMapper.toStreamKeyResponseDto(false, ""));
+    } catch (Exception error) {
+      redisTransaction.rollback();
+      throw error;
+    }
+
   }
 
   public Broadcast findByBroadcastId(Long broadcastId) {
 
     return broadcastRepository.findById(broadcastId).orElseThrow(
-            () -> new CustomException(messageSource.getMessage(
-                    "broadcast.not.found",
-                    null,
-                    CustomException.DEFAULT_ERROR_MESSAGE,
-                    Locale.getDefault()
-            ), HttpStatus.NOT_FOUND)
+        () -> new CustomException(messageSource.getMessage(
+            "broadcast.not.found",
+            null,
+            CustomException.DEFAULT_ERROR_MESSAGE,
+            Locale.getDefault()
+        ), HttpStatus.NOT_FOUND)
     );
 
   }
@@ -174,38 +219,26 @@ public class BroadcastService {
     return broadcastRepository.save(broadcast);
   }
 
-  public void requestStreamKey(WebSocketSession session) {
-    try{
+  public String requestStreamKey() throws JsonProcessingException {
+    try {
       String messageJSON = objectMapper.writeValueAsString(getStreamKey());
-      SocketMessageDto socketMessageDto = new SocketMessageDto(BROADCAST, "server", messageJSON);
+      SocketMessageDto socketMessageDto = new SocketMessageDto(BROADCAST, "back-server", messageJSON);
 
-      String result = objectMapper.writeValueAsString(socketMessageDto);
-      TextMessage text = new TextMessage(result);
-      session.sendMessage(text);
-    }catch (IOException ignored){
+      return objectMapper.writeValueAsString(socketMessageDto);
+    } catch (Exception e) {
+      log.error(e.getMessage());
+      SocketMessageDto socketMessageDto = new SocketMessageDto(ERROR,"back-server",e.getMessage());
+      return objectMapper.writeValueAsString(socketMessageDto);
     }
-  }
-
-  @DistributedLock(key = "'createReservation-' + #user.getId()")
-  public ReservationResponseDto createReservation(ReservationRequestDto requestDto, User user) {
-    if(reservationRepository.findByAirTime(requestDto.getAirtime()).isPresent()) {
-      throw new CustomException(messageSource.getMessage(
-          "already.occupied.reservation",
-          null,
-          CustomException.DEFAULT_ERROR_MESSAGE,
-          Locale.getDefault()
-      ), HttpStatus.FORBIDDEN);
-    }
-
-    return ReservationMapper.toReservationResponseCodeDto(reservationRepository
-        .save(ReservationMapper.toReservation(requestDto, user)));
   }
 
   private StreamKeyResponseDto getStreamKey() {
-    Optional<Broadcast> broadcast = broadcastRepository.findByBroadcastStatus(BroadcastStatus.ONAIR);
+    Optional<Broadcast> broadcast = broadcastRepository.findByBroadcastStatus(
+        BroadcastStatus.ONAIR);
 
-    if(broadcast.isPresent()) {
-      return BroadcastMapper.toStreamKeyResponseDto(true, broadcast.get().getReservation().getCode());
+    if (broadcast.isPresent()) {
+      return BroadcastMapper.toStreamKeyResponseDto(true,
+          broadcast.get().getReservation().getCode());
     } else {
       return BroadcastMapper.toStreamKeyResponseDto(false, DEFAULT_STREAM_KEY);
     }
@@ -215,43 +248,37 @@ public class BroadcastService {
     String messageJSON = objectMapper.writeValueAsString(responseDto);
     SocketMessageDto socketMessageDto = new SocketMessageDto(BROADCAST, "server", messageJSON);
 
-    messagingTemplate.convertAndSend("/queue/message",socketMessageDto);
+    messagingTemplate.convertAndSend("queue/message",socketMessageDto);
   }
-  public List<ReservationStateResponseDto> getReservations(LocalDate date) {
-    List<Reservations> reservations = reservationRepository.findByAirTimeBetween(date.atStartOfDay(), date.atTime(LocalTime.MAX));
 
-    // 시간 남으면 Query DSL 사용하는 것도 생각 중.
-    List<LocalTime> reservedTimes = reservations.stream()
-        .map(reservation -> reservation.getAirTime().toLocalTime())
-        .toList();
+  public BroadcastTitleResponseDto getBroadcastTitle(Long broadcastId) {
+    Broadcast broadcast = broadcastRepository.findById(broadcastId).orElseThrow(() ->
+        new CustomException(messageSource.getMessage(
+            "broadcast.not.found",
+            null,
+            CustomException.DEFAULT_ERROR_MESSAGE,
+            Locale.getDefault()
+        ), HttpStatus.FORBIDDEN)
+    );
 
-    List<ReservationStateResponseDto> responseDtoList = new ArrayList<>();
-
-    for(int hour = 0; hour < 24; hour++) {
-      for(int minute : new int[] {0, 20, 40}) {
-        LocalTime timeSlot = LocalTime.of(hour, minute);
-        boolean isReserved = reservedTimes.contains(timeSlot);
-
-        ReservationStateResponseDto dto = ReservationStateResponseDto.builder()
-            .time(timeSlot)
-            .isReserved(isReserved)
-            .build();
-
-        responseDtoList.add(dto);
-      }
-    }
-
-    return responseDtoList;
+    return BroadcastMapper.toBroadcastTitleResponseDto(broadcast);
   }
-  
+
   public Page<AdminBroadcastListResponseDto> getAllBroadcastListPageable(int page, int size) {
     Pageable pageable = PageRequest.of(page, size);
     Page<Broadcast> broadcastPage = broadcastRepository.findAll(pageable);
 
     List<AdminBroadcastListResponseDto> adminBroadcastListResponseDtoList = broadcastPage.stream()
-        .map(broadcast -> BroadcastMapper.toAdminBroadcastListResponseDto(broadcast))
+        .map(AdminMapper::toAdminBroadcastListResponseDto)
         .collect(Collectors.toList());
 
-    return new PageImpl<>(adminBroadcastListResponseDtoList, pageable, broadcastPage.getTotalElements());
+    return new PageImpl<>(adminBroadcastListResponseDtoList, pageable,
+        broadcastPage.getTotalElements());
+  }
+
+  private void deleteCache(RBucket<?> bucket) {
+    if (bucket.isExists()) {
+      bucket.delete();
+    }
   }
 }
