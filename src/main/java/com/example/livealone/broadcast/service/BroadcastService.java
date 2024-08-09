@@ -12,6 +12,8 @@ import com.example.livealone.broadcast.dto.StreamKeyResponseDto;
 import com.example.livealone.broadcast.dto.UserBroadcastResponseDto;
 import com.example.livealone.broadcast.entity.Broadcast;
 import com.example.livealone.broadcast.entity.BroadcastStatus;
+import com.example.livealone.product.dto.ProductResponseDto;
+import com.example.livealone.product.service.ProductService;
 import com.example.livealone.reservation.entity.Reservations;
 import com.example.livealone.broadcast.mapper.BroadcastMapper;
 import com.example.livealone.broadcast.repository.BroadcastRepository;
@@ -29,8 +31,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.redisson.api.RBucket;
+import org.redisson.api.RTransaction;
+import org.redisson.api.RedissonClient;
+import org.redisson.api.TransactionOptions;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
 import org.springframework.data.domain.Page;
@@ -55,8 +62,10 @@ public class BroadcastService {
 
   private final ObjectMapper objectMapper;
   private final MessageSource messageSource;
+  private final RedissonClient redissonClient;
 
   private static final int PAGE_SIZE = 5;
+  public static final String REDIS_ONAIR_BROADCAST_KEY = "OnAirBroadcast";
 
   @Value("${default.stream-key}")
   private String DEFAULT_STREAM_KEY;
@@ -64,14 +73,16 @@ public class BroadcastService {
 
   public CreateBroadcastResponseDto createBroadcast(BroadcastRequestDto boardRequestDto, User user)
       throws JsonProcessingException {
+    RBucket<BroadcastResponseDto> bucket = redissonClient.getBucket(REDIS_ONAIR_BROADCAST_KEY);
+
     Reservations reservations = reservationService.findReservation(user);
 
     Product product = productRepository.findById(boardRequestDto.getProductId()).orElseThrow(
         () -> new CustomException(messageSource.getMessage(
-          "product.not.found",
-          null,
-          CustomException.DEFAULT_ERROR_MESSAGE,
-          Locale.getDefault()
+            "product.not.found",
+            null,
+            CustomException.DEFAULT_ERROR_MESSAGE,
+            Locale.getDefault()
         ), HttpStatus.NOT_FOUND)
     );
 
@@ -83,7 +94,11 @@ public class BroadcastService {
 
     Broadcast saveBroadcast = broadcastRepository.save(broadcast);
 
-    sendStreamKey(BroadcastMapper.toStreamKeyResponseDto(true, broadcast.getReservation().getCode()));
+    BroadcastResponseDto redis = BroadcastMapper.toBroadcastResponseDto(saveBroadcast, saveBroadcast.getProduct());
+    bucket.set(redis, 1, TimeUnit.HOURS);
+
+    sendStreamKey(
+        BroadcastMapper.toStreamKeyResponseDto(true, broadcast.getReservation().getCode()));
 
     return BroadcastMapper.toCreateBroadcastResponseDto(saveBroadcast);
   }
@@ -94,14 +109,20 @@ public class BroadcastService {
 
   @Transactional(readOnly = true)
   public BroadcastResponseDto inquiryCurrentBroadcast() {
-    Broadcast broadcast = broadcastRepository.findByBroadcastStatus(BroadcastStatus.ONAIR).orElseThrow(() ->
-        new CustomException(messageSource.getMessage(
-            "no.exit.current.broadcast",
-            null,
-            CustomException.DEFAULT_ERROR_MESSAGE,
-            Locale.getDefault()
-        ), HttpStatus.NOT_FOUND)
-    );
+    RBucket<BroadcastResponseDto> bucket = redissonClient.getBucket(REDIS_ONAIR_BROADCAST_KEY);
+    if (bucket.isExists()) {
+      return bucket.get();
+    }
+
+    Broadcast broadcast = broadcastRepository.findByBroadcastStatus(BroadcastStatus.ONAIR)
+        .orElseThrow(() ->
+            new CustomException(messageSource.getMessage(
+                "no.exit.current.broadcast",
+                null,
+                CustomException.DEFAULT_ERROR_MESSAGE,
+                Locale.getDefault()
+            ), HttpStatus.NOT_FOUND)
+        );
 
     Product product = broadcast.getProduct();
 
@@ -109,50 +130,82 @@ public class BroadcastService {
   }
 
   public void closeBroadcast(User user) throws JsonProcessingException {
-    Broadcast broadcast = broadcastRepository.findByBroadcastStatus(BroadcastStatus.ONAIR).orElseThrow(() ->
-        new CustomException(messageSource.getMessage(
-            "no.exit.current.broadcast",
+
+    RTransaction redisTransaction = redissonClient.createTransaction(TransactionOptions.defaults());
+
+    try {
+      Broadcast broadcast = broadcastRepository.findByBroadcastStatus(BroadcastStatus.ONAIR)
+          .orElseThrow(() ->
+              new CustomException(messageSource.getMessage(
+                  "no.exit.current.broadcast",
+                  null,
+                  CustomException.DEFAULT_ERROR_MESSAGE,
+                  Locale.getDefault()
+              ), HttpStatus.NOT_FOUND)
+          );
+
+      RBucket<BroadcastResponseDto> broadcastBucket = redissonClient.getBucket(REDIS_ONAIR_BROADCAST_KEY);
+      RBucket<ProductResponseDto> productBucket = redissonClient.getBucket(ProductService.REDIS_PRODUCT_KEY + broadcast.getProduct().getId());
+
+      if (!Objects.equals(broadcast.getStreamer().getId(), user.getId())) {
+        throw new CustomException(messageSource.getMessage(
+            "user.not.match",
             null,
             CustomException.DEFAULT_ERROR_MESSAGE,
             Locale.getDefault()
-        ), HttpStatus.NOT_FOUND)
-    );
+        ), HttpStatus.FORBIDDEN);
+      }
 
-    if(!Objects.equals(broadcast.getStreamer().getId(), user.getId())) {
-      throw new CustomException(messageSource.getMessage(
-          "user.not.match",
-          null,
-          CustomException.DEFAULT_ERROR_MESSAGE,
-          Locale.getDefault()
-      ), HttpStatus.FORBIDDEN);
+      broadcastRepository.save(broadcast.closeBroadcast());
+
+      deleteCache(broadcastBucket);
+      deleteCache(productBucket);
+
+      redisTransaction.commit();
+
+      sendStreamKey(BroadcastMapper.toStreamKeyResponseDto(false, ""));
+    } catch (Exception error) {
+      redisTransaction.rollback();
+      throw error;
     }
-
-    broadcastRepository.save(broadcast.closeBroadcast());
-
-    sendStreamKey(BroadcastMapper.toStreamKeyResponseDto(false, ""));
   }
 
   /**
-   * 매 정각마다 방송을 중단하고 스트림 키를 보내는 스케쥴러 입니다.
-   * 유저 테스트 용으로 0, 20, 40분에 실행 되도록 하였습니다.
+   * 매 정각마다 방송을 중단하고 스트림 키를 보내는 스케쥴러 입니다. 유저 테스트 용으로 0, 20, 40분에 실행 되도록 하였습니다.
    */
   @Scheduled(cron = "0 0,20,40 * * * *")
   public void forceCloseBroadcast() throws JsonProcessingException {
-    broadcastRepository.findByBroadcastStatus(BroadcastStatus.ONAIR)
-        .ifPresent(broadcast -> broadcastRepository.save(broadcast.closeBroadcast()));
+    RTransaction redisTransaction = redissonClient.createTransaction(TransactionOptions.defaults());
 
-    sendStreamKey(BroadcastMapper.toStreamKeyResponseDto(false, ""));
+    try {
+      RBucket<BroadcastResponseDto> broadcastBucket = redissonClient.getBucket(REDIS_ONAIR_BROADCAST_KEY);
+      RBucket<Product> productBucket = redissonClient.getBucket(ProductService.REDIS_PRODUCT_KEY + broadcastBucket.get().getProductId());
+
+      broadcastRepository.findByBroadcastStatus(BroadcastStatus.ONAIR)
+          .ifPresent(broadcast -> broadcastRepository.save(broadcast.closeBroadcast()));
+
+      deleteCache(broadcastBucket);
+      deleteCache(productBucket);
+
+      redisTransaction.commit();
+
+      sendStreamKey(BroadcastMapper.toStreamKeyResponseDto(false, ""));
+    } catch (Exception error) {
+      redisTransaction.rollback();
+      throw error;
+    }
+
   }
 
   public Broadcast findByBroadcastId(Long broadcastId) {
 
     return broadcastRepository.findById(broadcastId).orElseThrow(
-            () -> new CustomException(messageSource.getMessage(
-                    "broadcast.not.found",
-                    null,
-                    CustomException.DEFAULT_ERROR_MESSAGE,
-                    Locale.getDefault()
-            ), HttpStatus.NOT_FOUND)
+        () -> new CustomException(messageSource.getMessage(
+            "broadcast.not.found",
+            null,
+            CustomException.DEFAULT_ERROR_MESSAGE,
+            Locale.getDefault()
+        ), HttpStatus.NOT_FOUND)
     );
 
   }
@@ -220,4 +273,9 @@ public class BroadcastService {
         broadcastPage.getTotalElements());
   }
 
+  private void deleteCache(RBucket<?> bucket) {
+    if (bucket.isExists()) {
+      bucket.delete();
+    }
+  }
 }

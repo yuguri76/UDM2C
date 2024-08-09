@@ -7,20 +7,26 @@ import com.example.livealone.product.entity.Product;
 import com.example.livealone.product.mapper.ProductMapper;
 import com.example.livealone.product.repository.ProductRepository;
 import com.example.livealone.user.entity.User;
+import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
+import org.redisson.api.RBucket;
+import org.redisson.api.RedissonClient;
 import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
 public class ProductService {
 
   private final ProductRepository productRepository;
+
   private final MessageSource messageSource;
+  private final RedissonClient redissonClient;
+
+  public final static String REDIS_PRODUCT_KEY = "Product::";
 
   @Transactional
   public ProductResponseDto createProduct(User user, ProductRequestDto requestDto) {
@@ -33,8 +39,12 @@ public class ProductService {
   }
 
   public Product findByProductId(Long productId) {
+    RBucket<Product> bucket = redissonClient.getBucket(REDIS_PRODUCT_KEY + productId);
+    if (bucket.isExists()) {
+      return bucket.get();
+    }
 
-    return productRepository.findById(productId).orElseThrow(
+    Product product = productRepository.findById(productId).orElseThrow(
             () -> new CustomException(messageSource.getMessage(
                     "product.not.found",
                     null,
@@ -43,6 +53,9 @@ public class ProductService {
             ), HttpStatus.NOT_FOUND)
     );
 
+    bucket.set(product, 1, TimeUnit.HOURS);
+
+    return product;
   }
 
   public Product saveProduct(Product product) {
