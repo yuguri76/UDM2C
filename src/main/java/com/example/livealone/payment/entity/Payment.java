@@ -40,14 +40,27 @@ public class Payment extends Timestamp {
 	@Column(name = "tid")
 	private String tid;
 
+	@Column(nullable = false)
+	private int orderQuantity;
+
+	@Column(nullable = false)
+	private String shippingAddress;
+
+	@Column(nullable = true)
+	private String deliveryRequest;
+
 	@Builder
-	public Payment(User user, Order order, int amount, PaymentMethod paymentMethod, PaymentStatus status, String tid) {
+	public Payment(User user, Order order, int amount, PaymentMethod paymentMethod, PaymentStatus status, String tid,
+		int orderQuantity, String shippingAddress, String deliveryRequest) {
 		this.user = user;
 		this.order = order;
 		this.amount = amount;
 		this.paymentMethod = paymentMethod;
 		this.status = status;
 		this.tid = tid;
+		this.orderQuantity = orderQuantity;
+		this.shippingAddress = shippingAddress;
+		this.deliveryRequest = deliveryRequest;
 	}
 
 	public void updateStatus(PaymentStatus status) {

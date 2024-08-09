@@ -44,15 +44,15 @@ public class Broadcast extends Timestamp {
 
 	@OneToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "air_time", referencedColumnName = "air_time", nullable = false, unique = true)
-	private BroadcastCode broadcastCode;
+	private Reservations reservation;
 
 	@Builder
-	public Broadcast(String title, BroadcastStatus broadcastStatus, User streamer, Product product, BroadcastCode broadcastCode) {
+	public Broadcast(String title, BroadcastStatus broadcastStatus, User streamer, Product product, Reservations reservation) {
 		this.title = title;
 		this.broadcastStatus = broadcastStatus;
 		this.streamer = streamer;
 		this.product = product;
-		this.broadcastCode = broadcastCode;
+		this.reservation = reservation;
 	}
 
 	public Broadcast updateBroadcast(String title, User streamer, Product product) {

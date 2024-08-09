@@ -2,12 +2,18 @@ package com.example.livealone.broadcast.controller;
 
 import com.example.livealone.broadcast.dto.BroadcastRequestDto;
 import com.example.livealone.broadcast.dto.BroadcastResponseDto;
-import com.example.livealone.broadcast.dto.StreamKeyResponseDto;
+import com.example.livealone.broadcast.dto.CreateBroadcastResponseDto;
+import com.example.livealone.broadcast.dto.ReservationStateResponseDto;
+import com.example.livealone.broadcast.dto.ReservationRequestDto;
+import com.example.livealone.broadcast.dto.ReservationResponseDto;
 import com.example.livealone.broadcast.dto.UserBroadcastResponseDto;
 import com.example.livealone.broadcast.service.BroadcastService;
 import com.example.livealone.global.dto.CommonResponseDto;
+import com.example.livealone.global.mail.MailService;
 import com.example.livealone.global.security.UserDetailsImpl;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.validation.Valid;
+import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -25,18 +31,20 @@ import org.springframework.web.bind.annotation.RestController;
 public class BroadcastController {
 
   private final BroadcastService broadcastService;
+  private final MailService mailService;
 
   @PostMapping("/broadcast")
-  public ResponseEntity<CommonResponseDto<Void>> createBroadcast(
-      @Valid @RequestBody BroadcastRequestDto boardRequestDto, @AuthenticationPrincipal UserDetailsImpl userPrincipal) {
+  public ResponseEntity<CommonResponseDto<CreateBroadcastResponseDto>> createBroadcast(
+      @Valid @RequestBody BroadcastRequestDto boardRequestDto, @AuthenticationPrincipal UserDetailsImpl userPrincipal)
+      throws JsonProcessingException {
 
-    broadcastService.createBroadcast(boardRequestDto, userPrincipal.getUser());
+    CreateBroadcastResponseDto responseDto = broadcastService.createBroadcast(boardRequestDto, userPrincipal.getUser());
 
     return ResponseEntity.status(HttpStatus.CREATED).body(
         new CommonResponseDto<>(
         HttpStatus.CREATED.value(),
         "방송을 성공적으로 시작하였습니다.",
-        null)
+        responseDto)
     );
 
   }
@@ -70,7 +78,8 @@ public class BroadcastController {
   }
 
   @PatchMapping("/broadcast")
-  public ResponseEntity<CommonResponseDto<Void>> closeBroadcast(@AuthenticationPrincipal UserDetailsImpl userPrincipal) {
+  public ResponseEntity<CommonResponseDto<Void>> closeBroadcast(@AuthenticationPrincipal UserDetailsImpl userPrincipal)
+      throws JsonProcessingException {
 
     broadcastService.closeBroadcast(userPrincipal.getUser());
 
@@ -83,14 +92,32 @@ public class BroadcastController {
 
   }
 
-  @GetMapping("/broadcast/streamKey")
-  public ResponseEntity<CommonResponseDto<StreamKeyResponseDto>> getStreamKey() {
+  @PostMapping("/broadcast/reservation")
+  public ResponseEntity<CommonResponseDto<Void>> createReservation(
+      @AuthenticationPrincipal UserDetailsImpl userPrincipal,
+      @RequestBody ReservationRequestDto requestDto) {
+
+    ReservationResponseDto responseDto = broadcastService.createReservation(requestDto, userPrincipal.getUser());
+
+    mailService.sendEmail(responseDto.getEmail(),
+        "[LiveAlone]방송 예약 완료 확인 메일입니다.",
+        responseDto.getAirTime() + "타임 방송 예약\n streamKey: " + responseDto.getCode());
 
     return ResponseEntity.status(HttpStatus.OK).body(
         new CommonResponseDto<>(
             HttpStatus.OK.value(),
-            "스트림 키를 성공적으로 가져왔습니다.",
-            broadcastService.getStreamKey())
+            "예약을 성공하였습니다.",
+            null)
+    );
+  }
+
+  @GetMapping("/broadcast/reservations")
+  public ResponseEntity<CommonResponseDto<List<ReservationStateResponseDto>>> getReservations(@RequestParam LocalDate date) {
+    return ResponseEntity.status(HttpStatus.OK).body(
+        new CommonResponseDto<>(
+            HttpStatus.OK.value(),
+            "예약 목록 조회를 성공하였습니다.",
+            broadcastService.getReservations(date))
     );
   }
 

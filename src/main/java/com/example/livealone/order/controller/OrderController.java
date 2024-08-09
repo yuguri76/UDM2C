@@ -11,10 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -34,24 +31,23 @@ public class OrderController {
      */
     @PostMapping("/order/broadcast/{broadcastId}/product/{productId}")
     public ResponseEntity<CommonResponseDto<OrderResponseDto>> createOrder(
-            @PathVariable("productId") Long productId,
-            @PathVariable("broadcastId") Long broadcastId,
-            @AuthenticationPrincipal UserDetailsImpl userDetails,
-            @RequestBody OrderRequestDto orderRequestDto
-            ) {
+        @PathVariable("productId") Long productId,
+        @PathVariable("broadcastId") Long broadcastId,
+        @AuthenticationPrincipal UserDetailsImpl userDetails,
+        @RequestBody OrderRequestDto orderRequestDto
+    ) {
 
         User user = userDetails.getUser();
 
         OrderResponseDto orderResponseDto = orderService.createOrder(productId, broadcastId, user, orderRequestDto);
 
         CommonResponseDto<OrderResponseDto> commonResponseDto = CommonResponseDto.<OrderResponseDto>builder()
-                .status(HttpStatus.OK.value())
-                .message("create order successfully")
-                .data(orderResponseDto)
-                .build();
+            .status(HttpStatus.OK.value())
+            .message("create order successfully")
+            .data(orderResponseDto)
+            .build();
 
         return ResponseEntity.ok().body(commonResponseDto);
-
     }
 
     /**
@@ -68,6 +64,30 @@ public class OrderController {
         CommonResponseDto<Void> commonResponseDto = CommonResponseDto.<Void>builder()
                 .status(HttpStatus.OK.value())
                 .message("check stock successfully")
+                .data(null)
+                .build();
+
+        return ResponseEntity.ok().body(commonResponseDto);
+    }
+
+    /**
+     * 결제 페이지에 10분이상 머무를 때 생성되었던 Order를 삭제하고 상품 재고를 복구하는 API
+     * @param productId
+     * @param userDetails
+     * @return
+     */
+    @DeleteMapping("/order/product/{productId}")
+    public ResponseEntity<CommonResponseDto<Void>> deleteOrder(
+            @PathVariable("productId") Long productId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ) {
+        User user = userDetails.getUser();
+
+        orderService.checkTimeExpired(user, productId);
+
+        CommonResponseDto<Void> commonResponseDto = CommonResponseDto.<Void>builder()
+                .status(HttpStatus.OK.value())
+                .message("delete order successfully")
                 .data(null)
                 .build();
 

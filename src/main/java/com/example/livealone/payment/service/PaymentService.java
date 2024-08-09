@@ -1,8 +1,11 @@
 package com.example.livealone.payment.service;
 
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.example.livealone.global.config.URIConfig;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -27,9 +30,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.util.UriComponentsBuilder;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PaymentService {
 
 	private final PaymentRepository paymentRepository;
@@ -38,34 +43,36 @@ public class PaymentService {
 	private final RestTemplate restTemplate;
 	private final ObjectMapper objectMapper;
 
-	@Value("TC0ONETIME")
+	private final URIConfig uriConfig;
+
+	@Value("${payment.kakao.cid}")
 	private String cid;
 
-	@Value("DEV1983009FCE70023372B535B4EB027DEB9824F")
+	@Value("${payment.kakao.secret-key}")
 	private String secretKey;
 
-	@Value("http://localhost:8080/payment/kakao/complete")
+	@Value("${payment.kakao.approval-url}")
 	private String approvalUrl;
 
-	@Value("http://localhost:8080/payment")
+	@Value("${payment.kakao.cancel-url}")
 	private String cancelUrl;
 
-	@Value("http://localhost:8080/payment")
+	@Value("${payment.kakao.fail-url}")
 	private String failUrl;
 
-	@Value("sk_test_w5lNQylNqa5lNQe013Nq")
+	@Value("${payment.toss.client-key}")
 	private String tossClientKey;
 
-	@Value("test_sk_jExPeJWYVQ1ekabzNRlxV49R5gvN")
+	@Value("${payment.toss.secret-key}")
 	private String tossSecretKey;
 
-	@Value("http://seoldarin.iptime.org:7956/ORDER-CHECK?orderno=1")
+	@Value("${payment.toss.ret-url}")
 	private String tossRetUrl;
 
-	@Value("http://seoldarin.iptime.org:7956/close")
+	@Value("${payment.toss.ret-cancel-url}")
 	private String tossRetCancelUrl;
 
-	@Value("http://seoldarin.iptime.org:7956/callback")
+	@Value("${payment.toss.result-callback}")
 	private String tossResultCallback;
 
 	public PaymentResponseDto createKakaoPayReady(PaymentRequestDto requestDto) {
@@ -75,6 +82,8 @@ public class PaymentService {
 
 		String url = "https://open-api.kakaopay.com/online/v1/payment/ready";
 
+		log.debug("Create Kakao pay ready 진입 URI :{} ",url);
+
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 		headers.set("Authorization", "SECRET_KEY " + secretKey);
@@ -82,14 +91,18 @@ public class PaymentService {
 
 		HashMap<String, String> params = new HashMap<>();
 		params.put("cid", "TC0ONETIME");
-		params.put("partner_order_id", "2");
-		params.put("partner_user_id", "2");
-		params.put("item_name", "초코파이");
-		params.put("quantity", "1");
-		params.put("total_amount", "2200");
-		params.put("vat_amount", "200");
+		params.put("partner_order_id", String.valueOf(requestDto.getOrderId()));
+		params.put("partner_user_id", String.valueOf(requestDto.getUserId()));
+		params.put("item_name", requestDto.getItemName());
+		params.put("quantity", String.valueOf(requestDto.getOrderQuantity()));
+		int totalAmount = requestDto.getAmount() * requestDto.getOrderQuantity();
+		params.put("total_amount", String.valueOf(totalAmount));
+		params.put("vat_amount", "0");
 		params.put("tax_free_amount", "0");
-		params.put("approval_url", String.format("http://localhost:8080/payment/kakao/complete?order_id=%d&user_id=%d", 2, 2));
+		params.put("approval_url", String.format("http://%s:8080/payment/kakao/complete?order_id=%d&user_id=%d",
+				uriConfig.getServerHost() ,
+				requestDto.getOrderId(),
+				requestDto.getUserId()));
 		params.put("cancel_url", cancelUrl);
 		params.put("fail_url", failUrl);
 
@@ -122,6 +135,9 @@ public class PaymentService {
 				.paymentMethod(PaymentMethod.KAKAO_PAY)
 				.status(PaymentStatus.REQUESTED)
 				.tid(tid)
+				.orderQuantity(requestDto.getOrderQuantity())
+				.shippingAddress(requestDto.getShippingAddress())
+				.deliveryRequest(requestDto.getDeliveryRequest())
 				.build();
 
 			paymentRepository.save(payment);
@@ -156,19 +172,31 @@ public class PaymentService {
 	 * @param userId  사용자 ID
 	 * @return 결제 응답 DTO
 	 */
-
 	@Transactional
 	public PaymentResponseDto approveKakaoPayPayment(String pgToken, Long orderId, Long userId) {
 		String url = "https://open-api.kakaopay.com/online/v1/payment/approve";
+
+		log.debug("Approve Kakao payment");
+		log.debug("pgToken : {}",pgToken);
+		log.debug("orderId : {}",orderId);
+		log.debug("userID : {}",userId);
 
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 		headers.set("Authorization", "SECRET_KEY " + secretKey);
 		headers.set("Content-type", "application/json");
 
+		Payment payment = paymentRepository.findByOrder_Id(orderId);
+		if (payment == null) {
+			return PaymentResponseDto.builder()
+				.status("FAILED")
+				.message("Invalid order ID: " + orderId)
+				.build();
+		}
+
 		Map<String, String> params = new HashMap<>();
 		params.put("cid", cid);
-		params.put("tid", getTidByOrderId(orderId));
+		params.put("tid",  payment.getTid());
 		params.put("partner_order_id", orderId.toString());
 		params.put("partner_user_id", userId.toString());
 		params.put("pg_token", pgToken);
@@ -176,10 +204,12 @@ public class PaymentService {
 		HttpEntity<Map<String, String>> request = new HttpEntity<>(params, headers);
 
 		try {
+			log.debug("Send Request");
 			ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, request, String.class);
 			JsonNode jsonNode = objectMapper.readTree(response.getBody());
 
-			Payment payment = paymentRepository.findByOrderId(orderId);
+			log.debug("jsonNode : {}",jsonNode);
+
 			payment.updateStatus(PaymentStatus.COMPLETED);
 
 			return PaymentResponseDto.builder()
@@ -195,7 +225,7 @@ public class PaymentService {
 				.build();
 
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.debug(e.getMessage());
 			return PaymentResponseDto.builder()
 				.status("FAILED")
 				.message("결제 승인 실패")
@@ -212,27 +242,34 @@ public class PaymentService {
 	public PaymentResponseDto createTossPayReady(PaymentRequestDto requestDto) {
 		String url = "https://pay.toss.im/api/v2/payments";
 
+		log.debug("Toss pay read : {}",url);
+
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_JSON);
 
 		Map<String, Object> params = new HashMap<>();
-		params.put("orderNo", requestDto.getOrderId().toString());
-		params.put("amount", requestDto.getAmount());
-		params.put("amountTaxFree", 0);
-		params.put("productDesc", "토스 티셔츠");
+		String createOrderNo = String.format("livealone:%d", requestDto.getOrderId())+ LocalDate.now();
+		params.put("orderNo", createOrderNo);
+		params.put("amount", requestDto.getAmount()*requestDto.getOrderQuantity());
+		params.put("amountTaxFree", "0"); // requestDto에서 받아옴
+		params.put("productDesc", requestDto.getItemName()); // requestDto에서 받아옴
 		params.put("apiKey", tossClientKey);
 		params.put("autoExecute", true);
 		params.put("callbackVersion", "V2");
 		params.put("resultCallback", tossResultCallback);
-		params.put("retUrl", tossRetUrl);
+		String createRetUrl = String.format("http://%s:8080/ORDER-CHECK?orderno=%s", uriConfig.getServerHost(),createOrderNo);
+		params.put("retUrl", createRetUrl);
 		params.put("retCancelUrl", tossRetCancelUrl);
+		log.debug("request : {}",params);
 
 		HttpEntity<Map<String, Object>> request = new HttpEntity<>(params, headers);
 
 		try {
+			log.debug("Send Request");
 			ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, request, String.class);
 
 			JsonNode jsonNode = objectMapper.readTree(response.getBody());
+			log.debug("jsonNode : {}",jsonNode);
 
 			// 필드 존재 여부 체크
 			if (jsonNode.has("payToken") && jsonNode.has("checkoutPage")) {
@@ -249,6 +286,9 @@ public class PaymentService {
 					.paymentMethod(PaymentMethod.TOSS_PAY)
 					.status(PaymentStatus.REQUESTED)
 					.tid(jsonNode.get("payToken").asText())
+					.orderQuantity(requestDto.getOrderQuantity())
+					.shippingAddress(requestDto.getShippingAddress())
+					.deliveryRequest(requestDto.getDeliveryRequest())
 					.build();
 
 				paymentRepository.save(payment);
@@ -289,6 +329,7 @@ public class PaymentService {
 	public PaymentResponseDto approveTossPayPayment(String payToken) {
 		String url = "https://pay.toss.im/api/v2/execute";
 
+		log.debug("payToken : {}",payToken);
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_JSON);
 
@@ -338,7 +379,16 @@ public class PaymentService {
 	 * @return tid
 	 */
 	private String getTidByOrderId(Long orderId) {
-		Payment payment = paymentRepository.findByOrderId(orderId);
+		Payment payment = paymentRepository.findByOrder_Id(orderId);
 		return payment.getTid();
+	}
+
+	public String returnOrderCheckPage(String orderno, String status, String orderNo, String payMethod, String bankCode, String cardCompany) {
+		log.debug("orderno : {}",orderno);
+		log.debug("status : {}",status);
+		log.debug("paymeThod ; {}", payMethod);
+
+		String url = String.format("http://%s:3000/completepayment", uriConfig.getFrontServerHost());
+		return url;
 	}
 }

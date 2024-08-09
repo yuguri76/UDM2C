@@ -1,5 +1,6 @@
 package com.example.livealone.oauth2.handler;
 
+import com.example.livealone.global.config.URIConfig;
 import com.example.livealone.global.security.JwtService;
 import com.example.livealone.global.security.UserDetailsImpl;
 import com.example.livealone.user.entity.User;
@@ -23,12 +24,15 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 	private final JwtService jwtService;
 	private final AuthService authService;
 
+	private final URIConfig uriConfig;
+
 	@Override
 	public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
 
 		User user = ((UserDetailsImpl) authentication.getPrincipal()).getUser();
 
-		response.sendRedirect(UriComponentsBuilder.fromHttpUrl("http://localhost:3000/oauth2/redirect")
+		String url= String.format("http://livealone.shop:3000/oauth2/redirect");
+		response.sendRedirect(UriComponentsBuilder.fromHttpUrl(url)
 				.queryParam("access", jwtService.generateToken(user))
 				.queryParam("refresh", authService.reissueRefreshToken(user))
 				.build()

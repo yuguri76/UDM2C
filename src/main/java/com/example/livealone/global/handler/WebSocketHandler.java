@@ -1,5 +1,6 @@
 package com.example.livealone.global.handler;
 
+import com.example.livealone.broadcast.service.BroadcastService;
 import com.example.livealone.chat.service.ChatService;
 import com.example.livealone.global.dto.SocketMessageDto;
 import com.example.livealone.global.exception.CustomException;
@@ -37,6 +38,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
     private final AuthService authService;
 
     private final ChatService chatService;
+    private final BroadcastService broadcastService;
 
     /**
      * 새 웹소켓 세션 접속
@@ -44,7 +46,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         CLIENTS.put(session.getId(), session);
-        log.info("New Sesssion :" + session.getId());
+        log.debug("New Sesssion :" + session.getId());
     }
 
     /**
@@ -53,7 +55,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
 
-        log.info("Exit Session :" + session.getId());
+        log.debug("Exit Session :" + session.getId());
         try {
             CLIENTS.remove(session.getId());
         } catch (Exception e) {
@@ -67,12 +69,14 @@ public class WebSocketHandler extends TextWebSocketHandler {
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
         SocketMessageDto socketMessageDto = getMessageType(message.getPayload());
-
+        log.debug("handleTextMessage TYPE : {}}",socketMessageDto.getType());
+        log.debug("handleTextMessage Message : {}", socketMessageDto.getMessage());
         String jsonMessage;
         switch (socketMessageDto.getType()) {
             case REQUEST_AUTH -> {
                 jsonMessage = getAuthMessage(session, socketMessageDto);
-                kafkaTemplate.send("chat", jsonMessage);
+
+                chatService.responseDirectMessageToSocekt(session,jsonMessage);
             }
             case REQUEST_REFRESH -> {
                 try{
@@ -80,30 +84,41 @@ public class WebSocketHandler extends TextWebSocketHandler {
 
                     TokenResponseDto tokenResponseDto = authService.reissueAccessToken(new ReissueRequestDto(refresh));
                     jsonMessage = getRefreshMessage(socketMessageDto, tokenResponseDto);
-                    kafkaTemplate.send("chat", jsonMessage);
+
+                    chatService.responseDirectMessageToSocekt(session,jsonMessage);
                 }catch (CustomException e){
                     SocketMessageDto anonymousUserMessage = new SocketMessageDto(ANONYMOUS_USER, "back-server", e.getMessage());
                     jsonMessage = objectMapper.writeValueAsString(anonymousUserMessage);
-                    kafkaTemplate.send("chat",jsonMessage);
+                    chatService.responseDirectMessageToSocekt(session,jsonMessage);
                 }
             }
             case CHAT_MESSAGE -> {
+                log.debug("Send Kafka : {}",message.getPayload());
                 jsonMessage = message.getPayload();
+
                 kafkaTemplate.send("chat", jsonMessage);
             }
             case REQUEST_CHAT_INIT -> {
-                // kafka로 메시지를 보내지 않고, 접속한 세션에게 바로 전송
                 chatService.writeInitMessage(session);
             }
             case ERROR -> {
-                // 아직은 안쓰고 일단 비워뒀습니다. (에러메시지 처리)
                 jsonMessage = getErrorMessage(session, socketMessageDto);
-
+                log.warn(jsonMessage);
             }
             case BROADCAST -> {
-
+                broadcastService.requestStreamKey(session);
             }
         }
+    }
+
+    public static void broadcast(TextMessage message) {
+        System.out.println(message);
+        CLIENTS.forEach((key, session) -> {
+            try {
+                session.sendMessage(message);
+            } catch (IOException ignored) {
+            }
+        });
     }
 
     public static ConcurrentHashMap<String, WebSocketSession> getClients() {
@@ -114,7 +129,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
         try {
             return objectMapper.readValue(payload, SocketMessageDto.class);
         } catch (JsonProcessingException e) {
-            log.info(e.getMessage());
+            log.debug(e.getMessage());
             return new SocketMessageDto(ERROR, "back-server", e.getMessage());
         }
     }
@@ -138,7 +153,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
             SocketMessageDto newMessage = new SocketMessageDto(RESPONSE_AUTH, nickname, session.getId());
             return objectMapper.writeValueAsString(newMessage);
         } catch (IOException e) {
-            log.info(e.getMessage());
+            log.debug(e.getMessage());
             SocketMessageDto errorMessage = new SocketMessageDto(FAILED, "back-server", e.getMessage());
             return objectMapper.writeValueAsString(errorMessage);
         }
@@ -149,10 +164,10 @@ public class WebSocketHandler extends TextWebSocketHandler {
 
             SocketMessageDto refreshMessage = new SocketMessageDto(RESPONSE_REFRESH,socketMessageDto.getMessenger(),
                     objectMapper.writeValueAsString(tokenResponseDto));
-            log.info("리프레쉬 요청"+tokenResponseDto.getAccess());
+            log.debug("리프레쉬 요청"+tokenResponseDto.getAccess());
             return objectMapper.writeValueAsString(refreshMessage);
         }catch (JsonProcessingException e){
-            log.info(e.getMessage());
+            log.debug(e.getMessage());
             SocketMessageDto errorMessage = new SocketMessageDto(FAILED,"back-server",e.getMessage());
             return objectMapper.writeValueAsString(errorMessage);
         }
@@ -165,7 +180,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
         try {
             return objectMapper.writeValueAsString(socketMessageDto);
         } catch (JsonProcessingException e) {
-            log.info(e.getMessage());
+            log.debug(e.getMessage());
             SocketMessageDto error = new SocketMessageDto(ERROR, "back-server", e.getMessage());
             return objectMapper.writeValueAsString(error);
         }

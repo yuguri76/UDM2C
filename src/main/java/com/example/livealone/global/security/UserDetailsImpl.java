@@ -1,18 +1,16 @@
 package com.example.livealone.global.security;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.oauth2.core.user.OAuth2User;
-
 import com.example.livealone.user.entity.User;
-
+import com.example.livealone.user.entity.UserRole;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Map;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 
 @Getter
 @RequiredArgsConstructor
@@ -23,8 +21,14 @@ public class UserDetailsImpl implements UserDetails, OAuth2User {
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {
 
-		return List.of();
+		UserRole role = user.getRole();
+		String authority = role.getAuthority();
 
+		SimpleGrantedAuthority simpleGrantedAuthority = new SimpleGrantedAuthority(authority);
+		Collection<GrantedAuthority> authorities = new ArrayList<>();
+		authorities.add(simpleGrantedAuthority);
+
+		return authorities;
 	}
 
 	@Override

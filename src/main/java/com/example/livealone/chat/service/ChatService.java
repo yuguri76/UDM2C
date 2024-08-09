@@ -61,6 +61,16 @@ public class ChatService {
         });
     }
 
+    public void responseDirectMessageToSocekt(WebSocketSession session, String jsonMessage) {
+        try{
+            TextMessage text = new TextMessage(jsonMessage);
+            session.sendMessage(text);
+        }catch (IOException e){
+            log.debug(e.getMessage());
+            addErrorLogs(e.getMessage());
+        }
+    }
+
     public void writeInitMessage(WebSocketSession session) {
 
         try {
@@ -83,7 +93,7 @@ public class ChatService {
             session.sendMessage(text);
 
         } catch (IOException e) {
-            log.info(e.getMessage());
+            log.debug(e.getMessage());
             addErrorLogs(e.getMessage());
         }
     }
@@ -134,30 +144,31 @@ public class ChatService {
 
     private synchronized void saveChatMessages() {
         if (!messageBuffer.isEmpty()) {
-            chatMessageRepository.saveAll(new LinkedList<>(messageBuffer));
+            chatMessageRepository.saveAll(new ArrayList<>(messageBuffer));
             messageBuffer.clear();
         }
     }
 
     private synchronized void saveErrorLogs() {
         if (!errorLogsBuffer.isEmpty()) {
-            chatErrorLogRepository.saveAll(new LinkedList<>(errorLogsBuffer));
+            chatErrorLogRepository.saveAll(new ArrayList<>(errorLogsBuffer));
             errorLogsBuffer.clear();
         }
     }
 
     private synchronized void saveSessionLogs() {
         if (!sessionLogsBuffer.isEmpty()) {
-            chatSessionLogRepository.saveAll(new LinkedList<>(sessionLogsBuffer));
+            chatSessionLogRepository.saveAll(new ArrayList<>(sessionLogsBuffer));
             sessionLogsBuffer.clear();
         }
     }
 
 
     public void flush() {
-        log.info("서버 종료 전 버퍼에 있는 데이터 저장");
+        log.debug("서버 종료 전 버퍼에 있는 데이터 저장");
         saveChatMessages();
         saveErrorLogs();
         saveSessionLogs();
     }
+
 }

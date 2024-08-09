@@ -1,5 +1,6 @@
 package com.example.livealone.global.security.config;
 
+import com.example.livealone.global.config.URIConfig;
 import com.example.livealone.oauth2.handler.OAuth2AuthenticationSuccessHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,6 +29,7 @@ public class WebSecurityConfig {
 	private final UserDetailsServiceImpl userDetailsService;
 	private final AuthenticationEntryPointImpl authenticationEntryPointImpl;
 	private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
+	private final URIConfig uriConfig;
 
 	@Bean
 	public JwtAuthentication jwtAuthenticationFilter() {
@@ -51,21 +53,21 @@ public class WebSecurityConfig {
 
 		http.sessionManagement(configurer -> configurer.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
-		// http.authorizeHttpRequests(request ->
-		// 	request
-		// 		.requestMatchers("/ws").permitAll()
-		// 		.requestMatchers("/auth/kakao/login").permitAll()
-		// 		.requestMatchers("/auth/naver/login").permitAll()
-		// 		.requestMatchers("/auth/google/login").permitAll()
-		// 		.requestMatchers("/auth/reissue").permitAll()
-		// 		.requestMatchers( HttpMethod.GET,"/broadcast").permitAll()
-		// 		.requestMatchers( HttpMethod.GET,"/product/**").permitAll()
-		// 		.anyRequest().authenticated());
+		 http.authorizeHttpRequests(request ->
+		 	request
+		 		.requestMatchers("/ws").permitAll()
+		 		.requestMatchers("/auth/kakao/login").permitAll()
+		 		.requestMatchers("/auth/naver/login").permitAll()
+		 		.requestMatchers("/auth/google/login").permitAll()
+		 		.requestMatchers("/auth/reissue").permitAll()
+		 		.requestMatchers( HttpMethod.GET,"/broadcast").permitAll()
+		 		.requestMatchers( HttpMethod.GET,"/broadcast/**").permitAll()
+		 		.requestMatchers( HttpMethod.GET,"/product/**").permitAll()
+				.requestMatchers("/broadcast/broadcastCode").permitAll()
+				.requestMatchers("/payment/**").permitAll()
+				.requestMatchers(HttpMethod.GET,"/ORDER-CHECK").permitAll()
+				.anyRequest().authenticated());
 
-		http.authorizeHttpRequests(request ->
-			request
-				.anyRequest().permitAll() // 모든 요청에 대해 인증을 요구하지 않음
-		);
 
 		http.exceptionHandling(e -> e
 			.authenticationEntryPoint(authenticationEntryPointImpl));
