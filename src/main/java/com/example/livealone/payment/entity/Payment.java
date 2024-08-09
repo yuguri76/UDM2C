@@ -22,7 +22,7 @@ public class Payment extends Timestamp {
 	@JoinColumn(name = "user_id", nullable = false)
 	private User user;
 
-	@OneToOne
+	@OneToOne(cascade = CascadeType.REMOVE)
 	@JoinColumn(name = "order_id", nullable = false)
 	private Order order;
 
