@@ -49,31 +49,31 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_TAG_NAME }}:latest
           build-args:
-            MYSQL_USER=${{ secrets.MYSQL_USER}}
-            MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}
-            JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}
-            ACCESS_EXPIRE_TIME=${{ secrets.ACCESS_EXPIRE_TIME }}
-            REFRESH_EXPIRE_TIME=${{ secrets.REFRESH_EXPIRE_TIME }}
-            SOCIAL_GOOGLE_CLIENT_ID=${{ secrets.SOCIAL_GOOGLE_CLIENT_ID }}
-            SOCIAL_GOOGLE_CLIENT_SECRET=${{ secrets.SOCIAL_GOOGLE_CLIENT_SECRET }}
-            SOCIAL_NAVER_CLIENT_ID=${{ secrets.SOCIAL_NAVER_CLIENT_ID }}
-            SOCIAL_NAVER_CLIENT_SECRET=${{ secrets.SOCIAL_NAVER_CLIENT_SECRET }}
-            SOCIAL_KAKAO_CLIENT_ID=${{ secrets.SOCIAL_KAKAO_CLIENT_ID }}
-            SOCIAL_KAKAO_CLIENT_SECRET=${{ secrets.SOCIAL_KAKAO_CLIENT_SECRET }}
-            MONGO_INITDB_ROOT_USERNAME=${{ secrets.MONGO_INITDB_ROOT_USERNAME }}
-            MONGO_INITDB_ROOT_PASSWORD=${{ secrets.MONGO_INITDB_ROOT_PASSWORD }}
-            DATABASE_HOST=${{secrets.DATABASE_HOST}}
-            SERVER_HOST=${{secrets.SERVER_HOST}}
-            FRONT_SERVER_HOST=${{secrets.FRONT_SERVER_HOST}}
-            KAKAO_CID=${{secrets.KAKAO_CID}}
-            KAKAO_SECRET_KEY=${{secrets.KAKAO_SECRET_KEY}}
-            ADMIN_CODE=${{secrets.ADMIN_CODE}}
-            DEFAULT_STREAM_KEY=${{secrets.DEFAULT_STREAM_KEY}}
-            LOGGING_LEVEL=${{secrets.LOGGING_LEVEL}}
-            ADMIN_TOKEN=${{secrets.ADMIN_TOKEN}}
-            MAIL_USERNAME=${{secrets.MAIL_USERNAME}}
-            MAIL_PASSWORD=${{secrets.MAIL_PASSWORD}}
-            MAIL_TIMEOUT=${{secrets.MAIL_TIMEOUT}}
+            MYSQL_USER="${{secrets.MYSQL_USER}}"
+            MYSQL_PASSWORD="${{ secrets.MYSQL_PASSWORD }}"
+            JWT_SECRET_KEY="${{ secrets.JWT_SECRET_KEY }}"
+            ACCESS_EXPIRE_TIME="${{ secrets.ACCESS_EXPIRE_TIME }}"
+            REFRESH_EXPIRE_TIME="${{ secrets.REFRESH_EXPIRE_TIME }}"
+            SOCIAL_GOOGLE_CLIENT_ID="${{ secrets.SOCIAL_GOOGLE_CLIENT_ID }}"
+            SOCIAL_GOOGLE_CLIENT_SECRET="${{ secrets.SOCIAL_GOOGLE_CLIENT_SECRET }}"
+            SOCIAL_NAVER_CLIENT_ID="${{ secrets.SOCIAL_NAVER_CLIENT_ID }}"
+            SOCIAL_NAVER_CLIENT_SECRET="${{ secrets.SOCIAL_NAVER_CLIENT_SECRET }}"
+            SOCIAL_KAKAO_CLIENT_ID="${{ secrets.SOCIAL_KAKAO_CLIENT_ID }}"
+            SOCIAL_KAKAO_CLIENT_SECRET="${{ secrets.SOCIAL_KAKAO_CLIENT_SECRET }}"
+            MONGO_INITDB_ROOT_USERNAME="${{ secrets.MONGO_INITDB_ROOT_USERNAME }}"
+            MONGO_INITDB_ROOT_PASSWORD="${{ secrets.MONGO_INITDB_ROOT_PASSWORD }}"
+            DATABASE_HOST="${{secrets.DATABASE_HOST}}"
+            SERVER_HOST="${{secrets.SERVER_HOST}}"
+            FRONT_SERVER_HOST="${{secrets.FRONT_SERVER_HOST}}"
+            KAKAO_CID="${{secrets.KAKAO_CID}}"
+            KAKAO_SECRET_KEY="${{secrets.KAKAO_SECRET_KEY}}"
+            ADMIN_CODE="${{secrets.ADMIN_CODE}}"
+            DEFAULT_STREAM_KEY="${{secrets.DEFAULT_STREAM_KEY}}"
+            LOGGING_LEVEL="${{secrets.LOGGING_LEVEL}}"
+            ADMIN_TOKEN="${{secrets.ADMIN_TOKEN}}"
+            MAIL_USERNAME="${{secrets.MAIL_USERNAME}}"
+            MAIL_PASSWORD="${{secrets.MAIL_PASSWORD}}"
+            MAIL_TIMEOUT="${{secrets.MAIL_TIMEOUT}}"
 
   deploy-to-ec2:
     needs: build-and-docker-push
