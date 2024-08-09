@@ -26,12 +26,14 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
 	private final URIConfig uriConfig;
 
+	@Value("${spring.security.oauth2.redirect.url}")
+	private String url;
+
 	@Override
 	public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
 
 		User user = ((UserDetailsImpl) authentication.getPrincipal()).getUser();
 
-		String url= String.format("http://livealone.shop:3000/oauth2/redirect");
 		response.sendRedirect(UriComponentsBuilder.fromHttpUrl(url)
 				.queryParam("access", jwtService.generateToken(user))
 				.queryParam("refresh", authService.reissueRefreshToken(user))
