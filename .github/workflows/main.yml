@@ -75,7 +75,6 @@ jobs:
             MAIL_PASSWORD=${{secrets.MAIL_PASSWORD}}
             MAIL_TIMEOUT=${{secrets.MAIL_TIMEOUT}}
 
-
   deploy-to-ec2:
     needs: build-and-docker-push
     runs-on: ubuntu-22.04
@@ -96,8 +95,3 @@ jobs:
 
             sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_TAG_NAME }}:latest
             sudo docker run -d -p 8080:8080 ${{ secrets.DOCKERHUB_USERNAME }}/${{env.DOCKER_IMAGE_TAG_NAME}}:latest
-
-
-
-
-
