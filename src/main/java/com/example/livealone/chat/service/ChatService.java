@@ -21,10 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static com.example.livealone.global.entity.SocketMessageType.*;
@@ -34,12 +31,17 @@ import static com.example.livealone.global.entity.SocketMessageType.*;
 @Slf4j
 public class ChatService {
 
+    private static final String[] COLORS = {
+            "#FF5733", "#33FF57", "#3357FF", "#F0FF33", "#FF33F0"
+    };
+
     private final ChatMessageRepository chatMessageRepository;
     private final ChatErrorLogRepository chatErrorLogRepository;
     private final ChatSessionLogRepository chatSessionLogRepository;
     private final ObjectMapper objectMapper;
     private final JwtService jwtService;
     private final AuthService authService;
+    private final Random random = new Random();
 
     private static final int batchSize = 100;
     private final ConcurrentLinkedQueue<ChatMessage> messageBuffer = new ConcurrentLinkedQueue<>();
@@ -66,7 +68,9 @@ public class ChatService {
                 Claims claims = jwtService.getClaims(replaceToken);
                 String nickname = claims.get("nickname", String.class);
 
-                messageDto = new SocketMessageDto(RESPONSE_AUTH, nickname, "색깔이라도 넣어줄까?");
+                // 랜덤색깔 넣어주기
+                int randomIndex = random.nextInt(COLORS.length);
+                messageDto = new SocketMessageDto(RESPONSE_AUTH, nickname, COLORS[randomIndex]);
             }
 
             case REQUEST_REFRESH -> {
@@ -88,7 +92,6 @@ public class ChatService {
     }
 
     public SocketMessageDto write(String message) {
-
         try {
             return objectMapper.readValue(message, SocketMessageDto.class);
         } catch (JsonProcessingException e) {
