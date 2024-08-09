@@ -68,7 +68,7 @@ jobs:
             fi
 
             sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_TAG_NAME }}:latest
-            sudo docker run -d -p 8080:8080 \
+            sudo docker run -d -p ${{env.DOCKER_IMAGE_TAG_NAME}} 8080:8080 \
                 -e MYSQL_USER=${{ secrets.MYSQL_USER}} \
                 -e MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }} \
                 -e JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }} \
