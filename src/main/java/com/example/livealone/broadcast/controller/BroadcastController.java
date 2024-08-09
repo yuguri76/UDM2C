@@ -7,6 +7,7 @@ import com.example.livealone.broadcast.dto.CreateBroadcastResponseDto;
 import com.example.livealone.broadcast.dto.UserBroadcastResponseDto;
 import com.example.livealone.broadcast.service.BroadcastService;
 import com.example.livealone.global.dto.CommonResponseDto;
+import com.example.livealone.global.dto.SocketMessageDto;
 import com.example.livealone.global.security.UserDetailsImpl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.validation.Valid;
@@ -14,6 +15,9 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.messaging.simp.annotation.SendToUser;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -99,4 +103,13 @@ public class BroadcastController {
             broadcastTitleResponseDto)
     );
   }
+
+  @MessageMapping("/session/broadcast")
+  @SendToUser("/queue/broadcast")
+  public String getRequestBroadcastMessage(SocketMessageDto socketMessageDto) throws JsonProcessingException {
+
+    return broadcastService.requestStreamKey();
+  }
 }
+
+

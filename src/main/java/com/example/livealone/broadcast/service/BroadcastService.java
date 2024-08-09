@@ -1,6 +1,7 @@
 package com.example.livealone.broadcast.service;
 
 import static com.example.livealone.global.entity.SocketMessageType.BROADCAST;
+import static com.example.livealone.global.entity.SocketMessageType.ERROR;
 
 import com.example.livealone.admin.dto.AdminBroadcastListResponseDto;
 import com.example.livealone.admin.mapper.AdminMapper;
@@ -19,14 +20,13 @@ import com.example.livealone.broadcast.mapper.BroadcastMapper;
 import com.example.livealone.broadcast.repository.BroadcastRepository;
 import com.example.livealone.global.dto.SocketMessageDto;
 import com.example.livealone.global.exception.CustomException;
-import com.example.livealone.global.handler.WebSocketHandler;
 import com.example.livealone.product.entity.Product;
 import com.example.livealone.product.repository.ProductRepository;
 import com.example.livealone.reservation.service.ReservationService;
 import com.example.livealone.user.entity.User;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.IOException;
+
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -34,6 +34,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RBucket;
 import org.redisson.api.RTransaction;
 import org.redisson.api.RedissonClient;
@@ -45,12 +46,12 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.socket.TextMessage;
-import org.springframework.web.socket.WebSocketSession;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class BroadcastService {
@@ -63,6 +64,7 @@ public class BroadcastService {
   private final ObjectMapper objectMapper;
   private final MessageSource messageSource;
   private final RedissonClient redissonClient;
+  private final SimpMessagingTemplate messagingTemplate;
 
   private static final int PAGE_SIZE = 5;
   public static final String REDIS_ONAIR_BROADCAST_KEY = "OnAirBroadcast";
@@ -179,6 +181,8 @@ public class BroadcastService {
 
     try {
       RBucket<BroadcastResponseDto> broadcastBucket = redissonClient.getBucket(REDIS_ONAIR_BROADCAST_KEY);
+      if(!broadcastBucket.isExists())
+        return;
       RBucket<Product> productBucket = redissonClient.getBucket(ProductService.REDIS_PRODUCT_KEY + broadcastBucket.get().getProductId());
 
       broadcastRepository.findByBroadcastStatus(BroadcastStatus.ONAIR)
@@ -215,15 +219,16 @@ public class BroadcastService {
     return broadcastRepository.save(broadcast);
   }
 
-  public void requestStreamKey(WebSocketSession session) {
+  public String requestStreamKey() throws JsonProcessingException {
     try {
       String messageJSON = objectMapper.writeValueAsString(getStreamKey());
-      SocketMessageDto socketMessageDto = new SocketMessageDto(BROADCAST, "server", messageJSON);
+      SocketMessageDto socketMessageDto = new SocketMessageDto(BROADCAST, "back-server", messageJSON);
 
-      String result = objectMapper.writeValueAsString(socketMessageDto);
-      TextMessage text = new TextMessage(result);
-      session.sendMessage(text);
-    } catch (IOException ignored) {
+      return objectMapper.writeValueAsString(socketMessageDto);
+    } catch (Exception e) {
+      log.error(e.getMessage());
+      SocketMessageDto socketMessageDto = new SocketMessageDto(ERROR,"back-server",e.getMessage());
+      return objectMapper.writeValueAsString(socketMessageDto);
     }
   }
 
@@ -243,9 +248,7 @@ public class BroadcastService {
     String messageJSON = objectMapper.writeValueAsString(responseDto);
     SocketMessageDto socketMessageDto = new SocketMessageDto(BROADCAST, "server", messageJSON);
 
-    String result = objectMapper.writeValueAsString(socketMessageDto);
-    TextMessage text = new TextMessage(result);
-    WebSocketHandler.broadcast(text);
+    messagingTemplate.convertAndSend("queue/message",socketMessageDto);
   }
 
   public BroadcastTitleResponseDto getBroadcastTitle(Long broadcastId) {
