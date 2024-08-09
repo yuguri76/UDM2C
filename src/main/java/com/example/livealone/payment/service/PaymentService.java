@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.example.livealone.global.aop.DistributedLock;
 import com.example.livealone.global.config.URIConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -399,9 +400,9 @@ public class PaymentService {
 	// 	}
 	// }
 
-	@Transactional
+	@DistributedLock(key = "'rollbackAndDeleteOrder-' + #orderId")
 	public void rollbackAndDeleteOrder(Long orderId) {
-		Order order = orderRepository.findById(orderId)
+		Order order = orderRepository.findByIdWithProduct(orderId)
 			.orElseThrow(() -> new IllegalArgumentException("Invalid order ID: " + orderId));
 		Product product = order.getProduct();
 
