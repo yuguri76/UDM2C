@@ -46,7 +46,6 @@ public class UserService {
         User curUser = findUserById(user.getId());
 
         curUser.updateUser(userInfoRequestDto.getNickname(), userInfoRequestDto.getBirthDay(), userInfoRequestDto.getAddress());
-        updateCache(curUser);
 
         return UserMapper.toUserInfoResponseDto(curUser);
     }
@@ -74,14 +73,6 @@ public class UserService {
                 CustomException.DEFAULT_ERROR_MESSAGE,
                 Locale.getDefault()
             ), HttpStatus.NOT_FOUND));
-    }
-
-    private void updateCache(User user) {
-        RBucket<User> bucket = redissonClient.getBucket("User::" + user.getId());
-
-        if (bucket.get() != null) {
-            bucket.set(user, 30, TimeUnit.MINUTES);
-        }
     }
 
     public User saveUser(User user) {
