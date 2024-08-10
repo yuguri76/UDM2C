@@ -49,10 +49,10 @@ jobs:
   deploy-to-ec2:
     needs: build-and-docker-push
     runs-on: ubuntu-22.04
-
     steps:
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.0.3
+        run: echo ${{secrets.EC2_HOST}}
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
@@ -63,32 +63,31 @@ jobs:
               sudo docker stop $CONTAINER_ID
               sudo docker rm $CONTAINER_ID
             fi
-
             sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_TAG_NAME }}:latest
-            sudo docker run -d -p 8080:8080 \
-            -e MYSQL_USER=${{secrets.MYSQL_USER}} \
-            -e MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }} \
-            -e JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }} \
-            -e ACCESS_EXPIRE_TIME=${{ secrets.ACCESS_EXPIRE_TIME }} \
-            -e REFRESH_EXPIRE_TIME=${{ secrets.REFRESH_EXPIRE_TIME }} \
-            -e SOCIAL_GOOGLE_CLIENT_ID=${{ secrets.SOCIAL_GOOGLE_CLIENT_ID }} \
-            -e SOCIAL_GOOGLE_CLIENT_SECRET=${{ secrets.SOCIAL_GOOGLE_CLIENT_SECRET }} \
-            -e SOCIAL_NAVER_CLIENT_ID=${{ secrets.SOCIAL_NAVER_CLIENT_ID }} \
-            -e SOCIAL_NAVER_CLIENT_SECRET=${{ secrets.SOCIAL_NAVER_CLIENT_SECRET }} \
-            -e SOCIAL_KAKAO_CLIENT_ID=${{ secrets.SOCIAL_KAKAO_CLIENT_ID }} \
-            -e SOCIAL_KAKAO_CLIENT_SECRET=${{ secrets.SOCIAL_KAKAO_CLIENT_SECRET }} \
-            -e MONGO_INITDB_ROOT_USERNAME=${{ secrets.MONGO_INITDB_ROOT_USERNAME }} \
-            -e MONGO_INITDB_ROOT_PASSWORD=${{ secrets.MONGO_INITDB_ROOT_PASSWORD }} \
-            -e DATABASE_HOST=${{secrets.DATABASE_HOST}} \
-            -e SERVER_HOST=${{secrets.SERVER_HOST}} \
-            -e FRONT_SERVER_HOST=${{secrets.FRONT_SERVER_HOST}} \
-            -e KAKAO_CID=${{secrets.KAKAO_CID}} \
-            -e KAKAO_SECRET_KEY=${{secrets.KAKAO_SECRET_KEY}} \
-            -e ADMIN_CODE=${{secrets.ADMIN_CODE}} \
-            -e DEFAULT_STREAM_KEY=${{secrets.DEFAULT_STREAM_KEY}} \
-            -e LOGGING_LEVEL=${{secrets.LOGGING_LEVEL}} \
-            -e ADMIN_TOKEN=${{secrets.ADMIN_TOKEN}} \
-            -e MAIL_USERNAME=${{secrets.MAIL_USERNAME}} \
-            -e MAIL_PASSWORD=${{secrets.MAIL_PASSWORD}} \
-            -e MAIL_TIMEOUT=${{secrets.MAIL_TIMEOUT}} \
-            -u ${{ secrets.DOCKERHUB_USERNAME }} ${{secrets.DOCKER_IMAGE_TAG_NAME}}:latest
+            sudo docker run -d --name server -p 8080:8080 \
+            --env MYSQL_USER=${{secrets.MYSQL_USER}} \
+            --env MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }} \
+            --env JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }} \
+            --env ACCESS_EXPIRE_TIME=${{ secrets.ACCESS_EXPIRE_TIME }} \
+            --env REFRESH_EXPIRE_TIME=${{ secrets.REFRESH_EXPIRE_TIME }} \
+            --env SOCIAL_GOOGLE_CLIENT_ID=${{ secrets.SOCIAL_GOOGLE_CLIENT_ID }} \
+            --env SOCIAL_GOOGLE_CLIENT_SECRET=${{ secrets.SOCIAL_GOOGLE_CLIENT_SECRET }} \
+            --env SOCIAL_NAVER_CLIENT_ID=${{ secrets.SOCIAL_NAVER_CLIENT_ID }} \
+            --env SOCIAL_NAVER_CLIENT_SECRET=${{ secrets.SOCIAL_NAVER_CLIENT_SECRET }} \
+            --env SOCIAL_KAKAO_CLIENT_ID=${{ secrets.SOCIAL_KAKAO_CLIENT_ID }} \
+            --env SOCIAL_KAKAO_CLIENT_SECRET=${{ secrets.SOCIAL_KAKAO_CLIENT_SECRET }} \
+            --env MONGO_INITDB_ROOT_USERNAME=${{ secrets.MONGO_INITDB_ROOT_USERNAME }} \
+            --env MONGO_INITDB_ROOT_PASSWORD=${{ secrets.MONGO_INITDB_ROOT_PASSWORD }} \
+            --env DATABASE_HOST=${{secrets.DATABASE_HOST}} \
+            --env SERVER_HOST=${{secrets.SERVER_HOST}} \
+            --env FRONT_SERVER_HOST=${{secrets.FRONT_SERVER_HOST}} \
+            --env KAKAO_CID=${{secrets.KAKAO_CID}} \
+            --env KAKAO_SECRET_KEY=${{secrets.KAKAO_SECRET_KEY}} \
+            --env ADMIN_CODE=${{secrets.ADMIN_CODE}} \
+            --env DEFAULT_STREAM_KEY=${{secrets.DEFAULT_STREAM_KEY}} \
+            --env LOGGING_LEVEL=${{secrets.LOGGING_LEVEL}} \
+            --env ADMIN_TOKEN=${{secrets.ADMIN_TOKEN}} \
+            --env MAIL_USERNAME=${{secrets.MAIL_USERNAME}} \
+            --env MAIL_PASSWORD=${{secrets.MAIL_PASSWORD}} \
+            --env MAIL_TIMEOUT=${{secrets.MAIL_TIMEOUT}} \
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{secrets.DOCKER_IMAGE_TAG_NAME}}:latest
