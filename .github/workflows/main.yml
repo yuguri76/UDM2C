@@ -7,9 +7,6 @@ on:
     branches:
       - develop
 
-env:
-  DOCKER_IMAGE_TAG_NAME: livealone
-
 jobs:
   build-and-docker-push:
     runs-on: ubuntu-22.04
@@ -47,7 +44,7 @@ jobs:
           context: .
           file: ./docker/Dockerfile
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_TAG_NAME }}:latest
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKER_IMAGE_TAG_NAME }}:latest
 
   deploy-to-ec2:
     needs: build-and-docker-push
@@ -94,4 +91,4 @@ jobs:
             -e MAIL_USERNAME=${{secrets.MAIL_USERNAME}} \
             -e MAIL_PASSWORD=${{secrets.MAIL_PASSWORD}} \
             -e MAIL_TIMEOUT=${{secrets.MAIL_TIMEOUT}} \
-            -u ${{ secrets.DOCKERHUB_USERNAME }} ${{env.DOCKER_IMAGE_TAG_NAME}}:latest
+            -u ${{ secrets.DOCKERHUB_USERNAME }} ${{secrets.DOCKER_IMAGE_TAG_NAME}}:latest
