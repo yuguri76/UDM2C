@@ -90,6 +90,5 @@ jobs:
             --env MAIL_USERNAME=${{secrets.MAIL_USERNAME}} \
             --env MAIL_PASSWORD=${{secrets.MAIL_PASSWORD}} \
             --env MAIL_TIMEOUT=${{secrets.MAIL_TIMEOUT}} \
-            ${{ secrets.DOCKERHUB_USERNAME }}/${{secrets.DOCKER_IMAGE_TAG_NAME}}:
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{secrets.DOCKER_IMAGE_TAG_NAME}}:latest
 
-            
