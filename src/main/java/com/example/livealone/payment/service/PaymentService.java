@@ -414,6 +414,7 @@ public class PaymentService {
 
 		// 재고 롤백
 		product.rollbackStock(order.getQuantity());
+		orderService.updateCacheProduct(product);
 		productService.saveProduct(product);
 
 		// 주문 삭제

@@ -59,8 +59,9 @@ public class OrderService {
             ), HttpStatus.NOT_FOUND);
         }
 
-//        Long currentQuantity = product.decreaseStock(orderQuantity);
-        checkAlmostSoldOut(product);
+        product.decreaseStock(orderQuantity);
+        updateCacheProduct(product);
+        checkSoldOut(product);
 
         Order order = Order.builder()
                 .user(user)
@@ -84,7 +85,6 @@ public class OrderService {
         Product product = productService.findByProductId(productId);
 
         if (product.getQuantity() < 1) {
-            checkSoldOut(product);
             throw new CustomException(messageSource.getMessage(
                     "no.exit.enough.product",
                     null,
@@ -117,6 +117,7 @@ public class OrderService {
 
             Product product = productService.findByProductId(productId);
             product.rollbackStock(order.getQuantity());
+            updateCacheProduct(product);
             productService.saveProduct(product);
             orderRepository.delete(order);
 
@@ -150,23 +151,17 @@ public class OrderService {
         return orderRepository.findAllByBroadcastId(broadcastId, page, size);
     }
 
-    private void checkAlmostSoldOut(Product product) throws JsonProcessingException {
-        if (product.getQuantity() <= 10) {
-            alertService.sendStockQuantity(OrderMapper.toOrderQuantityResponseDto(product));
-        }
-    }
-
-    private void checkSoldOut(Product product) {
+    private void checkSoldOut(Product product) throws JsonProcessingException {
         if(product.getQuantity() < 1) {
             alertService.sendSoldOutAlert();
+        }else if (product.getQuantity() <= 10) {
+            alertService.sendStockQuantity(OrderMapper.toOrderQuantityResponseDto(product));
         }
+
     }
 
-//    private void decreaseCacheProductQuantity(Product product, Long currentQuantity) {
-//        RBucket<Product> bucket = redissonClient.getBucket(ProductService.REDIS_PRODUCT_KEY + product.getId());
-//
-//        bucket.set(product, 1, TimeUnit.HOURS);
-//
-//        return product;
-//    }
+    public void updateCacheProduct(Product product) {
+        RBucket<Product> bucket = redissonClient.getBucket(ProductService.REDIS_PRODUCT_KEY + product.getId());
+        bucket.set(product, 1, TimeUnit.HOURS);
+    }
 }
