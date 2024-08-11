@@ -6,21 +6,26 @@ import com.example.livealone.payment.dto.PaymentRequestDto;
 import com.example.livealone.payment.dto.PaymentResponseDto;
 import com.example.livealone.payment.service.PaymentService;
 import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.view.RedirectView;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.io.IOException;
-import java.time.LocalDate;
-import java.util.List;
-
 @RestController
 @RequiredArgsConstructor
-@CrossOrigin(origins = {"http://livealone.shop"})
+@CrossOrigin(origins = {"https://livealone.shop"})
 @Slf4j
 public class PaymentController {
 
@@ -76,10 +81,10 @@ public class PaymentController {
 		PaymentResponseDto response = paymentService.approveKakaoPayPayment(pgToken, orderId, userId);
 		RedirectView redirectView = new RedirectView();
 		if (response.getStatus().equals("FAILED")) {
-			String url = "http://livealone.shop/payment";
+			String url = "https://livealone.shop/payment";
 			redirectView.setUrl(url);
 		} else {
-			String url = "http://livealone.shop/completepayment";
+			String url = "https://livealone.shop/completepayment";
 			redirectView.setUrl(url);
 		}
 		return redirectView;
@@ -94,7 +99,7 @@ public class PaymentController {
 	public RedirectView cancelKakaoPayment(@RequestParam("order_id") Long orderId) {
 		paymentService.cancelKakaoPayment(orderId);
 		RedirectView view = new RedirectView();
-		view.setUrl("http://livealone.shop/streaming");
+		view.setUrl("https://livealone.shop/streaming");
 		return view;
 	}
 
