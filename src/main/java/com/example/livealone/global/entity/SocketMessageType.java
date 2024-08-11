@@ -7,9 +7,11 @@ public enum SocketMessageType {
     REQUEST_REFRESH,
     CHAT_MESSAGE,
     FAILED,
-
     ERROR,
     BROADCAST,
+    ALERT_BROADCAST_START,
+    ALERT_ALMOST_SOLD_OUT,
+    ALERT_SOLD_OUT,
 
     // FRONTEND
     RESPONSE_AUTH,

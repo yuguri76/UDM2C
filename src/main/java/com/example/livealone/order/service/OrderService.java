@@ -1,6 +1,7 @@
 package com.example.livealone.order.service;
 
 import com.example.livealone.admin.dto.AdminConsumerResponseDto;
+import com.example.livealone.alert.service.AlertService;
 import com.example.livealone.broadcast.entity.Broadcast;
 import com.example.livealone.broadcast.service.BroadcastService;
 import com.example.livealone.global.aop.DistributedLock;
@@ -9,15 +10,19 @@ import com.example.livealone.order.dto.OrderRequestDto;
 import com.example.livealone.order.dto.OrderResponseDto;
 import com.example.livealone.order.entity.Order;
 import com.example.livealone.order.entity.OrderStatus;
+import com.example.livealone.order.mapper.OrderMapper;
 import com.example.livealone.order.repository.OrderRepository;
 import com.example.livealone.product.entity.Product;
 import com.example.livealone.product.service.ProductService;
 import com.example.livealone.user.entity.User;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;
 import org.springframework.context.MessageSource;
 import org.springframework.data.domain.Page;
@@ -32,12 +37,14 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final ProductService productService;
     private final BroadcastService broadcastService;
+    private final AlertService alertService;
     private final MessageSource messageSource;
 
     private final RedissonClient redissonClient;
 
     @DistributedLock(key = "'createOrder-' + #user.getId()")
-    public OrderResponseDto createOrder(Long productId, Long broadcastId, User user, OrderRequestDto orderRequestDto) {
+    public OrderResponseDto createOrder(Long productId, Long broadcastId, User user, OrderRequestDto orderRequestDto)
+        throws JsonProcessingException {
 
         Broadcast broadcast = broadcastService.findByBroadcastId(broadcastId);
         Product product = productService.findByProductId(productId);
@@ -52,7 +59,8 @@ public class OrderService {
             ), HttpStatus.NOT_FOUND);
         }
 
-        product.decreaseStock(orderQuantity);
+//        Long currentQuantity = product.decreaseStock(orderQuantity);
+        checkAlmostSoldOut(product);
 
         Order order = Order.builder()
                 .user(user)
@@ -76,6 +84,7 @@ public class OrderService {
         Product product = productService.findByProductId(productId);
 
         if (product.getQuantity() < 1) {
+            checkSoldOut(product);
             throw new CustomException(messageSource.getMessage(
                     "no.exit.enough.product",
                     null,
@@ -140,4 +149,24 @@ public class OrderService {
     public Page<AdminConsumerResponseDto> getAllOrderByBroadcastId(Long broadcastId, int page, int size) {
         return orderRepository.findAllByBroadcastId(broadcastId, page, size);
     }
+
+    private void checkAlmostSoldOut(Product product) throws JsonProcessingException {
+        if (product.getQuantity() <= 10) {
+            alertService.sendStockQuantity(OrderMapper.toOrderQuantityResponseDto(product));
+        }
+    }
+
+    private void checkSoldOut(Product product) {
+        if(product.getQuantity() < 1) {
+            alertService.sendSoldOutAlert();
+        }
+    }
+
+//    private void decreaseCacheProductQuantity(Product product, Long currentQuantity) {
+//        RBucket<Product> bucket = redissonClient.getBucket(ProductService.REDIS_PRODUCT_KEY + product.getId());
+//
+//        bucket.set(product, 1, TimeUnit.HOURS);
+//
+//        return product;
+//    }
 }

@@ -83,6 +83,9 @@ public class PaymentService {
 	@Value("${payment.toss.result-callback}")
 	private String tossResultCallback;
 
+	@Value("${PROTOCOL}")
+	private String protocol;
+
 	public PaymentResponseDto createKakaoPayReady(PaymentRequestDto requestDto) {
 		// Ready API -> 성공 시 next url 리턴 -> 프론트에서 결제 진행 -> 사용자가 결제 수단 선택 후 비밀번호 인증까지 마치면 결제 대기 화면은 결제 준비 API 요청시
 		// 전달 받은 approval_url에 pg_token 파라미터를 붙여 대기화면을 approval_url로 redirect
@@ -107,11 +110,12 @@ public class PaymentService {
 		params.put("total_amount", String.valueOf(totalAmount));
 		params.put("vat_amount", "0");
 		params.put("tax_free_amount", "0");
-		params.put("approval_url", String.format("http://%s:8080/payment/kakao/complete?order_id=%d&user_id=%d",
+		params.put("approval_url", String.format("%s://%s/payment/kakao/complete?order_id=%d&user_id=%d",
+				protocol,
 			uriConfig.getServerHost(),
 			requestDto.getOrderId(),
 			requestDto.getUserId()));
-		String failCancelUrl = String.format("http://%s:8080/payment/kakao/cancel?order_id=%d", uriConfig.getServerHost(), requestDto.getOrderId());
+		String failCancelUrl = String.format("%s://%s/payment/kakao/cancel?order_id=%d", protocol, uriConfig.getServerHost(), requestDto.getOrderId());
 		params.put("cancel_url", failCancelUrl);
 		params.put("fail_url", failCancelUrl);
 
@@ -280,11 +284,11 @@ public class PaymentService {
 		params.put("callbackVersion", "V2");
 		params.put("resultCallback", tossResultCallback);
 
-		String createRetUrl = String.format("http://%s:8080/ORDER-CHECK?orderno=%s", uriConfig.getServerHost(),
+		String createRetUrl = String.format("%s://%s/ORDER-CHECK?orderno=%s", protocol, uriConfig.getServerHost(),
 			createOrderNo);
 		params.put("retUrl", createRetUrl);
 
-		String cancelUrl = String.format("http://%s:8080/payment/toss/cancel?orderno=%s", uriConfig.getServerHost(), createOrderNo);
+		String cancelUrl = String.format("%s://%s/payment/toss/cancel?orderno=%s", protocol, uriConfig.getServerHost(), createOrderNo);
 		params.put("retCancelUrl", cancelUrl);
 
 		log.debug("request : {}", params);
@@ -445,7 +449,7 @@ public class PaymentService {
 			rollbackAndDeleteOrder(payment.getOrder().getId());
 		}
 
-		String url = String.format("http://%s:3000/completepayment", uriConfig.getFrontServerHost());
+		String url = String.format("%s://%s/completepayment", protocol, uriConfig.getFrontServerHost());
 		return url;
 	}
 
@@ -468,7 +472,7 @@ public class PaymentService {
 		payment.updateStatus(PaymentStatus.FAILED);
 		rollbackAndDeleteOrder(payment.getOrder().getId());
 
-		String url = String.format("http://%s:3000/streaming", uriConfig.getFrontServerHost());
+		String url = String.format("%s://%s/streaming", protocol, uriConfig.getFrontServerHost());
 		return url;
 	}
 

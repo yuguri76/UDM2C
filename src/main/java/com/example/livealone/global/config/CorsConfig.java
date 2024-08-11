@@ -15,12 +15,15 @@ public class CorsConfig {
 
     @Value("${uri.front-server}")
     private String frontServerHost;
+    @Value("${PROTOCOL}")
+    private String protocol;
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        String url = String.format("http://%s:3000",frontServerHost);
+        String url = String.format("%s://%s",protocol,frontServerHost);
+        String domainUrl = String.format("%s://livealone.shop",protocol);
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList(url ,"http://livealone.shop:3000"));
+        configuration.setAllowedOrigins(Arrays.asList(url ,domainUrl));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
         configuration.setAllowCredentials(true); // 인증 정보를 허용 JWT, 쿠키
