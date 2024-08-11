@@ -92,7 +92,7 @@ jobs:
               -e MAIL_USERNAME=${{secrets.MAIL_USERNAME}} \
               -e MAIL_PASSWORD=${{secrets.MAIL_PASSWORD}} \
               -e MAIL_TIMEOUT=${{secrets.MAIL_TIMEOUT}} \
-              ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKER_IMAGE_TAG_NAME }}:latest
+              ${{ secrets.DOCKER_IMAGE_TAG_NAME }}:latest
 
 
 
