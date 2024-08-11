@@ -7,6 +7,7 @@ import com.example.livealone.order.dto.OrderRequestDto;
 import com.example.livealone.order.dto.OrderResponseDto;
 import com.example.livealone.order.service.OrderService;
 import com.example.livealone.user.entity.User;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -35,7 +36,7 @@ public class OrderController {
         @PathVariable("broadcastId") Long broadcastId,
         @AuthenticationPrincipal UserDetailsImpl userDetails,
         @RequestBody OrderRequestDto orderRequestDto
-    ) {
+    ) throws JsonProcessingException {
 
         User user = userDetails.getUser();
 

@@ -5,6 +5,7 @@ import static com.example.livealone.global.entity.SocketMessageType.ERROR;
 
 import com.example.livealone.admin.dto.AdminBroadcastListResponseDto;
 import com.example.livealone.admin.mapper.AdminMapper;
+import com.example.livealone.alert.service.AlertService;
 import com.example.livealone.broadcast.dto.BroadcastRequestDto;
 import com.example.livealone.broadcast.dto.BroadcastResponseDto;
 import com.example.livealone.broadcast.dto.BroadcastTitleResponseDto;
@@ -57,6 +58,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class BroadcastService {
 
   private final ReservationService reservationService;
+  private final AlertService alertService;
 
   private final BroadcastRepository broadcastRepository;
   private final ProductRepository productRepository;
@@ -101,6 +103,8 @@ public class BroadcastService {
 
     sendStreamKey(
         BroadcastMapper.toStreamKeyResponseDto(true, broadcast.getReservation().getCode()));
+
+    alertService.sendBroadcastStartAlert(BroadcastMapper.toBroadcastTitleResponseDto(saveBroadcast));
 
     return BroadcastMapper.toCreateBroadcastResponseDto(saveBroadcast);
   }
@@ -248,7 +252,7 @@ public class BroadcastService {
     String messageJSON = objectMapper.writeValueAsString(responseDto);
     SocketMessageDto socketMessageDto = new SocketMessageDto(BROADCAST, "server", messageJSON);
 
-    messagingTemplate.convertAndSend("queue/message",socketMessageDto);
+    messagingTemplate.convertAndSend("/queue/message",socketMessageDto);
   }
 
   public BroadcastTitleResponseDto getBroadcastTitle(Long broadcastId) {
