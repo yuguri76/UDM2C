@@ -65,9 +65,8 @@ public class Product extends Timestamp {
 	public void setName(String s) {
 	}
 
-	public Long decreaseStock(int quantity) {
+	public void decreaseStock(int quantity) {
 		this.quantity -= quantity;
-		return this.quantity;
 	}
 
 	public void rollbackStock(int quantity) {
