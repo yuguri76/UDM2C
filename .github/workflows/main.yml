@@ -62,34 +62,37 @@ jobs:
               sudo docker stop $CONTAINER_ID
               sudo docker rm $CONTAINER_ID
             fi
-            sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/${{secrets.DOCKER_IMAGE_TAG_NAME }}:latest
-            sudo docker run -d --name server -p 8080:8080 \
-            -e MYSQL_USER=${{secrets.MYSQL_USER}} \
-            -e MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }} \
-            -e JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }} \
-            -e ACCESS_EXPIRE_TIME=${{ secrets.ACCESS_EXPIRE_TIME }} \
-            -e REFRESH_EXPIRE_TIME=${{ secrets.REFRESH_EXPIRE_TIME }} \
-            -e SOCIAL_GOOGLE_CLIENT_ID=${{ secrets.SOCIAL_GOOGLE_CLIENT_ID }} \
-            -e SOCIAL_GOOGLE_CLIENT_SECRET=${{ secrets.SOCIAL_GOOGLE_CLIENT_SECRET }} \
-            -e SOCIAL_NAVER_CLIENT_ID=${{ secrets.SOCIAL_NAVER_CLIENT_ID }} \
-            -e SOCIAL_NAVER_CLIENT_SECRET=${{ secrets.SOCIAL_NAVER_CLIENT_SECRET }} \
-            -e SOCIAL_KAKAO_CLIENT_ID=${{ secrets.SOCIAL_KAKAO_CLIENT_ID }} \
-            -e SOCIAL_KAKAO_CLIENT_SECRET=${{ secrets.SOCIAL_KAKAO_CLIENT_SECRET }} \
-            -e MONGO_INITDB_ROOT_USERNAME=${{ secrets.MONGO_INITDB_ROOT_USERNAME }} \
-            -e MONGO_INITDB_ROOT_PASSWORD=${{ secrets.MONGO_INITDB_ROOT_PASSWORD }} \
-            -e DATABASE_HOST=${{secrets.DATABASE_HOST}} \
-            -e SERVER_HOST=${{secrets.SERVER_HOST}} \
-            -e FRONT_SERVER_HOST=${{secrets.FRONT_SERVER_HOST}} \
-            -e KAKAO_CID=${{secrets.KAKAO_CID}} \
-            -e KAKAO_SECRET_KEY=${{secrets.KAKAO_SECRET_KEY}} \
-            -e ADMIN_CODE=${{secrets.ADMIN_CODE}} \
-            -e DEFAULT_STREAM_KEY=${{secrets.DEFAULT_STREAM_KEY}} \
-            -e LOGGING_LEVEL=${{secrets.LOGGING_LEVEL}} \
-            -e ADMIN_TOKEN=${{secrets.ADMIN_TOKEN}} \
-            -e MAIL_USERNAME=${{secrets.MAIL_USERNAME}} \
-            -e MAIL_PASSWORD=${{secrets.MAIL_PASSWORD}} \
-            -e MAIL_TIMEOUT=${{secrets.MAIL_TIMEOUT}} \
-            ${{ secrets.DOCKERHUB_USERNAME}}/${{secrets.DOCKER_IMAGE_TAG_NAME}}:latest
+             sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/${{secrets.DOCKER_IMAGE_TAG_NAME }}:latest
+
+      - name: Run Docker Container
+        run: |
+          sudo docker run -d --name server -p 8080:8080 \
+              -e MYSQL_USER=${{secrets.MYSQL_USER}} \
+              -e MYSQL_PASSWORD=${{secrets.MYSQL_PASSWORD}} \
+              -e JWT_SECRET_KEY=${{secrets.JWT_SECRET_KEY}} \
+              -e ACCESS_EXPIRE_TIME=${{secrets.ACCESS_EXPIRE_TIME}} \
+              -e REFRESH_EXPIRE_TIME=${{secrets.REFRESH_EXPIRE_TIME}} \
+              -e SOCIAL_GOOGLE_CLIENT_ID=${{secrets.SOCIAL_GOOGLE_CLIENT_ID}} \
+              -e SOCIAL_GOOGLE_CLIENT_SECRET=${{secrets.SOCIAL_GOOGLE_CLIENT_SECRET}} \
+              -e SOCIAL_NAVER_CLIENT_ID=${{secrets.SOCIAL_NAVER_CLIENT_ID}} \
+              -e SOCIAL_NAVER_CLIENT_SECRET=${{secrets.SOCIAL_NAVER_CLIENT_SECRET}} \
+              -e SOCIAL_KAKAO_CLIENT_ID=${{secrets.SOCIAL_KAKAO_CLIENT_ID}} \
+              -e SOCIAL_KAKAO_CLIENT_SECRET=${{secrets.SOCIAL_KAKAO_CLIENT_SECRET}} \
+              -e MONGO_INITDB_ROOT_USERNAME=${{secrets.MONGO_INITDB_ROOT_USERNAME}} \
+              -e MONGO_INITDB_ROOT_PASSWORD=${{secrets.MONGO_INITDB_ROOT_PASSWORD}} \
+              -e DATABASE_HOST=${{secrets.DATABASE_HOST}} \
+              -e SERVER_HOST=${{secrets.SERVER_HOST}} \
+              -e FRONT_SERVER_HOST=${{secrets.FRONT_SERVER_HOST}} \
+              -e KAKAO_CID=${{secrets.KAKAO_CID}} \
+              -e KAKAO_SECRET_KEY=${{secrets.KAKAO_SECRET_KEY}} \
+              -e ADMIN_CODE=${{secrets.ADMIN_CODE}} \
+              -e DEFAULT_STREAM_KEY=${{secrets.DEFAULT_STREAM_KEY}} \
+              -e LOGGING_LEVEL=${{secrets.LOGGING_LEVEL}} \
+              -e ADMIN_TOKEN=${{secrets.ADMIN_TOKEN}} \
+              -e MAIL_USERNAME=${{secrets.MAIL_USERNAME}} \
+              -e MAIL_PASSWORD=${{secrets.MAIL_PASSWORD}} \
+              -e MAIL_TIMEOUT=${{secrets.MAIL_TIMEOUT}} \
+              ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKER_IMAGE_TAG_NAME }}:latest
 
 
 
