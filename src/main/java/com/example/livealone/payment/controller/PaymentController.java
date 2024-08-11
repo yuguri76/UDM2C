@@ -20,7 +20,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@CrossOrigin(origins = {"http://livealone.shop:3000"})
+@CrossOrigin(origins = {"http://livealone.shop"})
 @Slf4j
 public class PaymentController {
 
@@ -76,10 +76,10 @@ public class PaymentController {
 		PaymentResponseDto response = paymentService.approveKakaoPayPayment(pgToken, orderId, userId);
 		RedirectView redirectView = new RedirectView();
 		if (response.getStatus().equals("FAILED")) {
-			String url = "http://livealone.shop:3000/payment";
+			String url = "http://livealone.shop/payment";
 			redirectView.setUrl(url);
 		} else {
-			String url = "http://livealone.shop:3000/completepayment";
+			String url = "http://livealone.shop/completepayment";
 			redirectView.setUrl(url);
 		}
 		return redirectView;
@@ -94,7 +94,7 @@ public class PaymentController {
 	public RedirectView cancelKakaoPayment(@RequestParam("order_id") Long orderId) {
 		paymentService.cancelKakaoPayment(orderId);
 		RedirectView view = new RedirectView();
-		view.setUrl("http://livealone.shop:3000/streaming");
+		view.setUrl("http://livealone.shop/streaming");
 		return view;
 	}
 
