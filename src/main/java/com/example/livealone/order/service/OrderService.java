@@ -84,6 +84,7 @@ public class OrderService {
         Product product = productService.findByProductId(productId);
 
         if (product.getQuantity() < 1) {
+            checkSoldOut(product);
             throw new CustomException(messageSource.getMessage(
                     "no.exit.enough.product",
                     null,
