@@ -53,32 +53,32 @@ public class AdminController {
   }
 
   @GetMapping("/admin/broadcasts")
-  public ResponseEntity<CommonResponseDto<Page<AdminBroadcastListResponseDto>>> getBroadcasts(@AuthenticationPrincipal UserDetailsImpl userDetails, @RequestParam(defaultValue = "1") int page) {
-    Page<AdminBroadcastListResponseDto> adminBroadcastListResponseDtoPage = adminService.getBroadcasts(userDetails.getUser(), page);
+  public ResponseEntity<CommonResponseDto<Page<AdminBroadcastListResponseDto>>> getBroadcasts(@RequestParam(defaultValue = "1") int page) {
+    Page<AdminBroadcastListResponseDto> adminBroadcastListResponseDtoPage = adminService.getBroadcasts(page);
 
     return ResponseEntity.status(HttpStatus.OK).body(
         new CommonResponseDto<>(
             HttpStatus.OK.value(),
-            "권한을 조회하였습니다",
+            "방송 내역을 조회하였습니다.",
             adminBroadcastListResponseDtoPage)
     );
   }
 
   @GetMapping("/admin/users")
-  public ResponseEntity<CommonResponseDto<Page<AdminUserListResponseDto>>> getUsers(@AuthenticationPrincipal UserDetailsImpl userDetails, @RequestParam(defaultValue = "1") int page) {
-    Page<AdminUserListResponseDto> adminUserListResponseDtoPage = adminService.getUsers(userDetails.getUser(), page);
+  public ResponseEntity<CommonResponseDto<Page<AdminUserListResponseDto>>> getUsers(@RequestParam(defaultValue = "1") int page) {
+    Page<AdminUserListResponseDto> adminUserListResponseDtoPage = adminService.getUsers(page);
 
     return ResponseEntity.status(HttpStatus.OK).body(
         new CommonResponseDto<>(
             HttpStatus.OK.value(),
-            "권한을 조회하였습니다",
+            "유저 정보를 조회하였습니다",
             adminUserListResponseDtoPage)
     );
   }
 
   @GetMapping("/admin/broadcast/{broadcastId}")
-  public ResponseEntity<CommonResponseDto<AdminBroadcastDetailResponseDto>> getBroadcastDetails(@AuthenticationPrincipal UserDetailsImpl userDetails, @PathVariable Long broadcastId) {
-    AdminBroadcastDetailResponseDto adminBroadcastDetailResponseDto = adminService.getBroadcastDetails(userDetails.getUser(), broadcastId);
+  public ResponseEntity<CommonResponseDto<AdminBroadcastDetailResponseDto>> getBroadcastDetails(@PathVariable Long broadcastId) {
+    AdminBroadcastDetailResponseDto adminBroadcastDetailResponseDto = adminService.getBroadcastDetails(broadcastId);
 
     return ResponseEntity.status(HttpStatus.OK).body(
         new CommonResponseDto<>(
@@ -89,8 +89,8 @@ public class AdminController {
   }
 
   @GetMapping("/admin/broadcast/{broadcastId}/consumer")
-  public ResponseEntity<CommonResponseDto<Page<AdminConsumerResponseDto>>> getConsumers(@AuthenticationPrincipal UserDetailsImpl userDetails, @PathVariable Long broadcastId, @RequestParam(defaultValue = "1") int page) {
-    Page<AdminConsumerResponseDto> adminConsumerResponseDtos = adminService.getConsumers(userDetails.getUser(), broadcastId, page);
+  public ResponseEntity<CommonResponseDto<Page<AdminConsumerResponseDto>>> getConsumers(@PathVariable Long broadcastId, @RequestParam(defaultValue = "1") int page) {
+    Page<AdminConsumerResponseDto> adminConsumerResponseDtos = adminService.getConsumers(broadcastId, page);
 
     return ResponseEntity.status(HttpStatus.OK).body(
         new CommonResponseDto<>(

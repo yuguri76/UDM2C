@@ -66,6 +66,7 @@ public class WebSecurityConfig {
 						.requestMatchers("/broadcast/broadcastCode").permitAll()
 						.requestMatchers("/payment/**").permitAll()
 						.requestMatchers(HttpMethod.GET,"/ORDER-CHECK").permitAll()
+						.requestMatchers("/admin/**").hasRole("ADMIN")
 						.anyRequest().authenticated());
 
 

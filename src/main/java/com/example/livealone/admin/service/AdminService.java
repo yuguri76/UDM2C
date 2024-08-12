@@ -12,7 +12,6 @@ import com.example.livealone.broadcast.service.BroadcastService;
 import com.example.livealone.global.exception.CustomException;
 import com.example.livealone.order.service.OrderService;
 import com.example.livealone.user.entity.User;
-import com.example.livealone.user.entity.UserRole;
 import com.example.livealone.user.service.UserService;
 import java.util.Locale;
 import java.util.Objects;
@@ -59,24 +58,15 @@ public class AdminService {
     return AdminMapper.toAdminRoleResponseDto(user.getRole());
   }
 
-  public Page<AdminBroadcastListResponseDto> getBroadcasts(User user, int page) {
-
-    checkAdmin(user);
-
+  public Page<AdminBroadcastListResponseDto> getBroadcasts(int page) {
     return broadcastService.getAllBroadcastListPageable(page - 1, PAGEABLE_SIZE);
   }
 
-  public Page<AdminUserListResponseDto> getUsers(User user, int page) {
-
-    checkAdmin(user);
-
+  public Page<AdminUserListResponseDto> getUsers(int page) {
     return userService.getAllUserListPageable(page - 1, PAGEABLE_SIZE);
   }
 
-  public AdminBroadcastDetailResponseDto getBroadcastDetails(User user, Long broadcastId) {
-
-    checkAdmin(user);
-
+  public AdminBroadcastDetailResponseDto getBroadcastDetails(Long broadcastId) {
     Broadcast broadcast = broadcastService.findByBroadcastId(broadcastId);
 
     Long totalOrderCount = orderService.sumOrderQuantity(broadcastId);
@@ -85,21 +75,7 @@ public class AdminService {
     return AdminMapper.toAdminBroadcastDetailResponseDto(broadcast, broadcast.getProduct(), totalOrderCount, totalSalePrice);
   }
 
-  public Page<AdminConsumerResponseDto> getConsumers(User user, Long broadcastId, int page) {
-
-    checkAdmin(user);
-
+  public Page<AdminConsumerResponseDto> getConsumers(Long broadcastId, int page) {
     return orderService.getAllOrderByBroadcastId(broadcastId, page - 1, PAGEABLE_SIZE);
-  }
-
-  private void checkAdmin(User user) {
-    if (!Objects.equals(UserRole.ADMIN, user.getRole())) {
-      throw new CustomException(messageSource.getMessage(
-          "not.admin",
-          null,
-          CustomException.DEFAULT_ERROR_MESSAGE,
-          Locale.getDefault()
-      ), HttpStatus.NOT_FOUND);
-    }
   }
 }
