@@ -101,8 +101,7 @@ public class BroadcastService {
     BroadcastResponseDto redis = BroadcastMapper.toBroadcastResponseDto(saveBroadcast, saveBroadcast.getProduct());
     bucket.set(redis, 1, TimeUnit.HOURS);
 
-    sendStreamKey(
-        BroadcastMapper.toStreamKeyResponseDto(true, broadcast.getReservation().getCode()));
+    sendStreamKeyAllSession(BroadcastMapper.toStreamKeyResponseDto(true, reservations.getCode()));
 
     alertService.sendBroadcastStartAlert(BroadcastMapper.toBroadcastTitleResponseDto(saveBroadcast));
 
@@ -169,7 +168,7 @@ public class BroadcastService {
 
       redisTransaction.commit();
 
-      sendStreamKey(BroadcastMapper.toStreamKeyResponseDto(false, ""));
+      sendStreamKeyAllSession(BroadcastMapper.toStreamKeyResponseDto(false, DEFAULT_STREAM_KEY));
     } catch (Exception error) {
       redisTransaction.rollback();
       throw error;
@@ -197,7 +196,7 @@ public class BroadcastService {
 
       redisTransaction.commit();
 
-      sendStreamKey(BroadcastMapper.toStreamKeyResponseDto(false, ""));
+      sendStreamKeyAllSession(BroadcastMapper.toStreamKeyResponseDto(false, DEFAULT_STREAM_KEY));
     } catch (Exception error) {
       redisTransaction.rollback();
       throw error;
@@ -241,18 +240,17 @@ public class BroadcastService {
         BroadcastStatus.ONAIR);
 
     if (broadcast.isPresent()) {
-      return BroadcastMapper.toStreamKeyResponseDto(true,
-          broadcast.get().getReservation().getCode());
+      return BroadcastMapper.toStreamKeyResponseDto(true, broadcast.get().getReservation().getCode());
     } else {
       return BroadcastMapper.toStreamKeyResponseDto(false, DEFAULT_STREAM_KEY);
     }
   }
 
-  protected void sendStreamKey(StreamKeyResponseDto responseDto) throws JsonProcessingException {
+  protected void sendStreamKeyAllSession(StreamKeyResponseDto responseDto) throws JsonProcessingException {
     String messageJSON = objectMapper.writeValueAsString(responseDto);
     SocketMessageDto socketMessageDto = new SocketMessageDto(BROADCAST, "server", messageJSON);
 
-    messagingTemplate.convertAndSend("/queue/message",socketMessageDto);
+    messagingTemplate.convertAndSend("/queue/broadcast",socketMessageDto);
   }
 
   public BroadcastTitleResponseDto getBroadcastTitle(Long broadcastId) {
