@@ -32,9 +32,6 @@ import static com.example.livealone.global.entity.SocketMessageType.*;
 @Slf4j
 public class ChatService {
 
-    private static final String[] COLORS = {
-            "#FF5733", "#33FF57", "#3357FF", "#F0FF33", "#FF33F0"
-    };
 
     private final ChatMessageRepository chatMessageRepository;
     private final ChatErrorLogRepository chatErrorLogRepository;
@@ -42,13 +39,18 @@ public class ChatService {
     private final ObjectMapper objectMapper;
     private final JwtService jwtService;
     private final AuthService authService;
-    private final BroadcastService broadcastService;
     private final Random random = new Random();
 
-    private static final int batchSize = 100;
     private final ConcurrentLinkedQueue<ChatMessage> messageBuffer = new ConcurrentLinkedQueue<>();
     private final ConcurrentLinkedQueue<ChatErrorLog> errorLogsBuffer = new ConcurrentLinkedQueue<>();
     private final ConcurrentLinkedQueue<ChatSessionLog> sessionLogsBuffer = new ConcurrentLinkedQueue<>();
+
+    private static final Map<String, Integer> viewerCountMap = new HashMap<>();
+    private static final String[] COLORS = {
+            "#FF5733", "#33FF57", "#3357FF", "#F0FF33", "#FF33F0"
+    };
+    private static final int batchSize = 100;
+
 
     public String createSessionReply(SocketMessageDto socketMessageDto) throws JsonProcessingException {
         SocketMessageDto messageDto = null;
@@ -88,6 +90,11 @@ public class ChatService {
             case REQUEST_CHAT_INIT -> {
                 messageDto = writeInitMessages();
             }
+            case REQUEST_VIEWERCOUNT -> {
+                String roomid = socketMessageDto.getMessage();
+                int viewerCount = viewerCountMap.get(roomid);
+                return objectMapper.writeValueAsString(new SocketMessageDto(RESPONSE_VIEWERCOUNT, "back-server", String.valueOf(viewerCount)));
+            }
         }
 
         return objectMapper.writeValueAsString(messageDto);
@@ -110,6 +117,10 @@ public class ChatService {
 
             return objectMapper.writeValueAsString(dto);
         }
+    }
+
+    public void setViewerCount(String roomId, int viewerCount) {
+        viewerCountMap.put(roomId, viewerCount);
     }
 
     private void saveMessage(SocketMessageDto socketMessageDto) {
