@@ -5,6 +5,7 @@ public enum SocketMessageType {
     REQUEST_AUTH,
     REQUEST_CHAT_INIT,
     REQUEST_REFRESH,
+    REQUEST_VIEWERCOUNT,
     CHAT_MESSAGE,
     FAILED,
     ERROR,
@@ -17,6 +18,7 @@ public enum SocketMessageType {
     RESPONSE_AUTH,
     RESPONSE_CHAT_INIT,
     RESPONSE_REFRESH,
+    RESPONSE_VIEWERCOUNT,
     INVALID_TOKEN,
     ANONYMOUS_USER,
 }
