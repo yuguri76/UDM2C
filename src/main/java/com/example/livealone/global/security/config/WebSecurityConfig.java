@@ -68,6 +68,7 @@ public class WebSecurityConfig {
 					.requestMatchers(HttpMethod.GET,"/ORDER-CHECK").permitAll()
 					.requestMatchers("/admin/**").hasRole("ADMIN")
 					.requestMatchers( HttpMethod.GET,"/status").permitAll()
+					.requestMatchers("/login/**").permitAll()
 					.anyRequest().authenticated());
 
 
