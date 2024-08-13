@@ -38,7 +38,7 @@ spring:
           google:
             client-id: ${SOCIAL_GOOGLE_CLIENT_ID}
             client-secret: ${SOCIAL_GOOGLE_CLIENT_SECRET}
-            redirect-uri: ${PROTOCOL}://${SERVER_HOST}/login/oauth2/code/google
+            redirect-uri: http://${SERVER_HOST}/login/oauth2/code/google
             scope:
               - profile
               - email
@@ -59,7 +59,7 @@ spring:
             scope:
               - account_email
               - profile_nickname
-            redirect-uri: ${PROTOCOL}://${SERVER_HOST}/login/oauth2/code/kakao
+            redirect-uri: http://${SERVER_HOST}/login/oauth2/code/kakao
             client-name: Kakao
             provider: kakao
         provider:
@@ -105,6 +105,7 @@ logging:
 
 server:
   port: 8080
+  host: ${SERVER_HOST}
 
 kakao:
   pay:
@@ -135,6 +136,9 @@ uri:
   front-server: ${FRONT_SERVER_HOST}
   database: ${DATABASE_HOST}
   kafka: ${KAFKA_HOST}
+
+kafka:
+  chat-group: ${KAFKA_CHAT_GROUP}
 
 payment:
   kakao:
