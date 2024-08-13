@@ -55,19 +55,20 @@ public class WebSecurityConfig {
 
 		http.authorizeHttpRequests(request ->
 				request
-						.requestMatchers("/ws").permitAll()
-						.requestMatchers("/auth/kakao/login").permitAll()
-						.requestMatchers("/auth/naver/login").permitAll()
-						.requestMatchers("/auth/google/login").permitAll()
-						.requestMatchers("/auth/reissue").permitAll()
-						.requestMatchers( HttpMethod.GET,"/broadcast").permitAll()
-						.requestMatchers( HttpMethod.GET,"/broadcast/**").permitAll()
-						.requestMatchers( HttpMethod.GET,"/product/**").permitAll()
-						.requestMatchers("/broadcast/broadcastCode").permitAll()
-						.requestMatchers("/payment/**").permitAll()
-						.requestMatchers(HttpMethod.GET,"/ORDER-CHECK").permitAll()
-						.requestMatchers("/admin/**").hasRole("ADMIN")
-						.anyRequest().authenticated());
+					.requestMatchers("/ws").permitAll()
+					.requestMatchers("/auth/kakao/login").permitAll()
+					.requestMatchers("/auth/naver/login").permitAll()
+					.requestMatchers("/auth/google/login").permitAll()
+					.requestMatchers("/auth/reissue").permitAll()
+					.requestMatchers( HttpMethod.GET,"/broadcast").permitAll()
+					.requestMatchers( HttpMethod.GET,"/broadcast/**").permitAll()
+					.requestMatchers( HttpMethod.GET,"/product/**").permitAll()
+					.requestMatchers("/broadcast/broadcastCode").permitAll()
+					.requestMatchers("/payment/**").permitAll()
+					.requestMatchers(HttpMethod.GET,"/ORDER-CHECK").permitAll()
+					.requestMatchers("/admin/**").hasRole("ADMIN")
+					.requestMatchers( HttpMethod.GET,"/status").permitAll()
+					.anyRequest().authenticated());
 
 
 		http.exceptionHandling(e -> e

@@ -59,7 +59,7 @@ public class ChatService {
         switch (type) {
             case REQUEST_AUTH -> {
                 String token = socketMessageDto.getMessage();
-                if (!token.startsWith("Bearer ")) {
+                if (token ==null || !token.startsWith("Bearer ")) {
                     messageDto = new SocketMessageDto(ERROR, "back-server", token);
                     break;
                 }
