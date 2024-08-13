@@ -1,6 +1,5 @@
 package com.example.livealone.chat.service;
 
-import com.example.livealone.broadcast.service.BroadcastService;
 import com.example.livealone.chat.dto.ChatInitDto;
 import com.example.livealone.chat.entity.ChatErrorLog;
 import com.example.livealone.chat.entity.ChatMessage;
@@ -47,8 +46,13 @@ public class ChatService {
 
     private static final Map<String, Integer> viewerCountMap = new HashMap<>();
     private static final String[] COLORS = {
-            "#FF5733", "#33FF57", "#3357FF", "#F0FF33", "#FF33F0"
+            "#FF33F0","#4566BC","#E4E669","#d071b6","#a471d0","#b7d071","#d09d71","#7174d0"
     };
+    private static final String[] ADMIN_COLORS ={
+            "#d43b3b"
+    };
+
+
     private static final int batchSize = 100;
 
 
@@ -72,9 +76,24 @@ public class ChatService {
                 Claims claims = jwtService.getClaims(replaceToken);
                 String nickname = claims.get("nickname", String.class);
 
+
                 // 랜덤색깔 넣어주기
-                int randomIndex = random.nextInt(COLORS.length);
-                messageDto = new SocketMessageDto(RESPONSE_AUTH, nickname, COLORS[randomIndex]);
+
+                String color;
+                String role = claims.get("role",String.class);
+
+                log.info("role :{}",role);
+                if(role!=null && Objects.equals(role, "ROLE_ADMIN")){
+
+                    int randomIndex = random.nextInt(ADMIN_COLORS.length);
+                    color=ADMIN_COLORS[randomIndex];
+                }
+                else{
+                    int randomIndex = random.nextInt(COLORS.length);
+                    color = COLORS[randomIndex];
+                }
+
+                messageDto = new SocketMessageDto(RESPONSE_AUTH, nickname, color);
             }
 
             case REQUEST_REFRESH -> {

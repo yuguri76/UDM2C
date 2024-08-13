@@ -31,7 +31,7 @@ public class JwtService {
 	public static final String CLAIM_ID = "id";
 	public static final String CLAIM_USERNAME = "username";
 	public static final String CLAIM_NICKNAME = "nickname";
-
+	public static final String CLAIM_ROLE ="role";
 	@Value("${jwt.key}")
 	private String SECRET_KEY;
 
@@ -58,6 +58,7 @@ public class JwtService {
 			.claim(CLAIM_ID, user.getId())
 			.claim(CLAIM_USERNAME, user.getUsername())
 			.claim(CLAIM_NICKNAME, user.getNickname())
+			.claim(CLAIM_ROLE,user.getRole())
 			.setIssuedAt(curDate)
 			.setExpiration(expireDate)
 			.signWith(key, SignatureAlgorithm.HS256)
