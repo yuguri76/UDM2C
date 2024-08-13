@@ -10,6 +10,7 @@ import com.example.livealone.user.entity.User;
 import com.example.livealone.user.repository.UserRepository;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
@@ -22,13 +23,13 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class Oauth2UserServiceImpl extends DefaultOAuth2UserService {
 
 	private final UserRepository userRepository;
 
 	@Override
 	public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
-
 		OAuth2User oAuth2User = super.loadUser(userRequest);
 
 		String provider = userRequest.getClientRegistration().getRegistrationId();
@@ -52,7 +53,6 @@ public class Oauth2UserServiceImpl extends DefaultOAuth2UserService {
 		else {
 			user = optionalUser.get();
 		}
-
 		return setAuthentication(user);
 
 	}

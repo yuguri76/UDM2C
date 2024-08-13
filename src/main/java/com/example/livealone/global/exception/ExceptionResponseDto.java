@@ -1,5 +1,6 @@
 package com.example.livealone.global.exception;
 
+import lombok.ToString;
 import org.springframework.http.HttpStatus;
 
 import lombok.Builder;
