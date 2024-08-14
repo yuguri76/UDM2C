@@ -16,14 +16,16 @@ public class UserBroadcastResponseDto {
   private String productName;
 
   private LocalDateTime airTime;
+  private Integer totalSalePrice;
 
   @QueryProjection
-  public UserBroadcastResponseDto(String title, BroadcastStatus status, String productName, LocalDateTime airTime) {
+  public UserBroadcastResponseDto(String title, BroadcastStatus status, String productName, LocalDateTime airTime, Integer totalSalePrice) {
 
     this.title = title;
     this.status = status;
     this.productName = productName;
     this.airTime = airTime;
+    this.totalSalePrice = totalSalePrice;
 
   }
 }
