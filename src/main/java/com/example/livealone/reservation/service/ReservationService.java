@@ -32,6 +32,15 @@ public class ReservationService {
 
   @DistributedLock(key = "'createReservation-' + #user.getId()")
   public ReservationResponseDto createReservation(ReservationRequestDto requestDto, User user) {
+    if(!reservationRepository.findByAirTimeGreaterThanEqualAndStreamer(LocalDateTime.now().minusMinutes(BROADCAST_AFTER_STARTING), user).isEmpty()) {
+      throw new CustomException(messageSource.getMessage(
+          "limit.reservation.term",
+          null,
+          CustomException.DEFAULT_ERROR_MESSAGE,
+          Locale.getDefault()
+      ), HttpStatus.FORBIDDEN);
+    }
+
     if (reservationRepository.findByAirTime(requestDto.getAirtime()).isPresent()) {
       throw new CustomException(messageSource.getMessage(
           "already.occupied.reservation",
