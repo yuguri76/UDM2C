@@ -49,16 +49,16 @@ public class BroadcastController {
 
   }
 
-  @GetMapping("/user/broadcast")
+  @GetMapping("/user/{userId}/broadcast")
   public ResponseEntity<CommonResponseDto<List<UserBroadcastResponseDto>>> getBroadcast(
-      @RequestParam(defaultValue = "1") int page
-      , @AuthenticationPrincipal UserDetailsImpl userPrincipal) {
+      @PathVariable Long userId,
+      @RequestParam(defaultValue = "1") int page) {
 
     return ResponseEntity.status(HttpStatus.OK).body(
         new CommonResponseDto<>(
             HttpStatus.OK.value(),
             "방송 내역이 성공적으로 조회되었습니다.",
-            broadcastService.getBroadcast(page - 1, userPrincipal.getUser())
+            broadcastService.getBroadcast(page - 1, userId)
         )
     );
 
