@@ -13,7 +13,7 @@ public enum SocketMessageType {
     ALERT_BROADCAST_START,
     ALERT_ALMOST_SOLD_OUT,
     ALERT_SOLD_OUT,
-
+    THROW,
     // FRONTEND
     RESPONSE_AUTH,
     RESPONSE_CHAT_INIT,

@@ -1,6 +1,7 @@
 package com.example.livealone.chat.service;
 
 import com.example.livealone.chat.dto.ChatInitDto;
+import com.example.livealone.chat.dto.ChatChannelBoundDto;
 import com.example.livealone.chat.entity.ChatErrorLog;
 import com.example.livealone.chat.entity.ChatMessage;
 import com.example.livealone.chat.entity.ChatSessionLog;
@@ -18,11 +19,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ConcurrentMap;
 
 import static com.example.livealone.global.entity.SocketMessageType.*;
 
@@ -31,7 +35,7 @@ import static com.example.livealone.global.entity.SocketMessageType.*;
 @Slf4j
 public class ChatService {
 
-
+    private final KafkaTemplate<String, String> kafkaTemplate;
     private final ChatMessageRepository chatMessageRepository;
     private final ChatErrorLogRepository chatErrorLogRepository;
     private final ChatSessionLogRepository chatSessionLogRepository;
@@ -44,12 +48,12 @@ public class ChatService {
     private final ConcurrentLinkedQueue<ChatErrorLog> errorLogsBuffer = new ConcurrentLinkedQueue<>();
     private final ConcurrentLinkedQueue<ChatSessionLog> sessionLogsBuffer = new ConcurrentLinkedQueue<>();
 
-    private static final Map<String, Integer> viewerCountMap = new HashMap<>();
+    private static final ConcurrentMap<String, LinkedList<String>> totalViewerCount = new ConcurrentHashMap<>(); // 모든 서버에서 합친 수
     private static final String[] COLORS = {
-            "#FF33F0","#4566BC","#E4E669","#d071b6","#a471d0","#b7d071","#d09d71","#7174d0"
+            "#FF33F0", "#4566BC", "#E4E669", "#d071b6", "#a471d0", "#b7d071", "#d09d71", "#7174d0"
     };
-    private static final String[] ADMIN_COLORS ={
-            "#d43b3b"
+    private static final String[] ADMIN_COLORS = {
+            "#FF0000"
     };
 
 
@@ -63,7 +67,7 @@ public class ChatService {
         switch (type) {
             case REQUEST_AUTH -> {
                 String token = socketMessageDto.getMessage();
-                if (token ==null || !token.startsWith("Bearer ")) {
+                if (token == null || !token.startsWith("Bearer ")) {
                     messageDto = new SocketMessageDto(ERROR, "back-server", token);
                     break;
                 }
@@ -80,15 +84,13 @@ public class ChatService {
                 // 랜덤색깔 넣어주기
 
                 String color;
-                String role = claims.get("role",String.class);
+                String role = claims.get("role", String.class);
 
-                log.info("role :{}",role);
-                if(role!=null && Objects.equals(role, "ROLE_ADMIN")){
+                if (role != null && Objects.equals(role, "ADMIN")) {
 
                     int randomIndex = random.nextInt(ADMIN_COLORS.length);
-                    color=ADMIN_COLORS[randomIndex];
-                }
-                else{
+                    color = ADMIN_COLORS[randomIndex];
+                } else {
                     int randomIndex = random.nextInt(COLORS.length);
                     color = COLORS[randomIndex];
                 }
@@ -111,7 +113,12 @@ public class ChatService {
             }
             case REQUEST_VIEWERCOUNT -> {
                 String roomid = socketMessageDto.getMessage();
-                int viewerCount = viewerCountMap.get(roomid);
+                LinkedList<String> sessionList = totalViewerCount.get(roomid);
+                if (roomid == null || sessionList == null) {
+                    return objectMapper.writeValueAsString(new SocketMessageDto(THROW, "back-server", "1"));
+                }
+                int viewerCount = sessionList.size();
+                log.info("현재 시청자 수 : {}", viewerCount);
                 return objectMapper.writeValueAsString(new SocketMessageDto(RESPONSE_VIEWERCOUNT, "back-server", String.valueOf(viewerCount)));
             }
         }
@@ -138,8 +145,58 @@ public class ChatService {
         }
     }
 
-    public void setViewerCount(String roomId, int viewerCount) {
-        viewerCountMap.put(roomId, viewerCount);
+    public void sendChannelInboundSessionMessage(String roomId, String sessionId) {
+        try {
+            ChatChannelBoundDto sessionDto = new ChatChannelBoundDto(true,roomId, sessionId);
+            kafkaTemplate.send("viewer", objectMapper.writeValueAsString(sessionDto));
+        } catch (JsonProcessingException e) {
+            log.error(e.getMessage());
+        }
+    }
+
+    public void sendChannelOutboundSessionMessage(String roomId, String sessionId) {
+        try {
+            if (roomId == null || sessionId == null)
+                return;
+
+            ChatChannelBoundDto sessionDto = new ChatChannelBoundDto(false,roomId, sessionId);
+            kafkaTemplate.send("viewer", objectMapper.writeValueAsString(sessionDto));
+        } catch (JsonProcessingException e) {
+            log.error(e.getMessage());
+        }
+    }
+
+    public SocketMessageDto setTotalViewerCountbound(String message) {
+        try {
+            ChatChannelBoundDto sessionDto = objectMapper.readValue(message, ChatChannelBoundDto.class);
+            boolean isInbound = sessionDto.isInbound();
+            String roomId = sessionDto.getRoomId();
+            String sessionId = sessionDto.getSessionId();
+            log.info("setTotalViewerCount with kafka");
+            if (Objects.equals(roomId, "null") || sessionId == null) {
+                return new SocketMessageDto(THROW, "back-server", "throw");
+            }
+
+            if (isInbound) {
+                if (totalViewerCount.get(roomId) == null) {
+                    totalViewerCount.put(roomId, new LinkedList<>());
+                }
+                LinkedList<String> sessionList = totalViewerCount.get(roomId);
+                sessionList.add(sessionId);
+
+            } else {
+                LinkedList<String> sessionList = totalViewerCount.get(roomId);
+                if (sessionList == null)
+                    return new SocketMessageDto(THROW, "back-server", "throw");
+                sessionList.remove(sessionId);
+            }
+
+            log.info("현재 접속중인 세션 수 : {}", totalViewerCount.get(roomId).size());
+            return new SocketMessageDto(RESPONSE_VIEWERCOUNT, "back-server", String.valueOf(totalViewerCount.get(roomId).size()));
+        } catch (JsonProcessingException e) {
+            log.error(e.getMessage());
+            return new SocketMessageDto(THROW, "back-server", "throw");
+        }
     }
 
     private void saveMessage(SocketMessageDto socketMessageDto) {

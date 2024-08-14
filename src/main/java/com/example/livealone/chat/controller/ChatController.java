@@ -5,26 +5,15 @@ import com.example.livealone.global.dto.SocketMessageDto;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.event.EventListener;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.messaging.Message;
-import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.annotation.SendToUser;
-import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
-import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.socket.messaging.SessionConnectedEvent;
-import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 
 @RestController
@@ -35,8 +24,6 @@ public class ChatController {
     private final ChatService chatService;
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final SimpMessagingTemplate messagingTemplate;
-
-    private final ConcurrentMap<String, Integer> roomParticipants = new ConcurrentHashMap<>();
 
     @MessageMapping("/session")
     @SendToUser("/queue/reply")
@@ -55,4 +42,13 @@ public class ChatController {
         SocketMessageDto socketMessageDto = chatService.write(message);
         messagingTemplate.convertAndSend("/queue/message", socketMessageDto);
     }
+
+    @KafkaListener(topics ="viewer")
+    public  void listenChannelbounds(String message) throws InterruptedException {
+        Thread.sleep(500);
+        SocketMessageDto socketMessageDto = chatService.setTotalViewerCountbound(message);
+        messagingTemplate.convertAndSend("/queue/viewer", socketMessageDto);
+    }
+
+
 }

@@ -13,8 +13,7 @@ import org.springframework.messaging.support.MessageHeaderAccessor;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import java.util.Objects;
 
 @Configuration
 @Slf4j
@@ -23,39 +22,31 @@ public class StompHandler implements ChannelInterceptor {
 
     private final ChatService chatService;
 
-    private static final ConcurrentMap<String, List<String>> sessionMap = new ConcurrentHashMap<>();
-
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
         StompHeaderAccessor headerAccessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
 
         assert headerAccessor != null;
         if (headerAccessor.getCommand() == StompCommand.CONNECT) { // 연결 성공 시
-            log.info("CONNECT이벤트 발생");
+
             String roomId = String.valueOf(headerAccessor.getFirstNativeHeader("RoomId"));
+            String sessionId = headerAccessor.getSessionId();
+            log.info("Channel inbound : {}",roomId);
+            chatService.sendChannelInboundSessionMessage(roomId,sessionId);
 
-            sessionMap.computeIfAbsent(roomId, k -> new LinkedList<>());
-            List<String> sessionListByRoom = sessionMap.get(roomId);
-
-            sessionListByRoom.add(headerAccessor.getSessionId());
-            chatService.setViewerCount(roomId,sessionListByRoom.size());
         }
         else if(headerAccessor.getCommand() == StompCommand.DISCONNECT){
-            log.info("DISCONNECT이벤트 발생");
+
             String roomId = String.valueOf(headerAccessor.getFirstNativeHeader("RoomId"));
-            if(roomId.isEmpty()){
-                log.error("헤더에 roomId가 포함되지 않았습니다.");
+            String sessionId =  headerAccessor.getSessionId();
+            if(Objects.equals(roomId,"null") || sessionId ==null){
+                log.info("RoomId가 null 입니다 .");
                 return message;
             }
 
-            log.info("roomId : {}",roomId);
-            List<String> sessionListByRoom = sessionMap.get(roomId);
-            if(sessionListByRoom ==null){
-                log.error("해당 방이 없습니다.");
-                return message;
-            }
-            sessionListByRoom.remove(headerAccessor.getSessionId());
-            chatService.setViewerCount(roomId, sessionListByRoom.size());
+            log.info("Channel outbound : {}",roomId);
+            chatService.sendChannelOutboundSessionMessage(roomId,sessionId);
+
         }
         return message;
     }
