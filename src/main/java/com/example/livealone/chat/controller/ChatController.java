@@ -25,8 +25,6 @@ public class ChatController {
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final SimpMessagingTemplate messagingTemplate;
 
-    private final Queue<SocketMessageDto> messageQueue = new ConcurrentLinkedQueue<>();
-
     @MessageMapping("/session")
     @SendToUser("/queue/reply")
     public String getAuthRequest(SocketMessageDto socketMessageDto) throws JsonProcessingException {
@@ -46,20 +44,11 @@ public class ChatController {
     }
 
     @KafkaListener(topics ="viewer")
-    public  void listenChannelInbounds(String message){
-
-        SocketMessageDto socketMessageDto = chatService.setTotalViewerCountInbound(message);
-        messageQueue.add(socketMessageDto);
-        processMessageQueue();
+    public  void listenChannelbounds(String message) throws InterruptedException {
+        Thread.sleep(500);
+        SocketMessageDto socketMessageDto = chatService.setTotalViewerCountbound(message);
+        messagingTemplate.convertAndSend("/queue/viewer", socketMessageDto);
     }
 
-    private void processMessageQueue(){
-        while (!messageQueue.isEmpty()) {
-            SocketMessageDto message = messageQueue.poll();
-            if(message != null){
-                messagingTemplate.convertAndSend("/queue/viewer", message);
-            }
-        }
-    }
 
 }

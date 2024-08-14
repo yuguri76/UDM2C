@@ -148,7 +148,7 @@ public class ChatService {
     public void sendChannelInboundSessionMessage(String roomId, String sessionId) {
         try {
             ChatChannelBoundDto sessionDto = new ChatChannelBoundDto(true,roomId, sessionId);
-            kafkaTemplate.send("viewe", objectMapper.writeValueAsString(sessionDto));
+            kafkaTemplate.send("viewer", objectMapper.writeValueAsString(sessionDto));
         } catch (JsonProcessingException e) {
             log.error(e.getMessage());
         }
@@ -166,7 +166,7 @@ public class ChatService {
         }
     }
 
-    public SocketMessageDto setTotalViewerCountInbound(String message) {
+    public SocketMessageDto setTotalViewerCountbound(String message) {
         try {
             ChatChannelBoundDto sessionDto = objectMapper.readValue(message, ChatChannelBoundDto.class);
             boolean isInbound = sessionDto.isInbound();
