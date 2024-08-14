@@ -27,7 +27,7 @@ public class AdminController {
 
   private final AdminService adminService;
 
-  @PutMapping("/admin")
+  @PutMapping("register/admin")
   public ResponseEntity<CommonResponseDto<Void>> registerAdmin(@RequestBody AdminRequestDto requestDto, @AuthenticationPrincipal
       UserDetailsImpl userDetails) {
 
