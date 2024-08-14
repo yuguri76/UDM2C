@@ -1,10 +1,10 @@
 ### 관리자 등록 - 실패 (성공 케이스는 admin password 보안 이슈로 테스트 후 지웠습니다.)
-PUT http://localhost:8080/admin
+PUT http://localhost:8080/register/admin
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJraW1jaGFlbWluMDcwN0BnbWFpbC5jb20iLCJpZCI6MSwidXNlcm5hbWUiOiJjaGFlbWluIGtpbSIsIm5pY2tuYW1lIjoiY2hhZW1pbiBraW0iLCJpYXQiOjE3MjI5NTgwNDgsImV4cCI6MTcyMjk1ODY0OH0.sTtUy61e4g_PucFGnF_cMrovNGZ0824r23BM-2uOhRU
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJraW1jaGFlbWluMDcwN0BnbWFpbC5jb20iLCJpZCI6MiwidXNlcm5hbWUiOiJjaGFlbWluIGtpbSIsIm5pY2tuYW1lIjoiY2hhZW1pbiBraW0iLCJpYXQiOjE3MjM1OTkxOTksImV4cCI6MTcyMzU5OTc5OX0.zTJLzmOV66lShJgWsXfeA5GA5TINni_hg8N8Sf9-t8s
 
 {
-  "password": "wrongpassword"
+  "password": "wrongPassword"
 }
 
 ### 방송 상세 정보 가져오기
@@ -21,3 +21,4 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJjaGVhbWluNjMwNkBuYXZlci5jb
 GET http://localhost:8080/admin/broadcasts
 Content-Type: application/json
 Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJjaGVhbWluNjMwNkBuYXZlci5jb20iLCJpZCI6MSwidXNlcm5hbWUiOiLquYDssYTrr7wiLCJuaWNrbmFtZSI6Iuq5gOyxhOuvvCIsImlhdCI6MTcyMzQzNDU1MCwiZXhwIjoxNzIzNDM1MTUwfQ.jZDznqaHXUjxYhXS0w5az3Hni7tvdKasFMxqtcaBtGw
+

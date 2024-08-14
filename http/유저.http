@@ -2,3 +2,13 @@
 GET http://localhost:8080/user/address
 Content-Type: application/json
 Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJjaGVhbWluNjMwNkBuYXZlci5jb20iLCJpZCI6MSwidXNlcm5hbWUiOiLquYDssYTrr7wiLCJuaWNrbmFtZSI6Iuq5gOyxhOuvvCIsImlhdCI6MTcyMjMyODgwNSwiZXhwIjoxNzIyMzI5NDA1fQ.volO1BuI5HsLLum3RoyLgHXnS2Wuj2jSf2OCgIYNmqU
+
+### 유저 별 방송 내역 가져오기
+GET http://localhost:8080/user/1/broadcast
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJraW1jaGFlbWluMDcwN0BnbWFpbC5jb20iLCJpZCI6MiwidXNlcm5hbWUiOiJjaGFlbWluIGtpbSIsIm5pY2tuYW1lIjoiY2hhZW1pbiBraW0iLCJpYXQiOjE3MjM1OTkxOTksImV4cCI6MTcyMzU5OTc5OX0.zTJLzmOV66lShJgWsXfeA5GA5TINni_hg8N8Sf9-t8s
+
+### 유저 별 배송 내역 가져오기
+GET http://localhost:8080/user/1/delivery
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJraW1jaGFlbWluMDcwN0BnbWFpbC5jb20iLCJpZCI6MiwidXNlcm5hbWUiOiJjaGFlbWluIGtpbSIsIm5pY2tuYW1lIjoiY2hhZW1pbiBraW0iLCJpYXQiOjE3MjM1OTk5MDQsImV4cCI6MTcyMzYwMDUwNH0.VYvN2nJdske_cCxRm76hulAKFGyB0UHQfw85-Yg4Dcc

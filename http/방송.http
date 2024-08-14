@@ -10,10 +10,10 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJjaGVhbWluNjMwNkBuYXZlci5jb
 }
 
 ### 방송 내역 조회
-GET http://localhost:8080/user/broadcast
+GET http://localhost:8080/user/1/broadcast
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJraHU0MjM3QGdtYWlsLmNvbSIsIm5pY2tuYW1lIjoi7J6Q65GQ66eM65GQIiwiaWF0IjoxNzIxOTc4MzgyLCJleHAiOjE3MjE5Nzg5ODJ9.Uj30VvGZ1OL8Rcf_4ZjHJTHuiIpsmHqgYx5hSbQaG0o
-d
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJjaGVhbWluNjMwNkBuYXZlci5jb20iLCJpZCI6MSwidXNlcm5hbWUiOiLquYDssYTrr7wiLCJuaWNrbmFtZSI6Iuq5gOyxhOuvvCIsInJvbGUiOiJBRE1JTiIsImlhdCI6MTcyMzYwNzY1MCwiZXhwIjoxNzIzNjA4MjUwfQ.m2KBY2RAem4qaWTSyZBT2FcNSmyoTn4QUD5YVpGjhLc
+
 ### 방송 중단
 PATCH http://localhost:8080/broadcast
 Content-Type: application/json
