@@ -20,37 +20,4 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class StompHandler implements ChannelInterceptor {
 
-    private final ChatService chatService;
-
-    @Override
-    public Message<?> preSend(Message<?> message, MessageChannel channel) {
-        StompHeaderAccessor headerAccessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
-
-        assert headerAccessor != null;
-        if (headerAccessor.getCommand() == StompCommand.CONNECT) { // 연결 성공 시
-
-            String roomId = String.valueOf(headerAccessor.getFirstNativeHeader("RoomId"));
-            String sessionId = headerAccessor.getSessionId();
-            log.info("Channel inbound : {}",roomId);
-            chatService.sendChannelInboundSessionMessage(roomId,sessionId);
-
-        }
-        else if(headerAccessor.getCommand() == StompCommand.DISCONNECT){
-
-            String roomId = String.valueOf(headerAccessor.getFirstNativeHeader("RoomId"));
-            String sessionId =  headerAccessor.getSessionId();
-            if(Objects.equals(roomId,"null") || sessionId ==null){
-                log.info("RoomId가 null 입니다 .");
-                return message;
-            }
-
-            log.info("Channel outbound : {}",roomId);
-            chatService.sendChannelOutboundSessionMessage(roomId,sessionId);
-
-        }
-        return message;
-    }
-
-
-
 }

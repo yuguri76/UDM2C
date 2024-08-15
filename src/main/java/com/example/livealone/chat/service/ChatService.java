@@ -56,9 +56,7 @@ public class ChatService {
             "#FF0000"
     };
 
-
     private static final int batchSize = 100;
-
 
     public String createSessionReply(SocketMessageDto socketMessageDto) throws JsonProcessingException {
         SocketMessageDto messageDto = null;
@@ -79,7 +77,6 @@ public class ChatService {
                 }
                 Claims claims = jwtService.getClaims(replaceToken);
                 String nickname = claims.get("nickname", String.class);
-
 
                 // 랜덤색깔 넣어주기
 
@@ -111,16 +108,6 @@ public class ChatService {
             case REQUEST_CHAT_INIT -> {
                 messageDto = writeInitMessages();
             }
-            case REQUEST_VIEWERCOUNT -> {
-                String roomid = socketMessageDto.getMessage();
-                LinkedList<String> sessionList = totalViewerCount.get(roomid);
-                if (roomid == null || sessionList == null) {
-                    return objectMapper.writeValueAsString(new SocketMessageDto(THROW, "back-server", "1"));
-                }
-                int viewerCount = sessionList.size();
-                log.info("현재 시청자 수 : {}", viewerCount);
-                return objectMapper.writeValueAsString(new SocketMessageDto(RESPONSE_VIEWERCOUNT, "back-server", String.valueOf(viewerCount)));
-            }
         }
 
         return objectMapper.writeValueAsString(messageDto);
@@ -144,61 +131,6 @@ public class ChatService {
             return objectMapper.writeValueAsString(dto);
         }
     }
-
-    public void sendChannelInboundSessionMessage(String roomId, String sessionId) {
-        try {
-            ChatChannelBoundDto sessionDto = new ChatChannelBoundDto(true,roomId, sessionId);
-            kafkaTemplate.send("viewer", objectMapper.writeValueAsString(sessionDto));
-        } catch (JsonProcessingException e) {
-            log.error(e.getMessage());
-        }
-    }
-
-    public void sendChannelOutboundSessionMessage(String roomId, String sessionId) {
-        try {
-            if (roomId == null || sessionId == null)
-                return;
-
-            ChatChannelBoundDto sessionDto = new ChatChannelBoundDto(false,roomId, sessionId);
-            kafkaTemplate.send("viewer", objectMapper.writeValueAsString(sessionDto));
-        } catch (JsonProcessingException e) {
-            log.error(e.getMessage());
-        }
-    }
-
-    public SocketMessageDto setTotalViewerCountbound(String message) {
-        try {
-            ChatChannelBoundDto sessionDto = objectMapper.readValue(message, ChatChannelBoundDto.class);
-            boolean isInbound = sessionDto.isInbound();
-            String roomId = sessionDto.getRoomId();
-            String sessionId = sessionDto.getSessionId();
-            log.info("setTotalViewerCount with kafka");
-            if (Objects.equals(roomId, "null") || sessionId == null) {
-                return new SocketMessageDto(THROW, "back-server", "throw");
-            }
-
-            if (isInbound) {
-                if (totalViewerCount.get(roomId) == null) {
-                    totalViewerCount.put(roomId, new LinkedList<>());
-                }
-                LinkedList<String> sessionList = totalViewerCount.get(roomId);
-                sessionList.add(sessionId);
-
-            } else {
-                LinkedList<String> sessionList = totalViewerCount.get(roomId);
-                if (sessionList == null)
-                    return new SocketMessageDto(THROW, "back-server", "throw");
-                sessionList.remove(sessionId);
-            }
-
-            log.info("현재 접속중인 세션 수 : {}", totalViewerCount.get(roomId).size());
-            return new SocketMessageDto(RESPONSE_VIEWERCOUNT, "back-server", String.valueOf(totalViewerCount.get(roomId).size()));
-        } catch (JsonProcessingException e) {
-            log.error(e.getMessage());
-            return new SocketMessageDto(THROW, "back-server", "throw");
-        }
-    }
-
     private void saveMessage(SocketMessageDto socketMessageDto) {
 
         try {

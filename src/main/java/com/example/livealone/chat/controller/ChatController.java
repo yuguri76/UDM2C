@@ -42,13 +42,4 @@ public class ChatController {
         SocketMessageDto socketMessageDto = chatService.write(message);
         messagingTemplate.convertAndSend("/queue/message", socketMessageDto);
     }
-
-    @KafkaListener(topics ="viewer")
-    public  void listenChannelbounds(String message) throws InterruptedException {
-        Thread.sleep(500);
-        SocketMessageDto socketMessageDto = chatService.setTotalViewerCountbound(message);
-        messagingTemplate.convertAndSend("/queue/viewer", socketMessageDto);
-    }
-
-
 }
