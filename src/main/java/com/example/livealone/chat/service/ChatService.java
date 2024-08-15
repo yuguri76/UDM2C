@@ -66,7 +66,7 @@ public class ChatService {
             case REQUEST_AUTH -> {
                 String token = socketMessageDto.getMessage();
                 if (token == null || !token.startsWith("Bearer ")) {
-                    messageDto = new SocketMessageDto(ERROR, "back-server", token);
+                    messageDto = new SocketMessageDto(INVALID_TOKEN, "back-server", token);
                     break;
                 }
                 String replaceToken = token.replace("Bearer ", "");
