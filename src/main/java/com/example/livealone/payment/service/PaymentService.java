@@ -426,7 +426,7 @@ public class PaymentService {
 	 * @return 결제 내역 리스트
 	 */
 	public PaymentHistoryDto getCompletedPaymentsByUserId(Long userId, int page, int size) {
-		Pageable pageable = PageRequest.of(page, size);
+		Pageable pageable = PageRequest.of(page, 5);
 		Page<Payment> paymentPage = paymentRepository.findByUserIdAndStatus(userId, PaymentStatus.COMPLETED, pageable);
 
 		List<PaymentHistoryDto> paymentHistoryList = paymentPage.getContent().stream()
