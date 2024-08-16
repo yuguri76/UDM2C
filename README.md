@@ -2,7 +2,19 @@
 
 <div id="site">
 
+## 1인가구를 위한 홈쇼핑 🛒
+```
+💡 나 혼자 살고(Live) 나 혼자 산다(Buy)! 자취생들을 위한 홈쇼핑
+나 혼자 산다는 1인가구를 위한 꿀템을 판매하고 구매할 수 있는 라이브커머스 사이트입니다.
+```
+
 # [🏠 나혼자산다 사이트 바로가기 🏡](https://livealone.shop/)
+
+## GitHub
+| front                                                              | back                                                                                                      |
+|--------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------|
+| [![github](https://img.icons8.com/?size=100&id=ARy6tFUfwclb&format=png&color=000000)](https://github.com/UDM2C/frontlivealone) | [![github](https://img.icons8.com/?size=100&id=ARy6tFUfwclb&format=png&color=000000)](https://github.com/UDM2C/UDM2C) |
+
 
 </div>
 
@@ -24,7 +36,7 @@
    
 | 유규리                         | 권수연                         | 김채민                         | 김혜은                         | 노석준                         |
 |-------------------------------|-------------------------------|-------------------------------|-------------------------------|-------------------------------|
-| [![유규리](https://www.notion.so/image/https%3A%2F%2Fprod-files-secure.s3.us-west-2.amazonaws.com%2F83c75a39-3aba-4ba4-a792-7aefe4b07895%2F7c2b9490-1e23-4f57-acd3-6d223fcf54ac%2F1.png?table=block&id=4e04a7a6-6479-4451-a8d3-a2f1b8eccef5&spaceId=83c75a39-3aba-4ba4-a792-7aefe4b07895&width=240&userId=1915f230-f6d8-4fc2-88df-57efadf78940&cache=v2)]([https://github.com/yuguri76]) | [![권수연](https://www.notion.so/image/https%3A%2F%2Fprod-files-secure.s3.us-west-2.amazonaws.com%2F83c75a39-3aba-4ba4-a792-7aefe4b07895%2F2333fc0a-19f7-4641-91cf-7309c8b33316%2F3.png?table=block&id=fa26d3c2-3864-4fba-9826-08eafa18504f&spaceId=83c75a39-3aba-4ba4-a792-7aefe4b07895&width=260&userId=1915f230-f6d8-4fc2-88df-57efadf78940&cache=v2)](https://github.com/ggumi030) | [![김채민](https://www.notion.so/image/https%3A%2F%2Fprod-files-secure.s3.us-west-2.amazonaws.com%2F83c75a39-3aba-4ba4-a792-7aefe4b07895%2F81729450-ab76-4a3b-896d-c321fe2d840d%2F2.png?table=block&id=40f89b24-c0f9-4437-833e-367419c33117&spaceId=83c75a39-3aba-4ba4-a792-7aefe4b07895&width=250&userId=1915f230-f6d8-4fc2-88df-57efadf78940&cache=v2)](https://github.com/chamcham0707) | [![김혜은](https://www.notion.so/image/https%3A%2F%2Fprod-files-secure.s3.us-west-2.amazonaws.com%2F83c75a39-3aba-4ba4-a792-7aefe4b07895%2Fb575d21b-5aee-4987-8165-c10d3a7de9e0%2F5.png?table=block&id=3234afe4-76c7-46c9-8a50-d0ff70fbbfba&spaceId=83c75a39-3aba-4ba4-a792-7aefe4b07895&width=250&userId=1915f230-f6d8-4fc2-88df-57efadf78940&cache=v2)](https://github.com/MetroDefro) | [![노석준](https://www.notion.so/image/https%3A%2F%2Fprod-files-secure.s3.us-west-2.amazonaws.com%2F83c75a39-3aba-4ba4-a792-7aefe4b07895%2F7798172f-fc39-44fd-824e-2de55c1ed04a%2F4.png?table=block&id=270d79a4-d36a-4c07-be21-4e7a288b8c86&spaceId=83c75a39-3aba-4ba4-a792-7aefe4b07895&width=250&userId=1915f230-f6d8-4fc2-88df-57efadf78940&cache=v2)](https://github.com/kopite97) |
+| [![유규리](https://www.notion.so/image/https%3A%2F%2Fprod-files-secure.s3.us-west-2.amazonaws.com%2F83c75a39-3aba-4ba4-a792-7aefe4b07895%2F7c2b9490-1e23-4f57-acd3-6d223fcf54ac%2F1.png?table=block&id=4e04a7a6-6479-4451-a8d3-a2f1b8eccef5&spaceId=83c75a39-3aba-4ba4-a792-7aefe4b07895&width=240&userId=1915f230-f6d8-4fc2-88df-57efadf78940&cache=v2)](https://github.com/yuguri76) | [![권수연](https://www.notion.so/image/https%3A%2F%2Fprod-files-secure.s3.us-west-2.amazonaws.com%2F83c75a39-3aba-4ba4-a792-7aefe4b07895%2F2333fc0a-19f7-4641-91cf-7309c8b33316%2F3.png?table=block&id=fa26d3c2-3864-4fba-9826-08eafa18504f&spaceId=83c75a39-3aba-4ba4-a792-7aefe4b07895&width=260&userId=1915f230-f6d8-4fc2-88df-57efadf78940&cache=v2)](https://github.com/ggumi030) | [![김채민](https://www.notion.so/image/https%3A%2F%2Fprod-files-secure.s3.us-west-2.amazonaws.com%2F83c75a39-3aba-4ba4-a792-7aefe4b07895%2F81729450-ab76-4a3b-896d-c321fe2d840d%2F2.png?table=block&id=40f89b24-c0f9-4437-833e-367419c33117&spaceId=83c75a39-3aba-4ba4-a792-7aefe4b07895&width=250&userId=1915f230-f6d8-4fc2-88df-57efadf78940&cache=v2)](https://github.com/chamcham0707) | [![김혜은](https://www.notion.so/image/https%3A%2F%2Fprod-files-secure.s3.us-west-2.amazonaws.com%2F83c75a39-3aba-4ba4-a792-7aefe4b07895%2Fb575d21b-5aee-4987-8165-c10d3a7de9e0%2F5.png?table=block&id=3234afe4-76c7-46c9-8a50-d0ff70fbbfba&spaceId=83c75a39-3aba-4ba4-a792-7aefe4b07895&width=250&userId=1915f230-f6d8-4fc2-88df-57efadf78940&cache=v2)](https://github.com/MetroDefro) | [![노석준](https://www.notion.so/image/https%3A%2F%2Fprod-files-secure.s3.us-west-2.amazonaws.com%2F83c75a39-3aba-4ba4-a792-7aefe4b07895%2F7798172f-fc39-44fd-824e-2de55c1ed04a%2F4.png?table=block&id=270d79a4-d36a-4c07-be21-4e7a288b8c86&spaceId=83c75a39-3aba-4ba4-a792-7aefe4b07895&width=250&userId=1915f230-f6d8-4fc2-88df-57efadf78940&cache=v2)](https://github.com/kopite97) |
 
 <details>
 <summary>유규리</summary>
