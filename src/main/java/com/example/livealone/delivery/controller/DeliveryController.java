@@ -5,6 +5,7 @@ import com.example.livealone.delivery.service.DeliveryService;
 import com.example.livealone.global.dto.CommonResponseDto;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,12 +20,12 @@ public class DeliveryController {
     private final DeliveryService deliveryService;
 
     @GetMapping("/user/{userId}/delivery")
-    public ResponseEntity<CommonResponseDto<List<DeliveryHistoryResponseDto>>> getUserDeliveryHistory(
+    public ResponseEntity<CommonResponseDto<Page<DeliveryHistoryResponseDto>>> getUserDeliveryHistory(
             @PathVariable Long userId,
             @RequestParam(defaultValue = "1") int page) {
 
-        List<DeliveryHistoryResponseDto> deliveryHistoryResponseDto = deliveryService.getUserDeliveryHistory(userId, page - 1);
-        CommonResponseDto<List<DeliveryHistoryResponseDto>> commonResponseDto = CommonResponseDto.<List<DeliveryHistoryResponseDto>>builder()
+        Page<DeliveryHistoryResponseDto> deliveryHistoryResponseDto = deliveryService.getUserDeliveryHistory(userId, page - 1);
+        CommonResponseDto<Page<DeliveryHistoryResponseDto>> commonResponseDto = CommonResponseDto.<Page<DeliveryHistoryResponseDto>>builder()
                 .status(HttpStatus.OK.value())
                 .message("User Delivery History inquiry successfully")
                 .data(deliveryHistoryResponseDto)
