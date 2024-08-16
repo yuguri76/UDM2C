@@ -108,7 +108,7 @@ public class BroadcastService {
     return BroadcastMapper.toCreateBroadcastResponseDto(saveBroadcast);
   }
 
-  public List<UserBroadcastResponseDto> getBroadcast(int page, Long userId) {
+  public Page<UserBroadcastResponseDto> getBroadcast(int page, Long userId) {
     return broadcastRepository.findAllByUserId(userId, page, PAGE_SIZE);
   }
 

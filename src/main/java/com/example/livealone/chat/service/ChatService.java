@@ -1,7 +1,6 @@
 package com.example.livealone.chat.service;
 
 import com.example.livealone.chat.dto.ChatInitDto;
-import com.example.livealone.chat.dto.ChatChannelBoundDto;
 import com.example.livealone.chat.entity.ChatErrorLog;
 import com.example.livealone.chat.entity.ChatMessage;
 import com.example.livealone.chat.entity.ChatSessionLog;
@@ -24,9 +23,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ConcurrentMap;
 
 import static com.example.livealone.global.entity.SocketMessageType.*;
 
@@ -48,7 +45,6 @@ public class ChatService {
     private final ConcurrentLinkedQueue<ChatErrorLog> errorLogsBuffer = new ConcurrentLinkedQueue<>();
     private final ConcurrentLinkedQueue<ChatSessionLog> sessionLogsBuffer = new ConcurrentLinkedQueue<>();
 
-    private static final ConcurrentMap<String, LinkedList<String>> totalViewerCount = new ConcurrentHashMap<>(); // 모든 서버에서 합친 수
     private static final String[] COLORS = {
             "#FF33F0", "#4566BC", "#E4E669", "#d071b6", "#a471d0", "#b7d071", "#d09d71", "#7174d0"
     };
@@ -77,8 +73,6 @@ public class ChatService {
                 }
                 Claims claims = jwtService.getClaims(replaceToken);
                 String nickname = claims.get("nickname", String.class);
-
-                // 랜덤색깔 넣어주기
 
                 String color;
                 String role = claims.get("role", String.class);
@@ -137,7 +131,6 @@ public class ChatService {
             switch (socketMessageDto.getType()) {
                 case REQUEST_AUTH -> {
                     ChatSessionLog chatSessionLog = new ChatSessionLog(socketMessageDto.getMessenger(), socketMessageDto.getMessage());
-
                     sessionLogsBuffer.add(chatSessionLog);
                     if (sessionLogsBuffer.size() > batchSize) {
                         saveSessionLogs();
@@ -149,7 +142,7 @@ public class ChatService {
                         saveChatMessages();
                     }
                 }
-                case FAILED -> {
+                case ERROR-> {
                     ChatErrorLog chatErrorLog = new ChatErrorLog(socketMessageDto.getMessage());
                     errorLogsBuffer.add(chatErrorLog);
                     if (errorLogsBuffer.size() > batchSize) {

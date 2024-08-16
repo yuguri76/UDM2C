@@ -11,7 +11,10 @@ import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -21,11 +24,11 @@ public class BroadcastRepositoryQueryImpl implements BroadcastRepositoryQuery {
   private final JPAQueryFactory queryFactory;
 
   @Override
-  public List<UserBroadcastResponseDto> findAllByUserId(Long userId, int page, int size) {
+  public Page<UserBroadcastResponseDto> findAllByUserId(Long userId, int page, int size) {
 
-    PageRequest pageRequest = PageRequest.of(page,size);
+    Pageable pageable = PageRequest.of(page,size);
 
-    return queryFactory.select(new QUserBroadcastResponseDto(
+    List<UserBroadcastResponseDto> fetch = queryFactory.select(new QUserBroadcastResponseDto(
           broadcast.title,
           broadcast.broadcastStatus,
           broadcast.product.name,
@@ -38,10 +41,18 @@ public class BroadcastRepositoryQueryImpl implements BroadcastRepositoryQuery {
         ))
         .from(broadcast)
         .where(broadcast.streamer.id.eq(userId))
-        .offset(pageRequest.getOffset())
-        .limit(pageRequest.getPageSize())
+        .offset(pageable.getOffset())
+        .limit(pageable.getPageSize())
         .orderBy(new OrderSpecifier<>(Order.DESC, broadcast.id))
         .fetch();
+
+    Long count = queryFactory
+        .select(broadcast.count())
+        .from(broadcast)
+        .where(broadcast.streamer.id.eq(userId))
+        .fetchOne();
+
+    return new PageImpl<>(fetch, pageable, count);
 
   }
 
