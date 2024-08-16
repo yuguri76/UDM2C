@@ -13,6 +13,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -50,7 +51,7 @@ public class BroadcastController {
   }
 
   @GetMapping("/user/{userId}/broadcast")
-  public ResponseEntity<CommonResponseDto<List<UserBroadcastResponseDto>>> getBroadcast(
+  public ResponseEntity<CommonResponseDto<Page<UserBroadcastResponseDto>>> getBroadcast(
       @PathVariable Long userId,
       @RequestParam(defaultValue = "1") int page) {
 
