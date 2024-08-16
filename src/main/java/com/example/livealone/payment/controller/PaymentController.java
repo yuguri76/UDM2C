@@ -165,14 +165,18 @@ public class PaymentController {
 	public ResponseEntity<CommonResponseDto<PaymentHistoryDto>> getCompletedPaymentsByUserId(
 		@PathVariable Long userId,
 		@RequestParam(defaultValue = "0") int page,
-		@RequestParam(defaultValue = "10") int size) {
+		@RequestParam(defaultValue = "5") int size) {
 
+		// PaymentService의 메서드를 호출할 때, size 값을 5로 전달
 		PaymentHistoryDto paymentHistory = paymentService.getCompletedPaymentsByUserId(userId, page, size);
+
+		// 응답 DTO를 생성하여 클라이언트에게 반환
 		CommonResponseDto<PaymentHistoryDto> responseDto = CommonResponseDto.<PaymentHistoryDto>builder()
 			.status(200)
 			.message("결제 내역 조회 성공")
 			.data(paymentHistory)
 			.build();
+
 		return ResponseEntity.ok(responseDto);
 	}
 }
