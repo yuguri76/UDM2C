@@ -2,6 +2,7 @@ package com.example.livealone.payment.controller;
 
 import com.example.livealone.global.config.URIConfig;
 import com.example.livealone.global.dto.CommonResponseDto;
+import com.example.livealone.payment.dto.PaymentHistoryDto;
 import com.example.livealone.payment.dto.PaymentRequestDto;
 import com.example.livealone.payment.dto.PaymentResponseDto;
 import com.example.livealone.payment.service.PaymentService;
@@ -104,18 +105,6 @@ public class PaymentController {
 	}
 
 	/**
-	 * 결제 상태 조회
-	 *
-	 * @param paymentId 결제 ID
-	 * @return 결제 응답 DTO
-	 */
-	@GetMapping("/payment/{paymentId}/status")
-	public ResponseEntity<PaymentResponseDto> getPaymentStatus(@PathVariable Long paymentId) {
-		return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
-	}
-
-
-	/**
 	 * 토스페이 결제 준비
 	 *
 	 * @param requestDto 결제 요청 DTO
@@ -132,7 +121,7 @@ public class PaymentController {
 
 
 	/**
-	 * 리팩토링: ORDER-CHECK 처리
+	 * 토스페이 승인 및 완료처리: (ORDER-CHECK)
 	 */
 	@GetMapping("/ORDER-CHECK")
 	public void returnOrderCheckPage(@RequestParam String orderno,
@@ -166,43 +155,6 @@ public class PaymentController {
 	}
 
 
-	// /**
-	//  * 토스페이 결제 승인
-	//  *
-	//  * @param payToken 결제 고유 토큰
-	//  * @return 결제 응답 DTO
-	//  */
-	// @PostMapping("/payment/toss/approve")
-	// public ResponseEntity<PaymentResponseDto> approveTossPayPayment(@RequestParam String payToken) {
-	// 	log.debug("approveTossPayPayment");
-	// 	PaymentResponseDto response = paymentService.approveTossPayPayment(payToken);
-	// 	if (response.getStatus().equals("FAILED")) {
-	// 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-	// 	}
-	// 	return ResponseEntity.ok(response);
-	// }
-
-	// /**
-	//  * 토스페이 결제 완료 처리
-	//  *
-	//  * @param payToken 결제 승인 토큰
-	//  * @param orderId 주문 ID
-	//  * @param userId 사용자 ID
-	//  * @return 결제 응답 DTO
-	//  */
-	// @GetMapping("/payment/toss/complete")
-	// public RedirectView completeTossPayment(@RequestParam("payToken") String payToken,
-	// 	@RequestParam("order_id") Long orderId,
-	// 	@RequestParam("user_id") Long userId) {
-	// 	log.debug("completTossPayment");
-	// 	String status = "completed"; // 토스페이의 경우 결제 완료 후에 상태가 completed로 설정됨
-	// 	String orderNo = String.format("livealone:%d", orderId) + LocalDate.now();
-	// 	String redirectUrl = paymentService.returnOrderCheckPage(orderNo, status, orderNo, "TOSS_PAY", null, null);
-	// 	RedirectView redirectView = new RedirectView();
-	// 	redirectView.setUrl(redirectUrl);
-	// 	return redirectView;
-	// }
-
 	/**
 	 * 사용자별 결제 내역 조회
 	 *
@@ -210,13 +162,21 @@ public class PaymentController {
 	 * @return 결제 내역 리스트
 	 */
 	@GetMapping("/payment/user/{userId}/completed")
-	public ResponseEntity<CommonResponseDto<List<PaymentResponseDto>>> getCompletedPaymentsByUserId(@PathVariable Long userId) {
-		List<PaymentResponseDto> paymentResponses = paymentService.getCompletedPaymentsByUserId(userId);
-		CommonResponseDto<List<PaymentResponseDto>> responseDto = CommonResponseDto.<List<PaymentResponseDto>>builder()
+	public ResponseEntity<CommonResponseDto<PaymentHistoryDto>> getCompletedPaymentsByUserId(
+		@PathVariable Long userId,
+		@RequestParam(defaultValue = "0") int page,
+		@RequestParam(defaultValue = "5") int size) {
+
+		// PaymentService의 메서드를 호출할 때, size 값을 5로 전달
+		PaymentHistoryDto paymentHistory = paymentService.getCompletedPaymentsByUserId(userId, page, size);
+
+		// 응답 DTO를 생성하여 클라이언트에게 반환
+		CommonResponseDto<PaymentHistoryDto> responseDto = CommonResponseDto.<PaymentHistoryDto>builder()
 			.status(200)
 			.message("결제 내역 조회 성공")
-			.data(paymentResponses)
+			.data(paymentHistory)
 			.build();
+
 		return ResponseEntity.ok(responseDto);
 	}
 }

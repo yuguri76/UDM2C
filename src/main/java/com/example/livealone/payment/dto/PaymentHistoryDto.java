@@ -3,6 +3,8 @@ package com.example.livealone.payment.dto;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.util.List;
+
 @Getter
 @Builder
 public class PaymentHistoryDto {
@@ -11,4 +13,8 @@ public class PaymentHistoryDto {
 	private String status;
 	private String paymentMethod;
 	private String createdAt;
+	private int currentPage;
+	private int totalPages;
+	private long totalElements;
+	private List<PaymentHistoryDto> content;
 }

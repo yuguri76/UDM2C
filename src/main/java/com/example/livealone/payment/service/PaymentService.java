@@ -10,6 +10,9 @@ import com.example.livealone.global.aop.DistributedLock;
 import com.example.livealone.global.config.URIConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -21,6 +24,7 @@ import org.springframework.web.client.RestTemplate;
 import com.example.livealone.order.entity.Order;
 import com.example.livealone.order.repository.OrderRepository;
 import com.example.livealone.order.service.OrderService;
+import com.example.livealone.payment.dto.PaymentHistoryDto;
 import com.example.livealone.payment.dto.PaymentRequestDto;
 import com.example.livealone.payment.dto.PaymentResponseDto;
 import com.example.livealone.payment.entity.Payment;
@@ -36,7 +40,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.util.UriComponentsBuilder;
 
 @Service
 @RequiredArgsConstructor
@@ -352,57 +355,6 @@ public class PaymentService {
 		}
 	}
 
-	// /**
-	//  * 토스페이 결제 승인
-	//  *
-	//  * @param payToken 결제 고유 토큰
-	//  * @return 결제 응답 DTO
-	//  */
-	// @Transactional
-	// public PaymentResponseDto approveTossPayPayment(String payToken) {
-	// 	String url = "https://pay.toss.im/api/v2/execute";
-	//
-	// 	log.debug("payToken : {}", payToken);
-	// 	HttpHeaders headers = new HttpHeaders();
-	// 	headers.setContentType(MediaType.APPLICATION_JSON);
-	//
-	// 	Map<String, String> params = new HashMap<>();
-	// 	params.put("apiKey", tossSecretKey);
-	// 	params.put("payToken", payToken);
-	//
-	// 	HttpEntity<Map<String, String>> request = new HttpEntity<>(params, headers);
-	//
-	// 	try {
-	// 		ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, request, String.class);
-	// 		JsonNode jsonNode = objectMapper.readTree(response.getBody());
-	//
-	// 		Payment payment = paymentRepository.findByTid(payToken);
-	// 		if (payment == null) {
-	// 			throw new IllegalArgumentException("Invalid payToken: " + payToken);
-	// 		}
-	//
-	// 		payment.updateStatus(PaymentStatus.COMPLETED);
-	//
-	// 		return PaymentResponseDto.builder()
-	// 			.status("COMPLETED")
-	// 			.message("결제 완료")
-	// 			.paymentId(payment.getId())
-	// 			.userId(payment.getUser().getId())
-	// 			.orderId(payment.getOrder().getId())
-	// 			.amount(payment.getAmount())
-	// 			.paymentMethod(payment.getPaymentMethod().name())
-	// 			.createdAt(payment.getCreatedAt().toString())
-	// 			.updateAt(jsonNode.get("approved_at").asText())
-	// 			.build();
-	//
-	// 	} catch (Exception e) {
-	// 		e.printStackTrace();
-	// 		return PaymentResponseDto.builder()
-	// 			.status("FAILED")
-	// 			.message("결제 승인 실패")
-	// 			.build();
-	// 	}
-	// }
 
 	@DistributedLock(key = "'rollbackAndDeleteOrder-' + #orderId")
 	public void rollbackAndDeleteOrder(Long orderId) {
@@ -426,15 +378,10 @@ public class PaymentService {
 	@Transactional
 	public String returnOrderCheckPage(String orderno, String status, String orderNo, String payMethod, String bankCode,
 		String cardCompany) {
-		log.debug("orderno : {}", orderno); // livealone:192024-08-08
+		log.debug("orderno : {}", orderno);
 		log.debug("status : {}", status);
 		log.debug("paymeThod ; {}", payMethod);
 
-		// livealone:192024-08-08
-		// livealone:19:2024-08-08 (: 로 tokenize) -> [livealone, 19, 2024-08-08]
-		// findByOrder_Id(19)
-
-		// 결제 상태 업데이트 로직 추가
 		String[] tokens = orderno.split(":");
 		Long orderId = Long.parseLong(tokens[1]);
 		Payment payment = paymentRepository.findByOrder_Id(orderId);
@@ -456,13 +403,8 @@ public class PaymentService {
 
 	@Transactional
 	public String cancelOrderCheckPage(String orderno) {
-		log.debug("orderno : {}", orderno); // livealone:192024-08-08
+		log.debug("orderno : {}", orderno);
 
-		// livealone:192024-08-08
-		// livealone:19:2024-08-08 (: 로 tokenize) -> [livealone, 19, 2024-08-08]
-		// findByOrder_Id(19)
-
-		// 결제 상태 업데이트 로직 추가
 		String[] tokens = orderno.split(":");
 		Long orderId = Long.parseLong(tokens[1]);
 		Payment payment = paymentRepository.findByOrder_Id(orderId);
@@ -483,22 +425,25 @@ public class PaymentService {
 	 * @param userId 사용자 ID
 	 * @return 결제 내역 리스트
 	 */
-	public List<PaymentResponseDto> getCompletedPaymentsByUserId(Long userId) {
-		List<Payment> payments = paymentRepository.findByUserIdAndStatus(userId, PaymentStatus.COMPLETED);
-		return payments.stream()
-			.map(payment -> PaymentResponseDto.builder()
-				.status(payment.getStatus().name())
-				.message("결제 완료")
+public PaymentHistoryDto getCompletedPaymentsByUserId(Long userId, int page, int size) {
+		Pageable pageable = PageRequest.of(page, 5);
+		Page<Payment> paymentPage = paymentRepository.findByUserIdAndStatus(userId, PaymentStatus.COMPLETED, pageable);
+
+		List<PaymentHistoryDto> paymentHistoryList = paymentPage.getContent().stream()
+			.map(payment -> PaymentHistoryDto.builder()
 				.paymentId(payment.getId())
-				.userId(payment.getUser().getId())
-				.orderId(payment.getOrder().getId())
-				.productName(payment.getOrder().getProduct().getName())
-				.quantity(payment.getOrder().getQuantity())
 				.amount(payment.getAmount())
+				.status(payment.getStatus().name())
 				.paymentMethod(payment.getPaymentMethod().name())
 				.createdAt(payment.getCreatedAt().toString())
-				.updatedAt(payment.getUpdatedAt().toString())
 				.build())
 			.collect(Collectors.toList());
+
+		return PaymentHistoryDto.builder()
+			.currentPage(paymentPage.getNumber())
+			.totalPages(paymentPage.getTotalPages())
+			.totalElements(paymentPage.getTotalElements())
+			.content(paymentHistoryList)
+			.build();
 	}
 }
