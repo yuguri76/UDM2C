@@ -114,11 +114,12 @@ public class PaymentService {
 		params.put("vat_amount", "0");
 		params.put("tax_free_amount", "0");
 		params.put("approval_url", String.format("%s://%s/payment/kakao/complete?order_id=%d&user_id=%d",
-				protocol,
+			protocol,
 			uriConfig.getServerHost(),
 			requestDto.getOrderId(),
 			requestDto.getUserId()));
-		String failCancelUrl = String.format("%s://%s/payment/kakao/cancel?order_id=%d", protocol, uriConfig.getServerHost(), requestDto.getOrderId());
+		String failCancelUrl = String.format("%s://%s/payment/kakao/cancel?order_id=%d", protocol,
+			uriConfig.getServerHost(), requestDto.getOrderId());
 		params.put("cancel_url", failCancelUrl);
 		params.put("fail_url", failCancelUrl);
 
@@ -291,7 +292,8 @@ public class PaymentService {
 			createOrderNo);
 		params.put("retUrl", createRetUrl);
 
-		String cancelUrl = String.format("%s://%s/payment/toss/cancel?orderno=%s", protocol, uriConfig.getServerHost(), createOrderNo);
+		String cancelUrl = String.format("%s://%s/payment/toss/cancel?orderno=%s", protocol, uriConfig.getServerHost(),
+			createOrderNo);
 		params.put("retCancelUrl", cancelUrl);
 
 		log.debug("request : {}", params);
@@ -355,7 +357,6 @@ public class PaymentService {
 		}
 	}
 
-
 	@DistributedLock(key = "'rollbackAndDeleteOrder-' + #orderId")
 	public void rollbackAndDeleteOrder(Long orderId) {
 		Order order = orderRepository.findByIdWithProduct(orderId)
@@ -373,7 +374,6 @@ public class PaymentService {
 		paymentRepository.delete(payment);
 		orderRepository.delete(order);
 	}
-
 
 	@Transactional
 	public String returnOrderCheckPage(String orderno, String status, String orderNo, String payMethod, String bankCode,
@@ -436,6 +436,8 @@ public PaymentHistoryDto getCompletedPaymentsByUserId(Long userId, int page, int
 				.status(payment.getStatus().name())
 				.paymentMethod(payment.getPaymentMethod().name())
 				.createdAt(payment.getCreatedAt().toString())
+				.productName(payment.getOrder().getProduct().getName())
+				.quantity(payment.getOrder().getQuantity())
 				.build())
 			.collect(Collectors.toList());
 

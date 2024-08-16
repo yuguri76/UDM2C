@@ -17,4 +17,6 @@ public class PaymentHistoryDto {
 	private int totalPages;
 	private long totalElements;
 	private List<PaymentHistoryDto> content;
+	private String productName;
+	private int quantity;
 }
