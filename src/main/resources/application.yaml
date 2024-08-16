@@ -3,13 +3,13 @@ spring:
     name: livealone
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://${DATABASE_HOST}:3306/live_alone
+    url: jdbc:mysql://${DATABASE_HOST}:3307/live_alone
     username: ${MYSQL_USER}
     password: ${MYSQL_PASSWORD}
   data:
     redis:
       host: ${DATABASE_HOST}
-      port: 6379
+      port: 6378
     mongodb:
       uri: mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@${DATABASE_HOST}:27017/chatdb?authSource=admin
       port: 27017
