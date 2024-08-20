@@ -25,6 +25,7 @@ import com.example.livealone.order.entity.Order;
 import com.example.livealone.order.repository.OrderRepository;
 import com.example.livealone.order.service.OrderService;
 import com.example.livealone.payment.dto.PaymentHistoryDto;
+import com.example.livealone.payment.dto.PaymentInfoDto;
 import com.example.livealone.payment.dto.PaymentRequestDto;
 import com.example.livealone.payment.dto.PaymentResponseDto;
 import com.example.livealone.payment.entity.Payment;
@@ -425,17 +426,17 @@ public class PaymentService {
 	 * @param userId 사용자 ID
 	 * @return 결제 내역 리스트
 	 */
-public PaymentHistoryDto getCompletedPaymentsByUserId(Long userId, int page, int size) {
+	public PaymentHistoryDto getCompletedPaymentsByUserId(Long userId, int page, int size) {
 		Pageable pageable = PageRequest.of(page, 5);
-		Page<Payment> paymentPage = paymentRepository.findByUserIdAndStatus(userId, PaymentStatus.COMPLETED, pageable);
+		Page<Payment> paymentPage = paymentRepository.findByUserIdAndStatusOrderByCreatedAtDesc(userId, PaymentStatus.COMPLETED, pageable);
 
-		List<PaymentHistoryDto> paymentHistoryList = paymentPage.getContent().stream()
-			.map(payment -> PaymentHistoryDto.builder()
+		List<PaymentInfoDto> paymentHistoryList = paymentPage.getContent().stream()
+			.map(payment -> PaymentInfoDto.builder()
 				.paymentId(payment.getId())
 				.amount(payment.getAmount())
 				.status(payment.getStatus().name())
 				.paymentMethod(payment.getPaymentMethod().name())
-				.createdAt(payment.getCreatedAt().toString())
+				.createdAt(payment.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm:ss")))
 				.productName(payment.getOrder().getProduct().getName())
 				.quantity(payment.getOrder().getQuantity())
 				.build())
@@ -445,7 +446,7 @@ public PaymentHistoryDto getCompletedPaymentsByUserId(Long userId, int page, int
 			.currentPage(paymentPage.getNumber())
 			.totalPages(paymentPage.getTotalPages())
 			.totalElements(paymentPage.getTotalElements())
-			.content(paymentHistoryList)
+			.contents(paymentHistoryList)
 			.build();
 	}
 }

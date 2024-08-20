@@ -10,7 +10,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
-	Page<Payment> findByUserIdAndStatus(Long userId, PaymentStatus status, Pageable pageable);
+	Page<Payment> findByUserIdAndStatusOrderByCreatedAtDesc(Long userId, PaymentStatus status, Pageable pageable);
 
 	Payment findByOrder_Id(Long orderId);
 

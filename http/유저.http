@@ -12,3 +12,8 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJraW1jaGFlbWluMDcwN0BnbWFpb
 GET http://localhost:8080/user/1/delivery
 Content-Type: application/json
 Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJraW1jaGFlbWluMDcwN0BnbWFpbC5jb20iLCJpZCI6MiwidXNlcm5hbWUiOiJjaGFlbWluIGtpbSIsIm5pY2tuYW1lIjoiY2hhZW1pbiBraW0iLCJpYXQiOjE3MjM1OTk5MDQsImV4cCI6MTcyMzYwMDUwNH0.VYvN2nJdske_cCxRm76hulAKFGyB0UHQfw85-Yg4Dcc
+
+### 유저 별 주문 내역 가져오기
+GET https://lostark.shop/payment/user/3/completed?page=0&size=5
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqOTk3NkBuYXZlci5jb20iLCJpZCI6MywidXNlcm5hbWUiOiLqt5zrpqwiLCJuaWNrbmFtZSI6Iuq3pCIsInJvbGUiOiJBRE1JTiIsImlhdCI6MTcyNDE0MTQ4MSwiZXhwIjoxNzI0MTYzMDgxfQ.nVo7hGSO5uA6M-h6WMCt5GcMXDByCbb9FUlLzj5Gn30
